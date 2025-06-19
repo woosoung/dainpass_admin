@@ -1,0 +1,14 @@
+@charset "utf-8";
+
+.auth_box{}
+.auth_box li.act{background:dodgerblue;color:#fff;border:2px solid #8484d8;}
+.auth_box li span{cursor:pointer;color:#999;}
+.auth_box li .auth_r,
+.auth_box li.act .auth_r{background:#fff;color:#999;}
+.auth_box li.act .auth_r.act{background:indigo;color:#fff;}
+.auth_box li .auth_w,
+.auth_box li.act .auth_w{background:#fff;color:#999;}
+.auth_box li.act .auth_w.act{background:purple;color:#fff;}
+.auth_box li .auth_d,
+.auth_box li.act .auth_d{background:#fff;color:#999;}
+.auth_box li.act .auth_d.act{background:red;color:#fff;}

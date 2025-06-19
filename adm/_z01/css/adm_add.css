@@ -1,0 +1,6 @@
+@charset "utf-8";
+/* 기존 디폴트.css에서 사용되는 클래스와 동일한 클래스의 버전2를 정의할때 */
+.sound_only2 {display:inline-block !important;position:absolute;top:0;left:0;margin:0 !important;padding:0 !important;width:1px !important;height:1px !important;font-size:0;line-height:0;border:0 !important;overflow:hidden !important}
+
+/* menu 메뉴 */
+#menulist .sub_menu_class2 {padding-left:50px;background:url('../img/sub_menu_ico2.gif') 5px 15px no-repeat}

@@ -1,0 +1,6 @@
+@charset "utf-8";
+.auth_h3{border:2px solid #435ffe;display:inline-block;}
+.auth_h3.unact{background:#f1f1f1;color:#999;border:2px solid #9ba8f7;text-decoration:line-through;}
+
+.auths{}
+.auths.unact{background:#f1f1f1;color:#999;border:2px solid #f7ce9b;text-decoration:line-through;}

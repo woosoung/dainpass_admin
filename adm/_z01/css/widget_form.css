@@ -1,0 +1,9 @@
+@charset "utf-8";
+
+#td_widget_skin{width:120px;}
+#td_widget_skin select{max-width:120px;}
+#td_widget_skin select option{}
+#td_widget_skin_btn{display:no ne;position:absolute;left:0;top:0;width:100%;height:100%;z-index:100;background:rgba(0,0,0,0);cursor:pointer;}
+
+.td_wgt_start_dt i,
+.td_wgt_end_dt i {font-size:1.2em;cursor:pointer;margin-left:5px;}

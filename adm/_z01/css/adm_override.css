@@ -1,0 +1,120 @@
+@charset "utf-8";
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css");
+/* 테마설정페이지의 '사용중'버튼 스타일 */
+#theme_list li .theme_sl_use{background:#800000;}
+/* 최상단 */
+#hd_top{background-color:#333;}
+
+/* 최상단 좌측 아이콘 */
+#btn_gnb{
+    text-indent: 0;
+    background:none;
+    background-color:#333;
+    font-size:1.5em;
+    color:#fff;
+}
+#btn_gnb .bi-arrow-right-square{display:none;}
+#btn_gnb.btn_gnb_open{
+    text-indent: 0;
+    background:none;
+    background-color:#333;
+    font-size:1.5em;
+    color:#fff;
+}
+#btn_gnb.btn_gnb_open .bi-arrow-left-square{display:none;}
+#btn_gnb.btn_gnb_open .bi-arrow-right-square{display:block;}
+
+/* 최상단 ADMINISTRATOR 대체 */
+#logo {text-align:left;background:#555}
+#logo a {color:#fff;font-weight:700;font-size:1.5em;margin-left:20px;}
+
+
+#tnb li{margin-left:8px;}
+#tnb button{background:#555;}
+#tnb button:hover{background:#777;}
+#tnb button span{background:url(../img/op_btn.png) 50% 50% no-repeat #666666}
+/* 최상단 shop 아이콘 변경 */
+#tnb .tnb_shop{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-indent: 0;
+    background:none;
+    font-size:1.4em;
+    color:#fff;
+    text-align:center;
+}
+#tnb .tnb_shop:hover{background:#777;}
+/* 최상단 community 아이콘 변경 */
+#tnb .tnb_community{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-indent: 0;
+    background:none;
+    font-size:1.6em;
+    color:#fff;
+    text-align:center;
+}
+#tnb .tnb_community:hover{background:#777;}
+#tnb .tnb_service{background:#555;}
+#tnb .tnb_service:hover{background:#777;}
+#tnb .tnb_mb_area{background:#666666;}
+
+/* 좌측 메뉴 */
+#gnb .gnb_ul {background: #444;}
+#gnb .gnb_li {border-bottom: 1px solid #222;}
+#gnb .gnb_li button{background:#444;}
+#gnb .gnb_li .btn_op{background:url(../img/menu_default.png) 50% 50% no-repeat #ebebeb}
+#gnb .on .btn_op{background:url(../img/menu_default_on.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-100{background:url(../img/menu-1-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-100{background:url(../img/menu-1.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-200{background:url(../img/menu-2-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-200{background:url(../img/menu-2.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-300{background:url(../img/menu-3-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-300{background:url(../img/menu-3.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-400{background:url(../img/menu-7-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-400{background:url(../img/menu-7.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-500{background:url(../img/menu-6-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-500{background:url(../img/menu-6.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-900{background:url(../img/menu-4-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-900{background:url(../img/menu-4.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-910{background:url(../img/menu-9-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-910{background:url(../img/menu-9.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-920{background:url(../img/menu-a-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-920{background:url(../img/menu-a.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-930{background:url(../img/menu-b-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-930{background:url(../img/menu-b.png) 50% 50% no-repeat #fff}
+
+/* 각 버튼 스타일 */
+#wr_cont input[type="submit"],
+.btn_submit,
+.btn_01, 
+a.btn_01{background:#800000;}
+.btn_submit:hover,
+.btn_01:hover, 
+a.btn_01:hover{background:#900000;}
+.local_sch03 button,
+.btn_frmline,
+a.btn_frmline,
+.btn_02, 
+a.btn_02{background:#555}
+.btn_02:hover, a.btn_02:hover{background:#666}
+#processing button{background:#800000;}
+
+/* 팝업윈도우 */
+.new_win .local_sch, 
+.new_win .local_cmd, 
+.new_win .local_desc01, 
+.new_win .local_desc02, 
+.new_win .local_ov{margin:0;}
+
+/* 테이블공통 */
+.td_category{width:auto;}
+.td_code{width:150px;}
+
+/* shop_categories 관련 */
+#sct .sct_name1 {padding-left:25px;background-image:url('../img/sub_menu_ico.gif');background-repeat:no-repeat;background-size:auto;background-position:5px center;}
+#sct .sct_name2 {padding-left:50px;background-image:url('../img/sub_menu_ico2.gif');background-repeat:no-repeat;background-size:auto;background-position:10px center;}
+#sct .sct_name3 {padding-left:75px;}
+#sct .sct_name4 {padding-left:100px;}
