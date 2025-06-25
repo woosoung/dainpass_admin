@@ -9,4 +9,5 @@ $menu["menu920"] = array(
     array('920600', '사원관리', '' . G5_Z_URL . '/employee_list.php', 'employee_list'),
     array('920700', '업종관리', '' . G5_ZSHOP_ADMIN_URL . '/categorylist.php', 'categorylist'),
     array('920800', '가맹점관리', '' . G5_Z_URL . '/company_list.php', 'company_list'),
+    array('920900', '가맹점관리자', '' . G5_Z_URL . '/company_member_list.php', 'company_member_list'),
 );

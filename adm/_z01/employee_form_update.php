@@ -1,5 +1,5 @@
 <?php
-$sub_menu = "930500";
+$sub_menu = "920600";
 include_once('./_common.php');
 
 check_demo();
@@ -79,22 +79,24 @@ if(count($exArr)){
         meta_update(array("mta_db_tbl"=>"member","mta_db_idx"=>$mb_id,"mta_key"=>$k,"mta_value"=>$v));
     }
 }
-
-$auth_renewal = $auth_renewal ?? true; // 권한갱신 여부
+$auth_renewal = isset($auth_renewal) ? true : false;
+// echo $auth_renewal.':';exit;
+// $auth_renewal = $auth_renewal ?? true; // 권한갱신 여부
 if($auth_renewal){
     $auth_del_sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id = '{$mb_id}' ";
     sql_query($auth_del_sql,1);
-    $auth_arr = ($auths) ? explode(',',$auths) : array();
+    $auth_arr = isset($auths) ? explode(',',$auths) : array();
     if(count($auth_arr)){
+        $auth_sql = " INSERT INTO {$g5['auth_table']} VALUES ('{$mb_id}', '100000', 'r') "; // 기본적으로 메인페이지 즉, '대시보드' 권한을 부여
         foreach($auth_arr as $v){
             $arr = explode('_', $v);
             $code = $arr[0];
             $auth_str = $arr[1];
-            $auth_str .= ($arr[2]) ? ','.$arr[2] : '';
-            $auth_str .= ($arr[3]) ? ','.$arr[3] : '';
-            $auth_sql = " INSERT INTO {$g5['auth_table']} SET mb_id = '{$mb_id}', au_menu = '{$code}', au_auth = '{$auth_str}' ";
-            sql_query($auth_sql,1);
+            $auth_str .= isset($arr[2]) ? ','.$arr[2] : '';
+            $auth_str .= isset($arr[3]) ? ','.$arr[3] : '';
+            $auth_sql .= " ,('{$mb_id}', '{$code}', '{$auth_str}') ";
         }
+        sql_query($auth_sql,1);
     }
 }
 
