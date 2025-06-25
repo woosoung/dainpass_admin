@@ -1,5 +1,20 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // 모든 h3 태그를 가져옴
+    const h3Elements = document.querySelectorAll("h3");
+    // 텍스트가 정확히 '환경설정'인 요소를 찾음
+    const targetH3 = Array.from(h3Elements).find(h3 => h3.textContent.trim() === "환경설정");
+    if (targetH3) {
+        // 새로운 <a> 요소 생성
+        const link = document.createElement("a");
+        link.href = g5_admin_url;
+        link.textContent = "대시보드";
+
+        // 기존 h3의 내용 지우고 <a> 요소 추가
+        targetH3.textContent = "";  // 기존 텍스트 삭제
+        targetH3.appendChild(link); // 링크 삽입
+    }
+
     const btnGnb = document.querySelector("#btn_gnb"); //최상단 좌측 아이콘
     const logoA = document.querySelector("#logo a");
     const logoImg = document.querySelector("#logo a img");
@@ -30,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // 최상단 ADMINISTRATOR 로고이미지를 제거하고 텍스트로 변경합니다.
     if (logoImg) {
         logoImg.remove();
-        logoA.textContent = 'CONFIG SET';
+        logoA.textContent = 'ADMINISTRATOR';
     }
 
     // 최상산 shop버튼 대체

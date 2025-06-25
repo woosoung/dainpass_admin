@@ -4,7 +4,7 @@ include_once('./_common.php');
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 include_once(G5_ZSQL_PATH.'/term_role.php');
 
-auth_check($auth[$sub_menu],"r");
+@auth_check($auth[$sub_menu],"r");
 
 
 // 추가적인 검색조건 (ser_로 시작하는 검색필드)

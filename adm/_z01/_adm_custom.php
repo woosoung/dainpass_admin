@@ -78,7 +78,12 @@ function z_adm_common_head(){
 			for($i=0;$i<count($menu2[$k]);$i++){
 				if($i == 0) $menu_main_titles[$k] = $menu2[$k][$i][1];
 				$menu_list_tag .= '<li class="li2_menu inline-block">'.PHP_EOL;
-				$menu_list_tag .= ' <div>('.$menu[$k][$i][0].':'.$menu[$k][$i][1].')</div>'.PHP_EOL;
+				if (isset($menu[$k][$i])) {
+					$menu_list_tag .= ' <div>(' . $menu[$k][$i][0] . ':' . $menu[$k][$i][1] . ')</div>'.PHP_EOL;
+				} else {
+					$menu_list_tag .= ' <div>(접근불가 또는 메뉴 없음)</div>'.PHP_EOL;
+				}
+				// $menu_list_tag .= ' <div>('.$menu[$k][$i][0].':'.$menu[$k][$i][1].')</div>'.PHP_EOL;
 				$menu_list_tag .= '</li>'.PHP_EOL;
 			}
 			$menu_list_tag .= '</ul>'.PHP_EOL;
