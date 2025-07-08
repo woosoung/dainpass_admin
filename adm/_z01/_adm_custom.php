@@ -105,6 +105,7 @@ function z_adm_common_tail(){
 	echo 'const file_name = "'.$g5['file_name'].'";'.PHP_EOL;
 	echo 'const dir_name = "'.$g5['dir_name'].'";'.PHP_EOL;
 	echo 'const mb_name = "'.$member['mb_name'].'";'.PHP_EOL;
+	echo 'const mb_level = "'.$member['mb_level'].'";'.PHP_EOL;
 	echo 'const g5_community_use = "'.G5_COMMUNITY_USE.'"'.PHP_EOL;
 	echo '</script>'.PHP_EOL;
 	// jquery-ui 스타일시트

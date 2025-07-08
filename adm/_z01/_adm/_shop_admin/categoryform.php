@@ -26,8 +26,8 @@ if ($w == "")
         alert("최고관리자만 1단계 분류를 추가할 수 있습니다.");
 
     $len = strlen($ca_id);
-    if ($len == 6) //($len == 10)
-        alert("분류를 더 이상 추가할 수 없습니다.\\n\\n3단계 업종까지만 가능합니다."); //alert("분류를 더 이상 추가할 수 없습니다.\\n\\n5단계 업종까지만 가능합니다.");
+    if ($len == 4) //($len == 6)($len == 10)
+        alert("분류를 더 이상 추가할 수 없습니다.\\n\\n2단계 업종까지만 가능합니다."); //alert("분류를 더 이상 추가할 수 없습니다.\\n\\n5단계 업종까지만 가능합니다.");
 
     $len2 = $len + 1;
 
@@ -90,27 +90,27 @@ include_once (G5_ADMIN_PATH.'/admin.head.php');
 
 
 
-//caicon파일 추출 ###########################################################
-$sql = " SELECT * FROM {$g5['dain_file_table']}
-WHERE fle_db_tbl = 'set' AND fle_type = 'category' AND fle_db_idx = 'caicon' ORDER BY fle_reg_dt DESC ";
-$rs = sql_query($sql,1);
-//echo $rs->num_rows;echo "<br>";
-$fvc['cac_f_arr'] = array();
-$fvc['cac_fidxs'] = array();//회의 파일번호(fle_idx) 목록이 담긴 배열
-$fvc['cac_lst_idx'] = 0;//회의 파일중에 가장 최신버전의 파일번호
-for($i=0;$row2=sql_fetch_array($rs);$i++) {
-    //등록 이미지 섬네일 생성
-    $row2['thumb'] = '';
-	if(strpos($row2['fle_mime_type'],'image') !== false) { // 'image' 문자열이 포함되어 있으면 섬네일 생성
-		$thumbf = thumbnail($row2['fle_name'],G5_DATA_PATH.$row2['fle_path'],G5_DATA_PATH.$row2['fle_path'],$thumb_wd,$thumb_ht,false,false,'center');
-        $thumbf_url = G5_DATA_URL.$row2['fle_path'].'/'.$thumbf;
-		$row2['thumb_url'] = $thumbf_url;
-        $row2['thumb'] = '<img src="'.$thumbf_url.'" alt="'.$row2['fle_name_orig'].'" style="margin-left:20px;border:1px solid #ddd;"><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
-	}
-    $file_down_del = (is_file(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name'])) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_fullpath='.urlencode(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name']).'&file_name_orig='.$row2['fle_name_orig'].'" file_path="'.$row2['fle_path'].'">[파일다운로드]</a>&nbsp;&nbsp;'.$row2['fle_reg_dt'].'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$row2['fle_type'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label><br>'.$row2['thumb']:''.PHP_EOL;
-    @array_push($fvc['fvc_f_arr'],array('file'=>$file_down_del));
-    @array_push($fvc['fvc_fidxs'],$row2['fle_idx']);
-}
+// //caicon파일 추출 ###########################################################
+// $sql = " SELECT * FROM {$g5['dain_file_table']}
+// WHERE fle_db_tbl = 'set' AND fle_type = 'category' AND fle_db_idx = 'caicon' ORDER BY fle_reg_dt DESC ";
+// $rs = sql_query($sql,1);
+// //echo $rs->num_rows;echo "<br>";
+// $fvc['cac_f_arr'] = array();
+// $fvc['cac_fidxs'] = array();//회의 파일번호(fle_idx) 목록이 담긴 배열
+// $fvc['cac_lst_idx'] = 0;//회의 파일중에 가장 최신버전의 파일번호
+// for($i=0;$row2=sql_fetch_array($rs);$i++) {
+//     //등록 이미지 섬네일 생성
+//     $row2['thumb'] = '';
+// 	if(strpos($row2['fle_mime_type'],'image') !== false) { // 'image' 문자열이 포함되어 있으면 섬네일 생성
+// 		$thumbf = thumbnail($row2['fle_name'],G5_DATA_PATH.$row2['fle_path'],G5_DATA_PATH.$row2['fle_path'],$thumb_wd,$thumb_ht,false,false,'center');
+//         $thumbf_url = G5_DATA_URL.$row2['fle_path'].'/'.$thumbf;
+// 		$row2['thumb_url'] = $thumbf_url;
+//         $row2['thumb'] = '<img src="'.$thumbf_url.'" alt="'.$row2['fle_name_orig'].'" style="margin-left:20px;border:1px solid #ddd;"><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
+// 	}
+//     $file_down_del = (is_file(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name'])) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_fullpath='.urlencode(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name']).'&file_name_orig='.$row2['fle_name_orig'].'" file_path="'.$row2['fle_path'].'">[파일다운로드]</a>&nbsp;&nbsp;'.$row2['fle_reg_dt'].'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$row2['fle_type'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label><br>'.$row2['thumb']:''.PHP_EOL;
+//     @array_push($fvc['fvc_f_arr'],array('file'=>$file_down_del));
+//     @array_push($fvc['fvc_fidxs'],$row2['fle_idx']);
+// }
 
 
 
@@ -212,14 +212,23 @@ $pg_anchor .= '</ul>';
             <col>
         </colgroup>
         <tbody>
-        <tr>
-            <th scope="row">하위분류</th>
-            <td>
-                <?php echo help("이 분류의 코드가 10 이라면 10 으로 시작하는 하위분류의 설정값을 이 분류와 동일하게 설정합니다.\n<strong>이 작업은 실행 후 복구할 수 없습니다.</strong>"); ?>
-                <label for="sub_category">이 분류의 하위분류 설정을, 이 분류와 동일하게 일괄수정</label>
-                <input type="checkbox" name="sub_category" value="1" id="sub_category" onclick="if (this.checked) if (confirm('이 분류에 속한 하위 분류의 속성을 똑같이 변경합니다.\n\n이 작업은 되돌릴 방법이 없습니다.\n\n그래도 변경하시겠습니까?')) return ; this.checked = false;">
-            </td>
-        </tr>
+            <tr>
+                <th scope="row"><label for="mb_icon">회원아이콘</label></th>
+                <td colspan="3">
+                    <?php echo help('이미지 크기는 <strong>넓이 ' . $config['cf_member_icon_width'] . '픽셀 높이 ' . $config['cf_member_icon_height'] . '픽셀</strong>로 해주세요.') ?>
+                    <input type="file" name="mb_icon" id="mb_icon">
+                    <?php
+                    $mb_dir = substr($mb['mb_id'], 0, 2);
+                    $icon_file = G5_DATA_PATH . '/member/' . $mb_dir . '/' . get_mb_icon_name($mb['mb_id']) . '.gif';
+                    if (file_exists($icon_file)) {
+                        $icon_url = str_replace(G5_DATA_PATH, G5_DATA_URL, $icon_file);
+                        $icon_filemtile = (defined('G5_USE_MEMBER_IMAGE_FILETIME') && G5_USE_MEMBER_IMAGE_FILETIME) ? '?' . filemtime($icon_file) : '';
+                        echo '<img src="' . $icon_url . $icon_filemtile . '" alt="">';
+                        echo '<input type="checkbox" id="del_mb_icon" name="del_mb_icon" value="1">삭제';
+                    }
+                    ?>
+                </td>
+            </tr>
         </tbody>
         </table>
     </div>
