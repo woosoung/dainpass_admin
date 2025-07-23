@@ -2,7 +2,7 @@
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 // 기본관리자는 관리자페이지 접근가능
 $is_adm_accessable = ($is_admin && !$member['mb_leave_date'] && !$member['mb_intercept_date']) ? true : false;
-
+$conf_com_idx = 0; // 내가 소속된 업체명(가맹점) id
 // 내가 접근가능한 메인메뉴의 코드를 배열로 저장
 $auth_sql = " SELECT DISTINCT LEFT(au_menu, 3) AS menu_cd
                 FROM {$g5['auth_table']}
@@ -21,6 +21,8 @@ unset($auth_res);
 
 // memeber일 경우 meta_table에 회원정보가 있으면 $member배열에 추가
 if($is_member){
+    $conf_com_idx = (int) $member['mb_1']; // 0: 플랫폼, 그 외 : 가맹점
+    // echo $conf_com_idx;exit;
     $mta_mb_arr = get_meta('member',$member['mb_id']);
     if(count($mta_mb_arr)){
         $member = array_merge($member,$mta_mb_arr);

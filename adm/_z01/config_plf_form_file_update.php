@@ -19,11 +19,11 @@ if($w == '' || $w == 'u'){
     if(count($del_arr)) delete_idx_file($del_arr);
     
     //준비중 멀티파일처리
-    // upload_multi_file($_FILES['file_preparing'],'set','preparing','conf');
+    // upload_multi_file($_FILES['file_preparing'],'set','preparing','plf');
     //favicon 멀티파일처리
-    // upload_multi_file($_FILES['file_favicon'],'set','favicon','conf');
+    upload_multi_file($_FILES['file_favicon'],'set','favicon','plf');
     //ogimg 멀티파일처리
-    // upload_multi_file($_FILES['file_ogimg'],'set','ogimg','conf');
+    // upload_multi_file($_FILES['file_ogimg'],'set','ogimg','plf');
     //siemap 멀티파일처리
-    // upload_multi_file($_FILES['file_sitemap'],'set','sitemap','conf');
+    // upload_multi_file($_FILES['file_sitemap'],'set','sitemap','plf');
 }

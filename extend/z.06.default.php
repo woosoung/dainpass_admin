@@ -22,6 +22,7 @@ $g5['is_shop_index'] = ($g5['dir_name'] == 'shop' && $g5['file_name'] == 'index'
 $g5['is_index'] = ($g5['is_web_index'] || $g5['is_shop_index']) ? 1 : 0;
 
 include_once(G5_ZSQL_PATH.'/set_conf.php');
+include_once(G5_ZSQL_PATH.'/set_plf.php');
 include_once(G5_ZSQL_PATH.'/set_com.php');
 
 // 접근가능한 IP인지, 접근차단된 IP인지 확인 접근불가능시 차단메세지 출력

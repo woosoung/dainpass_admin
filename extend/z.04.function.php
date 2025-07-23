@@ -22,7 +22,7 @@ $g5['connect_pg'] = $connect_pg;
 if(!function_exists('sql_query_pg')){
 function sql_query_pg($sql, $error=G5_DISPLAY_SQL_ERROR, $link=null)
 {
-    global $g5;
+    global $conf_com_idx, $g5;
     
     if(!$link)
         $link = $g5['connect_pg'];
@@ -56,7 +56,7 @@ if ($insert_id === false) {
 */
 function sql_insert_id_pg($table, $link = null)
 {
-    global $g5;
+    global $conf_com_idx, $g5;
 
     if (!$link)
         $link = $g5['connect_pg'];
@@ -123,7 +123,7 @@ function sql_num_rows_pg($result)
 if(!function_exists('sql_field_names_pg')){
 function sql_field_names_pg($table, $link=null)
 {
-    global $g5;
+    global $conf_com_idx, $g5;
 
     if(!$link)
         $link = $g5['connect_pg'];
@@ -149,7 +149,7 @@ function sql_field_names_pg($table, $link=null)
 if(!function_exists('sql_fetch_pg')){
 function sql_fetch_pg($sql, $error=G5_DISPLAY_SQL_ERROR, $link=null)
 {
-    global $g5;
+    global $conf_com_idx, $g5;
 
     if(!$link)
         $link = $g5['connect_pg'];
@@ -181,7 +181,7 @@ function sql_fetch_array_pg($result)
 if(!function_exists('get_table_pg')){
 function get_table_pg($db_table,$db_field,$db_id,$db_fields='*')
 {
-    global $db;
+    global $conf_com_idx, $db;
 
 	if(!$db_table||!$db_field||!$db_id)
 		return false;
@@ -201,7 +201,7 @@ if (!pg_table_exists($g5['setting_table'])) {
 */
 function pg_table_exists($table, $link = null)
 {
-    global $g5;
+    global $conf_com_idx, $g5;
 
     if (!$link)
         $link = $g5['connect_pg'];
@@ -249,8 +249,8 @@ function dir_list_in_path($dir=''){
 if(!function_exists('gmailer')){
 function gmailer($to, $subject, $content, $type=1)
 {
-    global $config;
-    global $g5;
+    global $conf_com_idx, $config;
+    global $conf_com_idx, $g5;
     // 메일발송 사용을 하지 않는다면
     if (!$config['cf_email_use']) {
         return;
@@ -284,7 +284,7 @@ function gmailer($to, $subject, $content, $type=1)
 // get_table_meta('g5_shop_item','it_id',215021535,'shop_item')	// 4번째 매개변수는 테이블명과 같으면 생략할 수 있다.
 if(!function_exists('get_table_meta')){
 function get_table_meta($db_table,$db_field,$db_id,$db_table2=''){
-    global $g5;
+    global $conf_com_idx, $g5;
     
     if(!$db_table||!$db_field||!$db_id)
         return false;
@@ -315,9 +315,9 @@ function get_table_meta($db_table,$db_field,$db_id,$db_table2=''){
 
 // 기본 디비 배열 + 확장 meta 배열
 // get_table_meta('g5_shop_item','it_id',215021535,'shop_item')	// 4번째 매개변수는 테이블명과 같으면 생략할 수 있다.
-if(!function_exists('get_table_meta')){
+if(!function_exists('get_table_meta_pg')){
 function get_table_meta_pg($db_table,$db_field,$db_id,$db_table2=''){
-    global $g5;
+    global $conf_com_idx, $g5;
     
     if(!$db_table||!$db_field||!$db_id)
         return false;
@@ -349,7 +349,7 @@ function get_table_meta_pg($db_table,$db_field,$db_id,$db_table2=''){
 //--- 메타 테이블 저장 ---//
 if(!function_exists('meta_update')){
 function meta_update($meta_array){
-    global $g5;
+    global $conf_com_idx, $g5;
     
     if(!$meta_array['mta_key'])
         return 0;
@@ -397,7 +397,7 @@ function meta_update($meta_array){
 if(!function_exists('get_meta')){
 function get_meta($db_table,$db_id,$code64=1)
 {
-    global $g5;
+    global $conf_com_idx, $g5;
 
     if(!$db_table||!$db_id)
         return false;
@@ -521,7 +521,7 @@ function getExTableData($prefix,$fields,$data){
 // fle_db_tbl, fle_db_idx, fle_type 으로 파일삭제하기
 if(!function_exists('delete_db_file')) {
 function delete_db_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
-    global $g5;
+    global $conf_com_idx, $g5;
     $fr = sql_fetch_pg(" SELECT GROUP_CONCAT(fle_idx) AS fle_idxs FROM {$g5['dain_file_table']} WHERE fle_db_tbl = '{$fle_db_tbl}' AND fle_db_idx = '{$fle_db_idx}' AND fle_type = '{$fle_type}' ");
     if($fr['fle_idxs']) {
         $fle_idx_array = explode(',',$fr['fle_idxs']);
@@ -530,10 +530,38 @@ function delete_db_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
 }
 }
 
+
 //fle_idx로 파일삭제하기
 if(!function_exists('delete_idx_file')) {
 function delete_idx_file($fle_idx_array=array()) {
-    global $g5;
+    global $conf_com_idx, $g5;
+    //print_r2($fle_idx_array);
+    foreach($fle_idx_array as $k=>$v) {
+        $fr = sql_fetch_pg(" SELECT fle_path, fle_name FROM {$g5['dain_file_table']} WHERE fle_idx = '{$v}' ");
+        @unlink(G5_DATA_PATH.$fr['fle_path'].'/'.$fr['fle_name']);
+        delete_ndr_file_thumbnail($fr['fle_path'], $fr['fle_name']);
+        sql_query_pg(" DELETE FROM {$g5['dain_file_table']} WHERE fle_idx = '{$v}' ");
+    }
+}
+}
+
+
+// fle_db_tbl, fle_db_idx, fle_type 으로 파일삭제하기
+if(!function_exists('delete_db_s3_file')) {
+function delete_db_s3_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
+    global $conf_com_idx, $g5;
+    $fr = sql_fetch_pg(" SELECT GROUP_CONCAT(fle_idx) AS fle_idxs FROM {$g5['dain_file_table']} WHERE fle_db_tbl = '{$fle_db_tbl}' AND fle_db_idx = '{$fle_db_idx}' AND fle_type = '{$fle_type}' ");
+    if($fr['fle_idxs']) {
+        $fle_idx_array = explode(',',$fr['fle_idxs']);
+        delete_idx_s3_file($fle_idx_array);
+    }
+}
+}
+
+//fle_idx로 파일삭제하기
+if(!function_exists('delete_idx_s3_file')) {
+function delete_idx_s3_file($fle_idx_array=array()) {
+    global $conf_com_idx, $g5;
     //print_r2($fle_idx_array);
     foreach($fle_idx_array as $k=>$v) {
         $fr = sql_fetch_pg(" SELECT fle_path, fle_name FROM {$g5['dain_file_table']} WHERE fle_idx = '{$v}' ");
@@ -567,7 +595,7 @@ function delete_ndr_file_thumbnail($path, $file)
 //인수(1:파일배열, 2.DB테이블명, 3.DB인덱스, 4.파일타입)
 if(!function_exists('upload_multi_file')){
 function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
-    global $g5,$config,$member;
+    global $conf_com_idx, $g5,$config,$member;
     //echo count($_files['name']);
     $f_flag = (!count($_files['name']) || !$_files['name'][0]) ? false : true;
     if($f_flag){
@@ -579,7 +607,7 @@ function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
                                     ,"fle_name_orig"=>$_files['name'][$i]
                                     ,"fle_mime_type"=>$_files['type'][$i]
                                     ,"fle_desc"=>''
-                                    ,"fle_path"=>'/ndr/'.$fle_type		//<---- 저장 디렉토리
+                                    ,"fle_path"=>'/data/'.$fle_type		//<---- 저장 디렉토리
                                     ,"fle_db_tbl"=>$tbl
                                     ,"fle_db_idx"=>$idx
                                     ,"fle_type"=>$fle_type
@@ -596,7 +624,7 @@ function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
 //설정 변수: fle_mb_id, fle_name, fle_name_orig, fle_mime_type, fle_path, fle_db_tbl, fle_db_idx, fle_sort ....
 if(!function_exists('upload_insert_file')){
 function upload_insert_file($fle_array){
-    global $g5,$config,$member;
+    global $conf_com_idx, $g5,$config,$member;
 
     //-- 원본 파일명이 없으면 리턴
     if($fle_array['fle_name_orig'] == "")
@@ -619,7 +647,9 @@ function upload_insert_file($fle_array){
         $sql_status = "ok";
 
     //-- 파일 업로드 처리
-    $upload_file = upload_common_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
+    // $upload_file = upload_common_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
+    //-- 파일 업로드 처리 (AWS S3 사용)
+    $upload_file = upload_aws_s3_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
     //print_r2($upload_file);
 
 
@@ -736,24 +766,85 @@ function upload_common_file($srcfile, $destfile, $dir)
 }
 }
 
+// 파일을 업로드 함
+if(!function_exists('upload_aws_s3_file')){
+function upload_aws_s3_file($srcfile, $destfile, $dir)
+{
+    if ($destfile == "") return false;
+
+    // 디렉토리가 없다면 생성 (퍼미션도 변경!)
+    @mkdir(G5_DATA_PATH.$dir, G5_DIR_PERMISSION);
+    @chmod(G5_DATA_PATH.$dir, G5_DIR_PERMISSION);
+
+    //-- 디렉토리 재설정
+    $dir = G5_DATA_PATH.$dir;
+
+    //-- 디렉토리내 동일 파일명이 존재하면 일련번호 붙인 형태로 생성하고 파일명 리턴
+    $file_parts = pathinfo($dir.'/'.$destfile);
+    $file_name = $file_parts['filename'];
+    $full_name = $file_name.'.'.$file_parts['extension'];
+    $file_name_with_path = rtrim($dir,'/').'/'.$full_name;
+
+    if(file_exists($file_name_with_path)) {
+        $a = glob($dir.'/'.$file_name.'*');
+        natcasesort($a);
+        $i=0;
+        foreach($a as $key => $val) {
+            //echo "/".$file_name."\(/i".'<br>';
+            if( preg_match("/".$file_name."\(/i",$val) ) {
+                $b[$i] = $val;
+                $i++;
+            }
+        }
+        //if(sizeof($b) > 1) {
+        if(@sizeof($b)) {
+            preg_match_all('/(\([0-9]+\))/',$b[sizeof($b)-1],$match);
+            $rows = count($match,0);
+            $cols = (count($match,1)/count($match,0))-1;
+            $file_no = substr($match[$rows-1][$cols-1],1,-1)+1;
+        }
+        else
+            $file_no = 1;
+
+        //-- 파일명 재 설정 --//
+        $full_name = $file_name.'('.$file_no.').'.$file_parts['extension'];
+    }
+    else
+        $full_name = $destfile;
+
+    // 업로드 한후 , 퍼미션을 변경함
+    @move_uploaded_file($srcfile, $dir.'/'.$full_name);
+    @chmod($dir.'/'.$full_name, G5_FILE_PERMISSION);
+
+    $size = @getimagesize($dir.'/'.$full_name);
+    $file_size = filesize($dir.'/'.$destfile);
+
+    return array($full_name,$size[0],$size[1],$file_size);
+}
+}
+
 //--- 환경설정 변수 저장 ---//
 if(!function_exists('set_update')){
 function set_update($set_array)
 {
-    global $g5,$config;
-
+    global $conf_com_idx, $g5,$config;
+    
     $set_key = ($set_array['set_key']) ? $set_array['set_key']:'dain';
     $set_auto_yn = (isset($set_array['set_auto_yn']) && $set_array['set_auto_yn'] == 'Y') ? 'Y':'N';
     $set_com_idx = (isset($set_array['set_com_idx']) && $set_array['set_com_idx'] != 0) ? $set_array['set_com_idx']:0;
     $set_trm_idx = (isset($set_array['set_trm_idx']) && $set_array['set_trm_idx'] != 0) ? $set_array['set_trm_idx']:0;
     
-    $row1 = sql_fetch_pg(" SELECT * FROM {$g5['setting_table']}
+
+    $ssql = " SELECT * FROM {$g5['setting_table']}
                         WHERE set_name='{$set_array['set_name']}'
+                            AND set_shop_id = '{$set_com_idx}'
                             AND set_key = '{$set_key}'
                             AND set_type = '{$set_array['set_type']}'
-                            AND set_name = '{$set_array['set_name']}' ");
-    
-    if($row1['set_idx']) {
+                            AND set_name = '{$set_array['set_name']}' ";
+    // echo $ssql;exit;
+    $row1 = sql_fetch_pg($ssql);
+
+    if(isset($row1['set_idx'])) {
         $u_sql = " UPDATE {$g5['setting_table']} SET
                             set_value='{$set_array['set_value']}',
                             set_auto_yn='$set_auto_yn'
@@ -762,8 +853,8 @@ function set_update($set_array)
         sql_query_pg($u_sql);
     }
     else {
-        sql_query_pg(" INSERT INTO {$g5['setting_table']} (
-            set_com_idx,
+        $i_sql = " INSERT INTO {$g5['setting_table']} (
+            set_shop_id,
             set_trm_idx,
             set_key,
             set_type,
@@ -778,7 +869,9 @@ function set_update($set_array)
             '{$set_array['set_name']}',
             '{$set_array['set_value']}',
             '{$set_auto_yn}'
-        ) ");
+        ) ";
+        // echo $i_sql;exit;
+        sql_query_pg($i_sql);
     }
 }
 }
@@ -896,7 +989,7 @@ function tms_get_random_string($type = '', $len = 10) {
 // 입력 폼 안내문
 if(!function_exists('tms_help')){	
 function tms_help($help="",$iup=0,$bgcolor='#ffffff',$fontcolor='#555555'){
-    global $g5;
+    global $conf_com_idx, $g5;
     $iupclass = ($iup) ? "iup" : 'idown';
     $str = ($help) ? '<div class="tms_info_box"><p class="tms_info '.$iupclass.'" style="background:'.$bgcolor.';color:'.$fontcolor.';">'.str_replace("\n", "<br>", $help).'</p></div>' : '';
     return $str;
@@ -906,7 +999,7 @@ function tms_help($help="",$iup=0,$bgcolor='#ffffff',$fontcolor='#555555'){
 //색상/투명도 설정 input form 생성 함수
 if(!function_exists('tms_input_color')){
 function tms_input_color($name='',$value='#333333',$w='',$alpha_flag=0){
-    global $g5,$config,$default,$member,$is_admin;
+    global $conf_com_idx, $g5,$config,$default,$member,$is_admin;
     
     //if($name == '') return '컬러픽커 name값이 없습니다.';
     
@@ -1207,7 +1300,7 @@ function tms_radio_checked($field, $name, $val, $disable=0){ //인수('pending=�
 //환경체크박스
 if(!function_exists('tms_check_checked')){
 function tms_check_checked($name, $label, $val, $default_chk=0){ //네임속성값,라벨텍스트,값,기본값on/off(값이 없을때)
-    global $w;
+    global $conf_com_idx, $w;
     
     $checked = '';
     if($val){ //수정값이 존재하면

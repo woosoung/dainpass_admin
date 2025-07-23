@@ -1,10 +1,9 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 $set_key = 'dain';
-$set_type = 'conf';
+$set_type = 'plf';
 $set_sql = " SELECT * FROM {$g5['setting_table']} 
                     WHERE set_key = '{$set_key}'
-                        AND set_shop_id = '{$conf_com_idx}'
                         AND set_type = '{$set_type}' ";
 $set_res = sql_query_pg($set_sql);
 
@@ -19,7 +18,6 @@ for($i=0;$row=sql_fetch_array_pg($set_res);$i++){
     $set_values = (${'set_'.$row['set_type']}[$row['set_name']]) ? explode(',', ${'set_'.$row['set_type']}[$row['set_name']]) : array();
     
     ${'set_'.$row['set_type']}[$row['set_name'].'_arr'] = $set_values;
-    
     if(preg_match("/=/",${'set_'.$row['set_type']}[$row['set_name']])){
         ${'set_'.$row['set_type']}[$row['set_name'].'_str'] = '<p>$set_'.$row['set_type'].'[\''.$row['set_name'].'\']</p>'.PHP_EOL;
         ${'set_'.$row['set_type']}[$row['set_name'].'_str'] .= '<p>$set_'.$row['set_type'].'[\''.$row['set_name'].'_karr\'][key]</p>'.PHP_EOL;
@@ -50,8 +48,7 @@ for($i=0;$row=sql_fetch_array_pg($set_res);$i++){
         }
     }
 }
-// exit;
-// echo $set_conf['set_aws_region_arr'];exit;
+
 
 unset($set_key);
 unset($set_type);

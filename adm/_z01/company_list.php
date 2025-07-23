@@ -1,5 +1,5 @@
 <?php
-$sub_menu = "930600";
+$sub_menu = "920800";
 include_once('./_common.php');
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 include_once(G5_ZSQL_PATH.'/term_role.php');
@@ -23,34 +23,24 @@ foreach($_REQUEST as $key => $value ) {
     }
 }
 
+$sql_common = " FROM {$g5['shop_table']} AS com
+            ";
 
-$com_types = array('purchase','sales','both','etc');
-$com_types_string = implode("','", $com_types);
-$com_types_string = "'" . $com_types_string . "'";
-
-
-$sql_common = " FROM {$g5['company_table']} AS com
-                LEFT JOIN {$g5['company_member_table']} AS cmm ON com.com_idx = cmm.cmm_com_idx AND cmm_status = 'ok'
-                LEFT JOIN {$g5['member_table']} AS mb ON cmm.cmm_mb_id = mb.mb_id AND mb_leave_date = '' AND mb_intercept_date = '' ";
-
-//-- 업종 검색
-$sql_com_type = ($com_types_string) ? " AND com_type IN (".$com_types_string.") " : "";
 
 $where = array();
-$where[] = " com_status != 'trash' ";   // 디폴트 검색조건
+$where[] = " com.status != 'trash' ";
+
+$_GET['sfl'] = !empty($_GET['sfl']) ? $_GET['sfl'] : '';
 
 if ($stx) {
     switch ($sfl) {
-		case 'com_name' :
-            $where[] = " ( com_name LIKE '%{$stx}%' OR com_names LIKE '%{$stx}%' ) ";
+		case 'name' :
+            $where[] = " ( name LIKE '%{$stx}%' OR names LIKE '%{$stx}%' ) ";
             break;
-		case ( $sfl == 'mb_id' || $sfl == 'com.com_idx' ) :
+		case ( $sfl == 'com.shop_id' || $sfl == 'shop_name' || $sfl == 'business_no' ) : //case ( $sfl == 'mb_id' || $sfl == 'com.shop_id' ) :
             $where[] = " ({$sfl} = '{$stx}') ";
             break;
-		case ($sfl == 'mb_hp') :
-            $where[] = " REGEXP_REPLACE(mb_hp,'-','') LIKE '".preg_replace("/-/","",$stx)."' ";
-            break;
-		case ($sfl == 'mb_name' || $sfl == 'mb_nick' ) :
+		case ($sfl == 'owner_name' ) :
             $where[] = " ({$sfl} LIKE '{$stx}%') ";
             break;
         default :
@@ -65,46 +55,43 @@ if ($where)
 
 
 if (!$sst) {
-    $sst = "com_idx";
+    $sst = "com.shop_id";
     $sod = "DESC";
 }
-$sql_order = " ORDER BY {$sst} {$sod} ";
 
+$sql_order = " ORDER BY {$sst} {$sod} ";
 $rows = $config['cf_page_rows'];
 if (!$page) $page = 1; // 페이지가 없으면 첫 페이지 (1 페이지)
 $from_record = ($page - 1) * $rows; // 시작 열을 구함
 
-$sql = " SELECT SQL_CALC_FOUND_ROWS DISTINCT com.com_idx, com_name, com_names, com_type, com_reg_dt, com_status
-            ,com_tel, com_president, com_email, com_fax
-            ,GROUP_CONCAT( CONCAT(
-                'mb_id=', cmm.cmm_mb_id, '^'
-                ,'cmm_rank=', cmm.cmm_rank, '^'
-                ,'mb_name=', mb_name, '^'
-                ,'mb_hp=', mb_hp
-            ) ORDER BY cmm_reg_dt DESC ) AS com_namagers_info
-		{$sql_common}
-		{$sql_search} {$sql_com_type} {$sql_trm_idx_department}
-        GROUP BY com_idx
-        {$sql_order}
-		LIMIT {$from_record}, {$rows}
-";
-//echo $sql;
-$result = sql_query($sql,1);
-$count = sql_fetch_array( sql_query(" SELECT FOUND_ROWS() as total ") );
-$total_count = $count['total'];
-$total_page  = ceil($total_count / $rows);  // 전체 페이지 계산
 
-// 등록 대기수
-$sql = " SELECT count(*) AS cnt FROM {$g5['company_table']} AS com {$sql_join} WHERE com_status = 'pending' ";
-$row = sql_fetch($sql);
+$sql = " SELECT *
+            {$sql_common}
+            {$sql_search}
+            {$sql_order}
+            LIMIT {$rows} OFFSET {$from_record} ";
+
+
+$result = sql_query_pg($sql);
+
+// 부하율 고려한 전체갯수 쿼리에서는 조건문 불가
+// $sql = " SELECT n_live_tup AS total
+//         FROM pg_stat_user_tables
+//         WHERE relname = '{$g5['shop_table']}' 
+// ";
+$sql = " SELECT COUNT(*) AS total FROM {$g5['shop_table']} WHERE status != 'trash' ";
+$count = sql_fetch_pg($sql);
+$total_count = $count['total'];
+$total_page = ceil($total_count / $rows);  // 전체 페이지 계산
+
+$sql = " SELECT COUNT(*) AS cnt FROM {$g5['shop_table']} WHERE status = 'pending' ";
+$row = sql_fetch_pg($sql);
 $pending_count = $row['cnt'];
 
 $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
+$colspan = 11;
 
-$colspan = 9;
-
-
-$g5['title'] = '거래처관리';
+$g5['title'] = '가맹점관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 ?>
@@ -113,143 +100,110 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <span class="btn_ov01"><span class="ov_txt">총</span><span class="ov_num"> <?php echo number_format($total_count) ?></span></span>
     <span class="btn_ov01"><span class="ov_txt">승인대기</span><span class="ov_num"> <?php echo number_format($pending_count) ?></span></span>
 </div>
-
 <form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
-<label for="sfl" class="sound_only2">검색대상</label>
+<label for="sfl" class="sound_only">검색대상</label>
 <select name="ser_com_type" class="cp_field" title="업종선택">
 	<option value="">전체업종</option>
 	<?=$g5['set_com_type_options_value']?>
 </select>
 <script>$('select[name=ser_com_type]').val('<?=$_GET['ser_com_type']?>').attr('selected','selected');</script>
 <select name="sfl" id="sfl">
-	<option value="com_name"<?php echo get_selected($_GET['sfl'], "com_name"); ?>>업체명</option>
+	<option value="com.name"<?php echo get_selected($_GET['sfl'], "com_name"); ?>>업체명</option>
     <option value="mb_name"<?php echo get_selected($_GET['sfl'], "mb_name"); ?>>담당자</option>
     <option value="mb_hp"<?php echo get_selected($_GET['sfl'], "mb_hp"); ?>>담당자휴대폰</option>
-    <option value="com_president"<?php echo get_selected($_GET['sfl'], "com_president"); ?>>대표자</option>
-	<option value="com.com_idx"<?php echo get_selected($_GET['sfl'], "com.com_idx"); ?>>업체고유번호</option>
-	<option value="cmm.cmm_mb_id"<?php echo get_selected($_GET['sfl'], "cmm.cmm_mb_id"); ?>>담당자아이디</option>
-    <option value="com_status"<?php echo get_selected($_GET['sfl'], "com_status"); ?>>상태</option>
+    <option value="owner_name"<?php echo get_selected($_GET['sfl'], "owner_name"); ?>>대표자</option>
+	<option value="com.shop_id"<?php echo get_selected($_GET['sfl'], "com.shop_id"); ?>>업체고유번호</option>
+	<option value="cmm.mb_id"<?php echo get_selected($_GET['sfl'], "cmm.mb_is"); ?>>담당자아이디</option>
+    <option value="com.status"<?php echo get_selected($_GET['sfl'], "com_status"); ?>>상태</option>
 </select>
-<label for="stx" class="sound_only2">검색어<strong class="sound_only2"> 필수</strong></label>
+<label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
 <input type="text" name="stx" value="<?php echo $stx ?>" id="stx" class="frm_input">
 <input type="submit" class="btn_submit" value="검색">
 </form>
 
 <div class="local_desc01 local_desc">
-    <p>업체측 담당자를 관리하시려면 업체담당자 항목의 <i class="bi bi-pencil-square text-blue-800"></i> 편집아이콘을 클릭하세요. 담당자는 여러명일 수 있고 이직을 하는 경우 다른 업체에 소속될 수도 있습니다. </p>
+    <p>업체측 담당자를 관리하시려면 업체담당자 항목의 <i class="fa fa-edit"></i> 편집아이콘을 클릭하세요. 담당자는 여러명일 수 있고 이직을 하는 경우 다른 업체에 소속될 수도 있습니다. </p>
 </div>
-
 <form name="form01" id="form01" action="./company_list_update.php" onsubmit="return form01_submit(this);" method="post">
-<input type="hidden" name="sst" value="<?php echo $sst ?>">
-<input type="hidden" name="sod" value="<?php echo $sod ?>">
-<input type="hidden" name="sfl" value="<?php echo $sfl ?>">
-<input type="hidden" name="stx" value="<?php echo $stx ?>">
-<input type="hidden" name="page" value="<?php echo $page ?>">
-<input type="hidden" name="token" value="">
-<input type="hidden" name="w" value="">
-<?=$form_input?>
+    <input type="hidden" name="sst" value="<?php echo $sst ?>">
+    <input type="hidden" name="sod" value="<?php echo $sod ?>">
+    <input type="hidden" name="sfl" value="<?php echo $sfl ?>">
+    <input type="hidden" name="stx" value="<?php echo $stx ?>">
+    <input type="hidden" name="page" value="<?php echo $page ?>">
+    <input type="hidden" name="token" value="">
+    <input type="hidden" name="w" value="">
+    <div class="tbl_head01 tbl_wrap">
+        <table class="table table-bordered table-condensed">
+            <caption><?php echo $g5['title']; ?> 목록</caption>
+            <thead>
+                <tr class="success">
+                    <th scope="col">
+                        <label for="chkall" class="sound_only">업체 전체</label>
+                        <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
+                    </th>
+                    <th scope="col" class="td_left">번호</th>
+                    <th scope="col" class="td_left">업종</th>
+                    <th scope="col" class="td_left">업체명</th>
+                    <th scope="col" class="td_left">가맹점명</th>
+                    <th scope="col">대표자명</th>
+                    <th scope="col">이메일</th>
+                    <th scope="col">업체담당자</th>
+                    <th scope="col" style="width:120px;">연락처</th>
+                    <th scope="col">상태</th>
+                    <th scope="col" id="mb_list_mng">수정</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                for ($i=0; $row=sql_fetch_array_pg($result); $i++){
+                    $s_mod = '<a href="./company_form.php?'.$qstr.'&amp;w=u&amp;shop_id='.$row['shop_id'].'">수정</a>';
 
-<div class="tbl_head01 tbl_wrap">
-	<table class="table table-bordered table-condensed">
-	<caption><?php echo $g5['title']; ?> 목록</caption>
-	<thead>
-    <tr class="success">
-		<th scope="col">
-			<label for="chkall" class="sound_only">업체 전체</label>
-			<input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
-		</th>
-        <th scope="col">업체번호</th>
-		<th scope="col">업체명</th>
-		<th scope="col">대표자명</th>
-		<th scope="col">이메일</th>
-		<th scope="col" style="width:120px;">대표전화</th>
-		<th scope="col">업체담당자</th>
-		<th scope="col">업체구분</th>
-		<th scope="col" id="mb_list_mng">수정</th>
-	</tr>
-    </thead>
-    <tbody>
-    <?php
-    for($i=0; $row=sql_fetch_array($result); $i++) { 
-        // 메타 분리
-        if($row['com_namagers_info']) {
-            $pieces = explode(',', $row['com_namagers_info']);
-            for ($j1=0; $j1<sizeof($pieces); $j1++) {
-                $sub_item = explode('^', $pieces[$j1]);
-                for ($j2=0; $j2<sizeof($sub_item); $j2++) {
-                    list($key, $value) = explode('=', $sub_item[$j2]);
-//                    echo $key.'='.$value.'<br>';
-                    $row['com_managers'][$j1][$key] = $value;
+
+                    // default company class name
+                    // $row['default_com_class'] = ($_SESSION['ss_shop_id']==$row['shop_id']&&$member['mb_manager_yn']) ? 'b_default_company' : '';
+                    // 삭제인 경우 그레이 표현
+                    $row['com_status_trash_class']	= ($row['status'] == 'trash') ? " tr_trash" : "";
+                    $bg = 'bg'.($i%2);
+
+                ?>
+                <tr class="<?=$bg?><?=$row['com_status_trash_class']?>" tr_id="<?=$row['shop_id']?>">
+                    <td class="td_chk">
+                        <input type="hidden" name="shop_id[<?=$i?>]" value="<?=$row['shop_id']?>" id="shop_id_<?=$i?>">
+                        <label for="chk_<?=$i?>" class="sound_only"><?=get_text($row['name'])?></label>
+                        <input type="checkbox" name="chk[]" value="<?=$i?>" id="chk_<?=$i?>">
+                    </td>
+                    <td class="td_com_idx td_left font_size_8"><?=$row['shop_id']?></td><!-- 번호 -->
+                    <td class="td_shop_categories td_left font_size_8"></td><!-- 업종 -->
+                    <td class="td_com_name td_left"><!-- 업체명 -->
+                        <b class="<?=$row['default_com_class']?>"><?=get_text($row['name'])?></b>
+                        <a style="display:none;" href="javascript:company_popup('./company_order_list.popup.php?shop_id=<?=$row['shop_id']?>','<?=$row['shop_id']?>')" style="float:right;"><i class="fa fa-window-restore"></i></a>
+                    </td>
+                    <td class="td_shop_name td_left"><?=get_text($row['shop_name'])?></td>
+                    <td class="td_owner_name"><?=get_text($row['owner_name'])?></td><!-- 대표자명 -->
+                    <td class="td_contact_email font_size_8"><?=cut_str($row['contact_email'],30,'...')?></td><!-- 이메일 -->
+                    <td class="td_shop_manager td_left"></td><!-- 업체담당자 -->
+                    <td class="td_contact_phone"><span class="font_size_8"><?=$row['contact_phone']?></span></td><!-- 대표전화 -->
+                    <td headers="list_com_status" class="td_status"><?=$row['status']?></td><!-- 상태 -->
+                    <td class="td_mngsmall"><?=$s_mod?></td>
+                </tr>
+                <?php
                 }
-            }
-            unset($pieces);unset($sub_item);
-        }
-        // 담당자(들)
-        if( is_array($row['com_managers']) ) {
-            for ($j=0; $j<sizeof($row['com_managers']); $j++) {
-//                echo $key.'='.$value.'<br>';
-                $row['com_managers_text'] .= $row['com_managers'][$j]['mb_name'].' ['.$row['com_managers'][$j]['mb_id'].']';
-                $row['com_managers_text'] .= $row['com_managers'][$j]['mb_hp'] ? ' <span class="font_size_8">(<i class="bi bi-telephone-fill"></i> '.$row['com_managers'][$j]['mb_hp'].')</span><br>' : '<br>' ;
-            }
-        }
-        //수정버튼
-        $s_mod = '<a href="./company_form.php?'.$qstr.'&amp;w=u&amp;com_idx='.$row['com_idx'].'">수정</a>';
-    ?>
-    <tr class="<?=$bg?>" tr_id="<?=$row['com_idx']?>">
-        <td class="td_chk" >
-			<input type="hidden" name="com_idx[<?=$i?>]" value="<?=$row['com_idx']?>" id="com_idx_<?=$i?>">
-			<label for="chk_<?=$i?>" class="sound_only2"><?=get_text($row['com_name'])?></label>
-			<input type="checkbox" name="chk[]" value="<?=$i?>" id="chk_<?=$i?>">
-		</td>
-        <td class="td_com_idx font_size_8"><!-- 번호 -->
-			<?=$row['com_idx']?>
-		</td>
-        <td class="td_com_name td_left"><!-- 업체명 -->
-			<b><?=get_text($row['com_name'])?></b>
-		</td>
-        <td class="td_com_president"><!-- 대표자명 -->
-			<?=get_text($row['com_president'])?>
-		</td>
-        <td class="td_com_email font_size_8"><!-- 이메일 -->
-			<?=cut_str($row['com_email'],21,'..')?>
-		</td>
-        <td class="td_com_tel"><!-- 대표전화 -->
-			<span class="font_size_8"><?=formatPhoneNumber($row['com_tel'])?></span>
-		</td>
-        <td class="td_com_manager td_left" style="position:relative;padding-left:25px;font-size:1em;vertical-align:top;"><!-- 업체담당자 -->
-			<?php echo $row['com_managers_text']; ?>
-            <div style="display:<?=($is_admin=='super')?:'no ne'?>">
-                <a href="javascript:" com_idx="<?=$row['com_idx']?>" class="btn_manager" style="position:absolute;top:5px;left:5px;font-size:1.1rem;">
-                    <i class="bi bi-pencil-square text-blue-800"></i>
-                </a>
-            </div>
-		</td>
-        <td class="td_mmg font_size_8"><!-- 업체구분 -->
-            <?=$set_conf['set_com_type_karr'][$row['com_type']]?>
-		</td>
-        <td class="td_mngsmall">
-			<?=$s_mod?>
-		</td>
-    </tr>
-    <?php
-    }
-    if ($i == 0)
-    echo "<tr><td colspan=\"".$colspan."\" class=\"empty_table\">자료가 없습니다.</td></tr>";
-    ?>
-    </tbody>
-    </table>
-</div>
+                if ($i == 0)
+                    echo "<tr><td colspan=\"".$colspan."\" class=\"empty_table\">자료가 없습니다.</td></tr>";
+                ?>
+            </tbody>
+        </table>
+    </div>
+    <div class="btn_fixed_top">
+        <input type="submit" name="act_button" value="디폴트업체변경" onclick="document.pressed=this.value" class="btn_03 btn" style="margin-right:50px;display:none;">
 
-<div class="btn_fixed_top">
-    <?php if(!auth_check($auth[$sub_menu],"d",1)) { ?>
-    <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn" style="display:none;">
-    <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
-    <?php } ?>
-    <a href="./company_form.php" id="bo_add" class="btn_01 btn">업체추가</a>
-</div>
+        <?php if(!auth_check($auth[$sub_menu],"d",1)) { ?>
+        <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn" style="display:none;">
+        <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
+        <?php } ?>
+        <a href="./company_form.php" id="bo_add" class="btn_01 btn">업체추가</a>
+    </div>
 </form>
-
-<?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, '?'.$qstr.'&amp;ser_com_type='.$ser_com_type.'&amp;page='); ?>
-
+<?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, '?'.$qstr.'&amp;page='); ?>
 <?php
 include_once (G5_ADMIN_PATH.'/admin.tail.php');

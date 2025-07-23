@@ -1,5 +1,5 @@
 <?php
-$sub_menu = "930600";
+$sub_menu = "920800";
 include_once('./_common.php');
 
 check_demo();
@@ -14,21 +14,15 @@ if($w == 'u') {
     for ($i=0; $i<count($_POST['chk']); $i++) {
         // 실제 번호를 넘김
         $k = $_POST['chk'][$i];
-		$com = sql_fetch(" SELECT * FROM {$g5['company_table']} WHERE com_idx = '".$_POST['com_idx'][$k]."' ");
-		$mb = get_member($com['mb_id']);
+		$com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '".$_POST['shop_id'][$k]."' ");
+		// $mb = get_member($com['mb_id']);
 
-        if (!$mb['mb_id']) {
-            $msg .= $mb['mb_id'].' : 회원자료가 존재하지 않습니다.\\n';
-        } else if ($is_admin != 'super' && $mb['mb_level'] >= $member['mb_level']) {
-            $msg .= $mb['mb_id'].' : 자신보다 권한이 높거나 같은 회원은 수정할 수 없습니다.\\n';
-        } else {
-			$sql = " UPDATE {$g5['company_table']} SET
-						com_status = '{$_POST['com_status'][$k]}'
-					WHERE com_idx = '{$_POST['com_idx'][$k]}' ";
-			sql_query($sql,1);
-        }
+        
+        $sql = " UPDATE {$g5['shop_table']} SET
+                    status = '{$_POST['status'][$k]}'
+                WHERE shop_id = '{$_POST['shop_id'][$k]}' ";
+        sql_query_pg($sql);
     }
-
 }
 // 삭제할 때
 else if($w == 'd') {
@@ -36,28 +30,28 @@ else if($w == 'd') {
     {
         // 실제 번호를 넘김
         $k = $_POST['chk'][$i];
-		$com = sql_fetch(" SELECT * FROM {$g5['company_table']} WHERE com_idx = '".$_POST['com_idx'][$k]."' ");
+		$com = sql_fetch(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '".$_POST['shop_id'][$k]."' ");
 
-        if (!$com['com_idx']) {
-            $msg .= $com['com_idx'].' : 업체자료가 존재하지 않습니다.\\n';
+        if (!$com['shop_id']) {
+            $msg .= $com['shop_id'].' : 업체자료가 존재하지 않습니다.\\n';
         } else {
             // 해당 com_idx관련 모든 파일 삭제(완전히 삭제)
-            delete_db_file('company', $_POST['com_idx'][$k],'com');
+            delete_db_s3_file('shop', $_POST['shop_id'][$k],'shop');
 
             if($set_conf['set_del_yn']){
                 // 레코드 삭제
-                $sql = " DELETE FROM {$g5['company_table']} WHERE com_idx = '{$_POST['com_idx'][$k]}' ";
+                $sql = " DELETE FROM {$g5['shop_table']} WHERE shop_id = '{$_POST['shop_id'][$k]}' ";
                 // company_member 삭제
-                $sql2 = " DELETE FROM {$g5['company_member_table']} WHERE cmm_com_idx = '{$_POST['com_idx'][$k]}' ";
+                // $sql2 = " DELETE FROM {$g5['company_member_table']} WHERE cmm_com_idx = '{$_POST['com_idx'][$k]}' ";
             }
             else{
                 // 레코드 삭제상태로 변경
-                $sql = " UPDATE {$g5['company_table']} SET com_status = 'trash' WHERE com_idx = '{$_POST['com_idx'][$k]}' ";
+                $sql = " UPDATE {$g5['shop_table']} SET status = 'trash' WHERE shop_id = '{$_POST['shop_id'][$k]}' ";
                 // company_member 삭제상태로 변경
-                $sql2 = " UPDATE {$g5['company_member_table']} SET cmm_status = 'trash' WHERE cmm_com_idx = '{$_POST['com_idx'][$k]}' ";
+                // $sql2 = " UPDATE {$g5['company_member_table']} SET cmm_status = 'trash' WHERE cmm_com_idx = '{$_POST['com_idx'][$k]}' ";
             }
-			sql_query($sql,1);
-            sql_query($sql2,1);
+			sql_query_pg($sql,1);
+            // sql_query($sql2,1);
         }
     }
 }

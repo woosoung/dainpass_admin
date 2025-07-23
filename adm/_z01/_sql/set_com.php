@@ -2,18 +2,19 @@
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 $set_key = 'dain';
 $set_type = 'com';
-$set_sql = " SELECT * FROM {$g5['setting_table']} 
-                    WHERE set_key = '{$set_key}'
+$set_sql = " SELECT * FROM {$g5['setting_table']}
+                    WHERE set_key = '{$set_key}' 
+                        AND set_shop_id = '{$conf_com_idx}'
                         AND set_type = '{$set_type}' ";
 $set_res = sql_query_pg($set_sql);
 
 for($i=0;$row=sql_fetch_array_pg($set_res);$i++){
-    ${'set_'.$row['set_type']}[$row['set_name']]['set_idx'] = $row['set_idx'];
     ${'set_'.$row['set_type']}[$row['set_name']] = $row['set_value'];
-    // echo $row['set_name'].'='.$row['set_value'].'<br>';continue;
-    if(preg_match("/(_subject|_content|_title|_ttl|_desc|_description)$/",$row['set_name']) ) continue;
-    if(!preg_match("/,/",${'set_'.$row['set_type']}[$row['set_name']])) continue;
-    // echo ${'set_'.$row['set_type']}[$row['set_name']].'<br>';continue;
+    // if(preg_match("/(_subject|_content|_title|_ttl|_desc|_description)$/",$row['set_name']) ) continue;
+    if(!preg_match("/,/",${'set_'.$row['set_type']}[$row['set_name']])){
+        ${'set_'.$row['set_type']}[$row['set_name'].'_str'] = '<p>$set_'.$row['set_type'].'[\''.$row['set_name'].'\']</p>'.PHP_EOL;
+        continue;
+    }
     // A=B 형태를 가지고 있으면 자동 할당
     $set_values = (${'set_'.$row['set_type']}[$row['set_name']]) ? explode(',', ${'set_'.$row['set_type']}[$row['set_name']]) : array();
     

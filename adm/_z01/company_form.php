@@ -1,5 +1,5 @@
 <?php
-$sub_menu = "930600";
+$sub_menu = "920800";
 include_once('./_common.php');
 
 auth_check($auth[$sub_menu],'w');
@@ -22,7 +22,7 @@ foreach($_REQUEST as $key => $value ) {
 
 $html_title = ($w=='')?'추가':'수정'; 
 
-$g5['title'] = '업체 '.$html_title;
+$g5['title'] = '가맹점 '.$html_title;
 //include_once('./_top_menu_company.php');
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
@@ -30,44 +30,38 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 if ($w == '') {
     $com_idx = 0;
-    $com['com_status'] = 'ok';
+    $com['status'] = 'ok';
     $html_title = '추가';
 
 }
 else if ($w == 'u') {
-	$com = get_table_meta('company','com_idx',$com_idx);
-	if (!$com['com_idx'])
-		alert('존재하지 않는 업체자료입니다.');
+	$com = get_table_meta_pg('shop','shop_id',$shop_id);
+	
+	if (!$com['shop_id'])
+		alert('존재하지 않는 가맹점자료입니다.');
 
 	$html_title = '수정';
 
 	// 본사 com_idx_parent가 있으면 com_name_parent를 가져온다.
-	$pcom = sql_fetch(" SELECT com_name FROM {$g5['company_table']} WHERE com_idx = '{$com['com_idx_parent']}' ");
-	$com['com_name_parent'] = ($pcom['com_name']) ? $pcom['com_name'] : '';
+	$sql = " SELECT name FROM {$g5['shop_table']} WHERE shop_id = '{$com['shop_parent_id']}' ";
+	
+	$pcom = sql_fetch_pg($sql);
+	$com['com_name_parent'] = (!empty($pcom['name'])) ? $pcom['name'] : '';
 
-	$com['com_name'] = get_text($com['com_name']);
-	$com['com_tel'] = get_text($com['com_tel']);
-	$com['com_url'] = get_text($com['com_url']);
-	$com['com_addr3'] = get_text($com['com_addr3']);
+
+	$com['name'] = get_text($com['name']);
+	$com['contact_phone'] = get_text($com['contact_phone']);
+	$com['url'] = get_text($com['url']);
+	$com['addr1'] = ($com['addr1'])?get_text($com['addr1']):'';
+	$com['addr2'] = ($com['addr2'])?get_text($com['addr2']):'';
+	$com['addr3'] = ($com['addr3'])?get_text($com['addr3']):'';
 	
 	// 관련 파일(post_file) 추출
 	// $sql = "SELECT * FROM {$g5['dain_file_table']} 
 	// 		WHERE fle_db_tbl = 'company' AND fle_db_idx = '".$com['com_idx']."' ORDER BY fle_sort, fle_reg_dt DESC ";
 	// $rs = sql_query($sql,1);
 
-	//관련파일 추출
-	$sql = "SELECT * FROM {$g5['dain_file_table']}
-        WHERE fle_db_tbl = 'company' AND fle_type = 'com' AND fle_db_idx = '{$com['com_idx']}' ORDER BY fle_reg_dt DESC ";
-    $rs = sql_query_pg($sql);
-    //echo $rs->num_rows;echo "<br>";
-    $com['com_f_arr'] = array();
-    $com['com_fidxs'] = array();//회의 파일번호(fle_idx) 목록이 담긴 배열
-    $com['com_lst_idx'] = 0;//회의 파일중에 가장 최신버전의 파일번호
-    for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
-        $file_down_del = (is_file(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name'])) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_fullpath='.urlencode(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name']).'&file_name_orig='.$row2['fle_name_orig'].'" file_path="'.$row2['fle_path'].'">[파일다운로드]</a>&nbsp;&nbsp;'.$row2['fle_reg_dt'].'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$row2['fle_type'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>':''.PHP_EOL;
-        @array_push($com['com_f_arr'],array('file'=>$file_down_del));
-        @array_push($com['com_fidxs'],$row2['fle_idx']);
-    }
+	
 	
 }
 else
@@ -75,7 +69,7 @@ else
 
 
 // 라디오&체크박스 선택상태 자동 설정 (필드명 배열 선언!)
-$check_array=array('mb_sex');
+$check_array=array();
 for ($i=0;$i<sizeof($check_array);$i++) {
 	${$check_array[$i].'_'.$com[$check_array[$i]]} = ' checked';
 }
@@ -93,10 +87,10 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 <input type="hidden" name="sod" value="<?php echo $sod ?>">
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
-<input type="hidden" name="com_idx" value="<?php echo $com_idx; ?>">
-<?=$form_input?>
+<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
+<?=$form_input??''?>
 <div class="local_desc01 local_desc">
-    <p>업체정보를 관리해 주세요.</p>
+    <p>가맹점정보를 관리해 주세요.</p>
 </div>
 
 <div class="tbl_frm01 tbl_wrap">
@@ -112,9 +106,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 	<tr>
 		<th scope="row">업체명<strong class="sound_only">필수</strong>/지점명</th>
 		<td>
-			<input type="hidden" name="com_idx" value="<?=$com_idx?>">
-			<input type="text" name="com_name" value="<?=$com['com_name']?>" placeholder="업체명" id="com_name" class="frm_input">
-			<input type="text" name="com_branch" value="<?=$com['com_branch']?>" placeholder="지점명" id="com_branch" class="frm_input">
+			<input type="hidden" name="shop_id" value="<?=$shop_id?>">
+			<input type="text" name="name" value="<?=$com['name']?>" placeholder="업체명" id="name" class="frm_input">
+			<input type="text" name="branch" value="<?=$com['branch']?>" placeholder="지점명" id="branch" class="frm_input">
 		</td>
 		<th scope="row">업체구분</th>
 		<td>
@@ -127,9 +121,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 		</td>
 	</tr>
     <tr>
-        <th scope="row">업체명(영문)</th>
+        <th scope="row">가맹점명</th>
 		<td>
-			<input type="text" name="com_name_eng" value="<?=$com['com_name_eng']?>" id="com_name_eng" class="frm_input">
+			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input">
 		</td>
         <th scope="row">본사선택</th>
         <td>
@@ -242,16 +236,16 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 	<tr>
 		<th scope="row">위도/경도</th>
 		<td>
-			<input type="text" name="com_latitude" value="<?=$com['com_latitude']?>" placeholder="위도" id="com_latitude" class="frm_input">
-			<input type="text" name="com_longitude" value="<?=$com['com_longitude']?>" placeholder="경도" id="com_longitude" class="frm_input">
+			<input type="text" name="latitude" value="<?=$com['latitude']?>" placeholder="위도" id="latitude" class="frm_input">
+			<input type="text" name="longitude" value="<?=$com['longitude']?>" placeholder="경도" id="longitude" class="frm_input">
 		</td>
-		<th scope="row"><label for="com_status">상태</label></th>
+		<th scope="row"><label for="status">상태</label></th>
 		<td>
 			<?php //echo help("상태값은 관리자만 수정할 수 있습니다."); ?>
-			<select name="com_status" id="com_status">
-				<?=$set_conf['set_com_status_option']?>
+			<select name="status" id="status">
+				<?=$set_conf['set_shop_status_option']?>
 			</select>
-			<script>$('select[name="com_status"]').val('<?=$com['com_status']?>');</script>
+			<script>$('select[name="status"]').val('<?=$com['status']?>');</script>
 		</td>
 	</tr>
     <tr>
