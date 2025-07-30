@@ -2,8 +2,7 @@
 namespace Aws;
 
 use Aws\Exception\AwsException;
-use GuzzleHttp\Promise\Coroutine;
-use GuzzleHttp\Promise\PromiseInterface;
+use GuzzleHttp\Promise;
 use GuzzleHttp\Promise\PromisorInterface;
 use GuzzleHttp\Promise\RejectedPromise;
 
@@ -85,18 +84,11 @@ class Waiter implements PromisorInterface
                 'The provided "before" callback is not callable.'
             );
         }
-        MetricsBuilder::appendMetricsCaptureMiddleware(
-            $this->client->getHandlerList(),
-            MetricsBuilder::WAITER
-        );
     }
 
-    /**
-     * @return Coroutine
-     */
-    public function promise(): PromiseInterface
+    public function promise()
     {
-        return Coroutine::of(function () {
+        return Promise\coroutine(function () {
             $name = $this->config['operation'];
             for ($state = 'retry', $attempt = 1; $state === 'retry'; $attempt++) {
                 // Execute the operation.
@@ -190,8 +182,9 @@ class Waiter implements PromisorInterface
      */
     private function matchesPath($result, array $acceptor)
     {
-        return $result instanceof ResultInterface
-            && $acceptor['expected'] === $result->search($acceptor['argument']);
+        return !($result instanceof ResultInterface)
+            ? false
+            : $acceptor['expected'] == $result->search($acceptor['argument']);
     }
 
     /**
@@ -207,11 +200,6 @@ class Waiter implements PromisorInterface
         }
 
         $actuals = $result->search($acceptor['argument']) ?: [];
-        // If is empty or not evaluates to an array it must return false.
-        if (empty($actuals) || !is_array($actuals)) {
-            return false;
-        }
-
         foreach ($actuals as $actual) {
             if ($actual != $acceptor['expected']) {
                 return false;
@@ -234,11 +222,6 @@ class Waiter implements PromisorInterface
         }
 
         $actuals = $result->search($acceptor['argument']) ?: [];
-        // If is empty or not evaluates to an array it must return false.
-        if (empty($actuals) || !is_array($actuals)) {
-            return false;
-        }
-
         return in_array($acceptor['expected'], $actuals);
     }
 
@@ -269,12 +252,6 @@ class Waiter implements PromisorInterface
      */
     private function matchesError($result, array $acceptor)
     {
-        // If expected is true then the $result should be an instance of
-        // AwsException, otherwise it should not.
-        if (isset($acceptor['expected']) && is_bool($acceptor['expected'])) {
-            return $acceptor['expected'] === ($result instanceof AwsException);
-        }
-
         if ($result instanceof AwsException) {
             return $result->isConnectionError()
                 || $result->getAwsErrorCode() == $acceptor['expected'];

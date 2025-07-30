@@ -12,9 +12,6 @@ abstract class AbstractUploader extends AbstractUploadManager
     /** @var Stream Source of the data to be uploaded. */
     protected $source;
 
-    /** @var bool Configuration used to indicate if upload progress will be displayed. */
-    protected $displayProgress;
-
     /**
      * @param Client $client
      * @param mixed  $source
@@ -121,7 +118,7 @@ abstract class AbstractUploader extends AbstractUploadManager
      * Turns the provided source into a stream and stores it.
      *
      * If a string is provided, it is assumed to be a filename, otherwise, it
-     * passes the value directly to `Psr7\Utils::streamFor()`.
+     * passes the value directly to `Psr7\stream_for()`.
      *
      * @param mixed $source
      *
@@ -131,11 +128,11 @@ abstract class AbstractUploader extends AbstractUploadManager
     {
         // Use the contents of a file as the data source.
         if (is_string($source)) {
-            $source = Psr7\Utils::tryFopen($source, 'r');
+            $source = Psr7\try_fopen($source, 'r');
         }
 
         // Create a source stream.
-        $stream = Psr7\Utils::streamFor($source);
+        $stream = Psr7\stream_for($source);
         if (!$stream->isReadable()) {
             throw new IAE('Source stream must be readable.');
         }

@@ -1,6 +1,12 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
+require_once G5_LIB_PATH . '/aws/aws-autoloader.php'; // AWS SDK 오토로더 포함
+use Aws\S3\S3Client;
+use Aws\S3\Exception\S3Exception;
+use Aws\Exception\AwsException;
+
+
 // DB 연결
 if(!function_exists('sql_connect_pg')){
 function sql_connect_pg($host, $user, $pass, $db=G5_PGSQL_DB)
@@ -595,7 +601,7 @@ function delete_ndr_file_thumbnail($path, $file)
 //인수(1:파일배열, 2.DB테이블명, 3.DB인덱스, 4.파일타입)
 if(!function_exists('upload_multi_file')){
 function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
-    global $conf_com_idx, $g5,$config,$member;
+    global $conf_com_idx, $g5, $config, $member;
     //echo count($_files['name']);
     $f_flag = (!count($_files['name']) || !$_files['name'][0]) ? false : true;
     if($f_flag){
@@ -607,7 +613,7 @@ function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
                                     ,"fle_name_orig"=>$_files['name'][$i]
                                     ,"fle_mime_type"=>$_files['type'][$i]
                                     ,"fle_desc"=>''
-                                    ,"fle_path"=>'/data/'.$fle_type		//<---- 저장 디렉토리
+                                    ,"fle_path"=>$fle_type		//<---- 저장 디렉토리
                                     ,"fle_db_tbl"=>$tbl
                                     ,"fle_db_idx"=>$idx
                                     ,"fle_type"=>$fle_type
@@ -649,9 +655,10 @@ function upload_insert_file($fle_array){
     //-- 파일 업로드 처리
     // $upload_file = upload_common_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
     //-- 파일 업로드 처리 (AWS S3 사용)
+    // print_r2($fle_array);exit;
     $upload_file = upload_aws_s3_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
-    //print_r2($upload_file);
-
+    print_r2($upload_file);exit;
+    return;
 
     // 파일의 mime_type 추출
     if(!$fle_array['fle_mime_type'])
@@ -708,6 +715,94 @@ function upload_insert_file($fle_array){
                     );
 }
 }
+
+
+
+
+// 파일을 업로드 함
+if (!function_exists('upload_aws_s3_file')) {
+/**
+ * S3에 파일 업로드 + 썸네일 생성 (옵션 가능)
+ *
+ * @param string $srcfile   임시 업로드된 원본 파일 경로
+ * @param string $destfile  저장할 대상 파일명 (확장자 포함)
+ * @param string $dir       S3 내 저장 디렉토리 (예: 'user/123')
+ * @param array  $options   썸네일 설정: thumb_width, thumb_height, thumb_crop (bool)
+ * @return array|false      [파일명, width, height, filesize, url] 또는 false
+ */
+function upload_aws_s3_file($srcfile, $destfile, $dir, $options = []) {
+    global $set_conf;
+
+    if (empty($destfile) || !is_uploaded_file($srcfile)) return false;
+
+    // AWS SDK 초기화
+    $s3 = new S3Client([
+        'version' => 'latest',
+        'region'  => $set_conf['set_aws_region'],
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),     // 또는 직접 문자열로 입력 가능
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+
+    $bucket = trim($set_conf['set_aws_bucket']);
+    // echo $dir;exit;
+    // S3 저장 경로 구성
+    $prefix = trim($dir, '/');
+    $key = "data/{$prefix}/{$destfile}";
+    
+    // 파일명 중복 방지
+    $ext = pathinfo($destfile, PATHINFO_EXTENSION);
+    $name = pathinfo($destfile, PATHINFO_FILENAME);
+    $i = 0;
+    
+    while (true) {
+        // echo $bucket;exit;
+        try {
+            $s3->headObject(['Bucket' => $bucket, 'Key' => $key]);
+            $i++;
+            $key = "data/{$prefix}/{$name}({$i}).{$ext}";
+            // echo $key;exit;     
+        } 
+        catch (S3Exception $e) {
+            // echo $e->getMessage();exit;
+            if ($e->getAwsErrorCode() === 'NotFound') {
+                break; // 파일 없음 → 사용 가능한 파일명
+            } else {
+                throw $e; // 기타 에러는 예외로 던짐
+            }
+        }
+    }
+
+    // MIME 타입 확인
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $srcfile);
+    finfo_close($finfo);
+
+    try {
+        $res = $s3->putObject([
+            'Bucket'      => $bucket,
+            'Key'         => $key,
+            'SourceFile'  => $srcfile,
+            'ACL'         => $options['acl'] ?? 'public-read',
+            'ContentType' => $mime_type,
+        ]);
+    } catch (\Exception $e) {
+        error_log("S3 Upload Error: " . $e->getMessage());
+        return false;
+    }
+
+    return [
+        'filename'  => basename($key),
+        'filesize'  => filesize($srcfile),
+        'url'       => $res['ObjectURL'],
+        'key'       => $key,
+        'mime_type' => $mime_type,
+    ];
+}
+}
+
+
 
 // 파일을 업로드 함
 if(!function_exists('upload_common_file')){
@@ -766,62 +861,6 @@ function upload_common_file($srcfile, $destfile, $dir)
 }
 }
 
-// 파일을 업로드 함
-if(!function_exists('upload_aws_s3_file')){
-function upload_aws_s3_file($srcfile, $destfile, $dir)
-{
-    if ($destfile == "") return false;
-
-    // 디렉토리가 없다면 생성 (퍼미션도 변경!)
-    @mkdir(G5_DATA_PATH.$dir, G5_DIR_PERMISSION);
-    @chmod(G5_DATA_PATH.$dir, G5_DIR_PERMISSION);
-
-    //-- 디렉토리 재설정
-    $dir = G5_DATA_PATH.$dir;
-
-    //-- 디렉토리내 동일 파일명이 존재하면 일련번호 붙인 형태로 생성하고 파일명 리턴
-    $file_parts = pathinfo($dir.'/'.$destfile);
-    $file_name = $file_parts['filename'];
-    $full_name = $file_name.'.'.$file_parts['extension'];
-    $file_name_with_path = rtrim($dir,'/').'/'.$full_name;
-
-    if(file_exists($file_name_with_path)) {
-        $a = glob($dir.'/'.$file_name.'*');
-        natcasesort($a);
-        $i=0;
-        foreach($a as $key => $val) {
-            //echo "/".$file_name."\(/i".'<br>';
-            if( preg_match("/".$file_name."\(/i",$val) ) {
-                $b[$i] = $val;
-                $i++;
-            }
-        }
-        //if(sizeof($b) > 1) {
-        if(@sizeof($b)) {
-            preg_match_all('/(\([0-9]+\))/',$b[sizeof($b)-1],$match);
-            $rows = count($match,0);
-            $cols = (count($match,1)/count($match,0))-1;
-            $file_no = substr($match[$rows-1][$cols-1],1,-1)+1;
-        }
-        else
-            $file_no = 1;
-
-        //-- 파일명 재 설정 --//
-        $full_name = $file_name.'('.$file_no.').'.$file_parts['extension'];
-    }
-    else
-        $full_name = $destfile;
-
-    // 업로드 한후 , 퍼미션을 변경함
-    @move_uploaded_file($srcfile, $dir.'/'.$full_name);
-    @chmod($dir.'/'.$full_name, G5_FILE_PERMISSION);
-
-    $size = @getimagesize($dir.'/'.$full_name);
-    $file_size = filesize($dir.'/'.$destfile);
-
-    return array($full_name,$size[0],$size[1],$file_size);
-}
-}
 
 //--- 환경설정 변수 저장 ---//
 if(!function_exists('set_update')){

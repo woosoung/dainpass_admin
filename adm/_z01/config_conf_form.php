@@ -103,6 +103,48 @@ add_javascript('<script src="'.G5_Z_URL.'/js/colpick/colpick.js"></script>',0);
                 </div>
             </td>
         </tr>
+        <tr>
+            <th>S3 IAM 사용자명</th>
+            <td colspan="3" class="tms_help">
+                <?php echo tms_help("S3사용을 위한 사용자명(dainpass-s3-admin)",1,'#f9fac6','#333333'); ?>
+                <div class="tms_hint flex gap-6">
+                    <input type="text" name="set_s3iam_user" class="w-[200px]" value="<?=${'set_'.$set_type}['set_s3iam_user']??''?>">
+                    <div class="tms_hbox">
+                        <div class="tms_hcon">
+                            <?=${'set_'.$set_type}['set_s3iam_user_str']??''?>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th>S3 엑세스키</th>
+            <td colspan="3" class="tms_help">
+                <?php echo tms_help("S3사용을 위한 엑세스키",1,'#f9fac6','#333333'); ?>
+                <div class="tms_hint flex gap-6">
+                    <input type="text" name="set_s3_accesskey" class="w-[200px]" value="<?=${'set_'.$set_type}['set_s3_accesskey']??''?>">
+                    <div class="tms_hbox">
+                        <div class="tms_hcon">
+                            <?=${'set_'.$set_type}['set_s3_accesskey_str']??''?>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th>S3 비밀엑세스키</th>
+            <td colspan="3" class="tms_help">
+                <?php echo tms_help("S3사용을 위한 비밀엑세스키",1,'#f9fac6','#333333'); ?>
+                <div class="tms_hint flex gap-6">
+                    <input type="text" name="set_s3_secretaccesskey" class="w-[300px]" value="<?=${'set_'.$set_type}['set_s3_secretaccesskey']??''?>">
+                    <div class="tms_hbox">
+                        <div class="tms_hcon">
+                            <?=${'set_'.$set_type}['set_s3_secretaccesskey_str']??''?>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
         </tbody>
         </table>
     </div><!-- // .tbl_frm01 -->
