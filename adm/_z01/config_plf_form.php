@@ -91,9 +91,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </td>
         </tr>
         <tr>
-            <th>Favicon 이미지</th>
+            <th>플랫폼사이트 Favicon 이미지</th>
             <td colspan="3" class="tms_help">
-                <?php echo help("'Favicon'이미지 파일을 관리해 주시면 됩니다."); ?>
+                <?php echo help("플랫폼사이트의 'Favicon'이미지 파일을 관리해 주시면 됩니다."); ?>
                 <div class="tms_hint flex gap-4">
                     <div>
                         <input type="file" id="file_favicon" name="file_favicon[]" multiple class="multifile">

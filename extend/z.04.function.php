@@ -537,6 +537,25 @@ function delete_db_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
 }
 
 
+// fle_db_tbl, fle_db_idx, fle_type 으로 파일삭제하기
+if(!function_exists('delete_db_s3_file')) {
+function delete_db_s3_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
+    global $conf_com_idx, $g5;
+    $sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
+                FROM {$g5['dain_file_table']}
+                WHERE fle_db_tbl = '{$fle_db_tbl}'
+                AND fle_db_idx = '{$fle_db_idx}'
+                AND fle_type = '{$fle_type}'
+    ";
+    $fr = sql_fetch_pg($sql);
+    if($fr['fle_idxs']) {
+        $fle_idx_array = explode(',',$fr['fle_idxs']);
+        delete_idx_s3_file($fle_idx_array);
+    }
+}
+}
+
+
 //fle_idx로 파일삭제하기
 if(!function_exists('delete_idx_file')) {
 function delete_idx_file($fle_idx_array=array()) {
@@ -552,31 +571,46 @@ function delete_idx_file($fle_idx_array=array()) {
 }
 
 
-// fle_db_tbl, fle_db_idx, fle_type 으로 파일삭제하기
-if(!function_exists('delete_db_s3_file')) {
-function delete_db_s3_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
-    global $conf_com_idx, $g5;
-    $fr = sql_fetch_pg(" SELECT GROUP_CONCAT(fle_idx) AS fle_idxs FROM {$g5['dain_file_table']} WHERE fle_db_tbl = '{$fle_db_tbl}' AND fle_db_idx = '{$fle_db_idx}' AND fle_type = '{$fle_type}' ");
-    if($fr['fle_idxs']) {
-        $fle_idx_array = explode(',',$fr['fle_idxs']);
-        delete_idx_s3_file($fle_idx_array);
-    }
-}
-}
 
 //fle_idx로 파일삭제하기
-if(!function_exists('delete_idx_s3_file')) {
-function delete_idx_s3_file($fle_idx_array=array()) {
-    global $conf_com_idx, $g5;
-    //print_r2($fle_idx_array);
-    foreach($fle_idx_array as $k=>$v) {
-        $fr = sql_fetch_pg(" SELECT fle_path, fle_name FROM {$g5['dain_file_table']} WHERE fle_idx = '{$v}' ");
-        @unlink(G5_DATA_PATH.$fr['fle_path'].'/'.$fr['fle_name']);
-        delete_ndr_file_thumbnail($fr['fle_path'], $fr['fle_name']);
+if (!function_exists('delete_idx_s3_file')) {
+function delete_idx_s3_file($fle_idx_array = array()) {
+    global $set_conf, $conf_com_idx, $g5;
+
+    // AWS S3 클라이언트 초기화
+    $s3 = new S3Client([
+        'version' => 'latest',
+        'region'  => $set_conf['set_aws_region'],
+        'credentials' => [
+            'key'    => $set_conf['set_s3_accesskey'],
+            'secret' => $set_conf['set_s3_secretaccesskey'],
+        ]
+    ]);
+    $bucket = $set_conf['set_aws_bucket'];
+
+    foreach ($fle_idx_array as $v) {
+        $fr = sql_fetch_pg("SELECT fle_path, fle_name FROM {$g5['dain_file_table']} WHERE fle_idx = '{$v}' ");
+        if (!$fr) continue;
+
+        $key = trim($fr['fle_path'], '/');
+
+        // S3 원본 파일 삭제
+        try {
+            $s3->deleteObject([
+                'Bucket' => $bucket,
+                'Key'    => $key
+            ]);
+        } catch (AwsException $e) {
+            error_log("S3 Delete Error (original): " . $e->getMessage());
+        }
+
+
+        // PostgreSQL에서 메타데이터 삭제
         sql_query_pg(" DELETE FROM {$g5['dain_file_table']} WHERE fle_idx = '{$v}' ");
     }
 }
 }
+
 
 // ndr file 관련 썸네일 이미지 삭제
 if(!function_exists('delete_ndr_file_thumbnail')){
@@ -603,17 +637,30 @@ if(!function_exists('upload_multi_file')){
 function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
     global $conf_com_idx, $g5, $config, $member;
     //echo count($_files['name']);
+    // 해당 파일이 이미지파일이면 width, height를 구해야 한다.
     $f_flag = (!count($_files['name']) || !$_files['name'][0]) ? false : true;
     if($f_flag){
         for($i=0;$i<count($_files['name']);$i++) {
             if ($_files['name'][$i]) {
+                // 해당 파일이 이미지파일이면 width, height를 구해야 한다.
+                if( strpos($_files['type'][$i], 'image/') === 0) {
+                    $img_info = getimagesize($_files['tmp_name'][$i]);
+                    $width = $img_info[0];
+                    $height = $img_info[1];
+                } else {
+                    $width = 0;
+                    $height = 0;
+                }
                 $upfile_info = upload_insert_file(array("fle_idx"=>$fle_idx
                                     ,"fle_mb_id"=>$member['mb_id']
                                     ,"fle_name"=>$_files['tmp_name'][$i]
                                     ,"fle_name_orig"=>$_files['name'][$i]
                                     ,"fle_mime_type"=>$_files['type'][$i]
+                                    ,"fle_width"=>$width
+                                    ,"fle_height"=>$height
+                                    ,"fle_size"=>$_files['size'][$i]
                                     ,"fle_desc"=>''
-                                    ,"fle_path"=>$fle_type		//<---- 저장 디렉토리
+                                    ,"fle_path"=>''		//<---- 저장 디렉토리
                                     ,"fle_db_tbl"=>$tbl
                                     ,"fle_db_idx"=>$idx
                                     ,"fle_type"=>$fle_type
@@ -625,7 +672,7 @@ function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
     }//if($f_flag)
 }
 }
-
+//https://dainpass-prod-file.s3.ap-northeast-2.amazonaws.com/data/
 // Post File 업로드 함수
 //설정 변수: fle_mb_id, fle_name, fle_name_orig, fle_mime_type, fle_path, fle_db_tbl, fle_db_idx, fle_sort ....
 if(!function_exists('upload_insert_file')){
@@ -655,10 +702,9 @@ function upload_insert_file($fle_array){
     //-- 파일 업로드 처리
     // $upload_file = upload_common_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
     //-- 파일 업로드 처리 (AWS S3 사용)
-    // print_r2($fle_array);exit;
-    $upload_file = upload_aws_s3_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
-    print_r2($upload_file);exit;
-    return;
+    // print_r2($fle_array);
+    $upload_file = upload_aws_s3_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_type']);
+    // print_r2($upload_file);exit;
 
     // 파일의 mime_type 추출
     if(!$fle_array['fle_mime_type'])
@@ -685,18 +731,20 @@ function upload_insert_file($fle_array){
             '{$fle_array['fle_db_tbl']}',
             '{$fle_array['fle_db_idx']}',
             '{$fle_array['fle_type']}',
-            '{$fle_array['fle_path']}',
-            '{$upload_file[0]}',
+            '{$upload_file['key']}',
+            '{$upload_file['filename']}',
             '{$fle_array['fle_name_orig']}',
-            '{$upload_file[1]}',
-            '{$upload_file[2]}',
+            '{$fle_array['fle_width']}',
+            '{$fle_array['fle_height']}',
             '{$fle_array['fle_desc']}',
             '{$fle_array['fle_sort']}',
             '{$fle_array['fle_mime_type']}',
-            '{$upload_file[3]}',
+            '{$upload_file['filesize']}',
             '".G5_TIME_YMDHIS."',
             '{$sql_status}'
         )";
+    // echo $sql.'<br>';
+    // exit;
     sql_query_pg($sql);
     $fle_idx = sql_insert_id_pg($g5['dain_file_table']);
 
@@ -738,53 +786,33 @@ function upload_aws_s3_file($srcfile, $destfile, $dir, $options = []) {
     // AWS SDK 초기화
     $s3 = new S3Client([
         'version' => 'latest',
-        'region'  => $set_conf['set_aws_region'],
+        'region'  => trim($set_conf['set_aws_region']),
         'credentials' => [
-            'key'    => trim($set_conf['set_s3_accesskey']),     // 또는 직접 문자열로 입력 가능
+            'key'    => trim($set_conf['set_s3_accesskey']),
             'secret' => trim($set_conf['set_s3_secretaccesskey']),
         ]
     ]);
 
     $bucket = trim($set_conf['set_aws_bucket']);
-    // echo $dir;exit;
-    // S3 저장 경로 구성
+
+    // 저장 경로 및 파일명 구성
     $prefix = trim($dir, '/');
-    $key = "data/{$prefix}/{$destfile}";
-    
-    // 파일명 중복 방지
     $ext = pathinfo($destfile, PATHINFO_EXTENSION);
     $name = pathinfo($destfile, PATHINFO_FILENAME);
-    $i = 0;
+    $unique = uniqid(); // 고유값 추가
+    $key = "data/{$prefix}/{$name}_{$unique}.{$ext}";
     
-    while (true) {
-        // echo $bucket;exit;
-        try {
-            $s3->headObject(['Bucket' => $bucket, 'Key' => $key]);
-            $i++;
-            $key = "data/{$prefix}/{$name}({$i}).{$ext}";
-            // echo $key;exit;     
-        } 
-        catch (S3Exception $e) {
-            // echo $e->getMessage();exit;
-            if ($e->getAwsErrorCode() === 'NotFound') {
-                break; // 파일 없음 → 사용 가능한 파일명
-            } else {
-                throw $e; // 기타 에러는 예외로 던짐
-            }
-        }
-    }
-
     // MIME 타입 확인
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime_type = finfo_file($finfo, $srcfile);
     finfo_close($finfo);
 
+    // 업로드 처리
     try {
         $res = $s3->putObject([
             'Bucket'      => $bucket,
             'Key'         => $key,
             'SourceFile'  => $srcfile,
-            'ACL'         => $options['acl'] ?? 'public-read',
             'ContentType' => $mime_type,
         ]);
     } catch (\Exception $e) {
@@ -802,6 +830,38 @@ function upload_aws_s3_file($srcfile, $destfile, $dir, $options = []) {
 }
 }
 
+
+// 파일을 업로드 함
+if(!function_exists('is_s3file')){
+function is_s3file($key) {
+    global $set_conf;
+
+    $s3 = new S3Client([
+        'version' => 'latest',
+        'region'  => $set_conf['set_aws_region'],
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+
+    try {
+        $s3->headObject([
+            'Bucket' => trim($set_conf['set_aws_bucket']),
+            'Key'    => $key
+        ]);
+        return true; // 파일이 존재함
+    } catch (S3Exception $e) {
+        if ($e->getAwsErrorCode() === 'NotFound') {
+            return false; // 파일 없음
+        } else {
+            // 기타 오류 (권한 문제 등)
+            error_log("S3 check error: " . $e->getMessage());
+            return false;
+        }
+    }
+}
+}
 
 
 // 파일을 업로드 함
