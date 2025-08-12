@@ -16,7 +16,6 @@ if($w == '' || $w == 'u'){
             array_push($del_arr,$k);
         }
     }
-    
     // print_r2($del_arr);exit;
     if(count($del_arr)) delete_idx_s3_file($del_arr);
     

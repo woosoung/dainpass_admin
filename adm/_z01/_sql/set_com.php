@@ -29,6 +29,10 @@ for($i=0;$row=sql_fetch_array_pg($set_res);$i++){
         ${'set_'.$row['set_type']}[$row['set_name'].'_str'] .= '<p>$set_'.$row['set_type'].'['.$row['set_name'].'_check]</p>'.PHP_EOL;
         ${'set_'.$row['set_type']}[$row['set_name'].'_str'] .= '<p>$set_'.$row['set_type'].'['.$row['set_name'].'_option]</p>'.PHP_EOL;
     }
+    else if(preg_match("/,/",${'set_'.$row['set_type']}[$row['set_name']])){
+        ${'set_'.$row['set_type']}[$row['set_name'].'_str'] = '<p>$set_'.$row['set_type'].'[\''.$row['set_name'].'\']</p>'.PHP_EOL;
+        ${'set_'.$row['set_type']}[$row['set_name'].'_str'] .= '<p>$set_'.$row['set_type'].'[\''.$row['set_name'].'_arr\']</p>'.PHP_EOL;
+    }
     else {
         ${'set_'.$row['set_type']}[$row['set_name'].'_str'] = '<p>$set_'.$row['set_type'].'['.$row['set_name'].']</p>'.PHP_EOL;
         ${'set_'.$row['set_type']}[$row['set_name'].'_str'] .= '<p>$set_'.$row['set_type'].'['.$row['set_name'].'_arr][key]</p>'.PHP_EOL;
@@ -37,7 +41,7 @@ for($i=0;$row=sql_fetch_array_pg($set_res);$i++){
     foreach($set_values as $set_value){
         //변수가 (,),(=)로 구분되어 있을때
         if(preg_match("/=/",$set_value)){
-            $comma_equal = 1;
+            // $comma_equal = 1;
             list($key, $value) = explode('=',$set_value);
             ${'set_'.$row['set_type']}[$row['set_name'].'_karr'][$key] = $value;
             ${'set_'.$row['set_type']}[$row['set_name'].'_varr'][$value] = $key;
@@ -46,6 +50,9 @@ for($i=0;$row=sql_fetch_array_pg($set_res);$i++){
             ${'set_'.$row['set_type']}[$row['set_name'].'_radio'] .= '<label for="'.$row['set_name'].'_'.$key.'" class="'.$row['set_name'].'"><input type="radio" id="'.$row['set_name'].'_'.$key.'" name="'.$row['set_name'].'" value="'.$key.'">'.$value.'</label>';
             ${'set_'.$row['set_type']}[$row['set_name'].'_check'] .= '<label for="'.$row['set_name'].'_'.$key.'"><input type="checkbox" id="'.$row['set_name'].'_'.$key.'" class="'.$row['set_name'].'_chk" name="'.$row['set_name'].'['.$key.']" key="'.$key.'" value="1">'.$value.'</label>';
             ${'set_'.$row['set_type']}[$row['set_name'].'_option'] .= '<option value="'.trim($key).'">'.trim($value).'</option>';
+        }
+        else { //변수가 (,)로만 구분되어 있을때
+            ${'set_'.$row['set_type']}[$row['set_name'].'_arr'][] = $set_value;
         }
     }
 }
@@ -137,7 +144,7 @@ unset($set_key);
 unset($set_type);
 unset($set_sql);
 unset($set_res);
-unset($comma_equal);
+// unset($comma_equal);
 
 unset($sql);
 unset($rs);

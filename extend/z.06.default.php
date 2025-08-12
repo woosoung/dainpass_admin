@@ -22,9 +22,16 @@ $g5['is_shop_index'] = ($g5['dir_name'] == 'shop' && $g5['file_name'] == 'index'
 $g5['is_index'] = ($g5['is_web_index'] || $g5['is_shop_index']) ? 1 : 0;
 
 include_once(G5_ZSQL_PATH.'/set_conf.php');
+include_once(G5_ZSQL_PATH.'/set_mng.php');
+include_once(G5_ZSQL_PATH.'/set_mngapp.php');
 include_once(G5_ZSQL_PATH.'/set_plf.php');
+include_once(G5_ZSQL_PATH.'/set_app.php');
 include_once(G5_ZSQL_PATH.'/set_com.php');
 
+$default_sql = " SELECT * FROM {$g5['dain_default_table']} ";
+// echo $default_sql;exit;
+$default2 = sql_fetch_pg($default_sql);
+// print_r2($default2);exit;
 // 접근가능한 IP인지, 접근차단된 IP인지 확인 접근불가능시 차단메세지 출력
 if(!$is_admin && $g5['dir_name'] != 'bbs' && $g5['file_name'] != 'login'){
     // 접근가능한 IP인지 확인

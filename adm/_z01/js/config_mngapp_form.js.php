@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (targetSpan && targetSpan.classList.contains("copied_url")) {
         const text = targetSpan.textContent;
         navigator.clipboard.writeText(text)
-          .then(() => alert("URL이 복사되었습니다!"))
+          .then(() => alert("텍스트가 복사되었습니다!"))
           .catch(err => {
             alert("복사에 실패했습니다.");
             console.error("Clipboard copy failed:", err);

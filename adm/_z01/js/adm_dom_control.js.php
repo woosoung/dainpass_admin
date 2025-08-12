@@ -1,4 +1,7 @@
 <script>
+let afavicon_img_src = '<?=(($set_mng['afavicon_url'] != '') ? $set_mng['afavicon_url'] : '')?>';
+let mnglogo_img_src = '<?=(($set_mng['mnglogo_url'] != '') ? $set_mng['mnglogo_url'] : '')?>';
+
 document.addEventListener("DOMContentLoaded", function() {
     // 모든 h3 태그를 가져옴
     const h3Elements = document.querySelectorAll("h3");
@@ -45,7 +48,15 @@ document.addEventListener("DOMContentLoaded", function() {
     // 최상단 ADMINISTRATOR 로고이미지를 제거하고 텍스트로 변경합니다.
     if (logoImg) {
         logoImg.remove();
-        logoA.textContent = 'ADMINISTRATOR';
+        if(mnglogo_img_src != ''){
+            // 새로운 이미지 태그 생성
+            const mnglogoImg = document.createElement("img");
+            mnglogoImg.src = mnglogo_img_src; // 원하는 경로로 수정
+            mnglogoImg.alt = "ADMINISTRATOR";
+            logoA.appendChild(mnglogoImg);
+        } else {
+            logoA.textContent = "ADMINISTRATOR"; // 기존 텍스트 제거
+        }
     }
 
     // 최상산 shop버튼 대체
@@ -123,8 +134,7 @@ document.addEventListener("DOMContentLoaded", function() {
     var faviEle = document.createElement('link');
     faviEle.rel = 'icon';
     faviEle.type = 'image/png';
-    faviEle.href = '<?=$set_com['favicon_url']?>'; // PHP 변수가 적절히 처리되었다고 가정
+    faviEle.href = afavicon_img_src; // PHP 변수가 적절히 처리되었다고 가정
     if(title) title.insertAdjacentElement('afterend', faviEle);
-
 });
 </script>

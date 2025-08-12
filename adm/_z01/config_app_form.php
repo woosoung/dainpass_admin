@@ -1,5 +1,5 @@
 <?php
-$sub_menu = "920200";
+$sub_menu = "920260";
 include_once('./_common.php');
 include_once(G5_EDITOR_LIB);
 include_once(G5_LIB_PATH.'/thumbnail.lib.php');
@@ -7,7 +7,7 @@ include_once(G5_LIB_PATH.'/thumbnail.lib.php');
 @auth_check($auth[$sub_menu], 'w');
 
 $set_key = 'dain';
-$set_type = 'conf';
+$set_type = 'app';
 
 
 //afavicon파일 추출 ###########################################################
@@ -52,13 +52,12 @@ for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
     @array_push($fvc['afvc_fidxs'], $row2['fle_idx']);
 }
 
-
 $pg_anchor = '<ul class="anchor">
-    <li><a href="#anc_cf_default">기본환경설정</a></li>
-    <li><a href="#anc_cf_amazon">Amazon</a></li>
+    <li><a href="#anc_cf_default">플랫폼앱설정</a></li>
+    <li><a href="#anc_cf_amazon">기타설정</a></li>
 </ul>';
 
-$g5['title'] = '관리환경설정';
+$g5['title'] = '플랫폼앱설정';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 @include_once('./css/'.$g5['file_name'].'.css.php');
@@ -76,11 +75,11 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 <input type="hidden" name="file_name" value="<?=$g5['file_name']?>">
 <input type="hidden" name="fle_db_idx" value="<?=$fvc['fle_db_idx']?>">
 <section id="anc_cf_default">
-    <h2 class="h2_frm">기본설정</h2>
+    <h2 class="h2_frm">플랫폼앱 기본설정</h2>
     <?php echo $pg_anchor ?>
     <div class="tbl_frm01 tbl_wrap">
         <table>
-        <caption>기본설정</caption>
+        <caption>플랫폼앱 기본설정</caption>
         <colgroup>
             <col class="grid_4" style="width:15%;">
             <col style="width:35%;">
@@ -89,30 +88,33 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         </colgroup>
         <tbody>
         <tr>
-            <th>이미지 프록시서버 URL</th>
+            <th>플랫폼앱 Favicon 이미지</th>
             <td colspan="3" class="tms_help">
-                <?php echo tms_help("예)이미지 프록시서버 URL",1,'#f9fac6','#333333'); ?>
-                <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_imgproxy_url" class="w-[300px]" value="<?=${'set_'.$set_type}['set_imgproxy_url']??''?>">
+                <?php echo help("플랫폼앱의 'Favicon'이미지 파일을 관리해 주시면 됩니다.([1]번 파일만 반영됩니다.)"); ?>
+                <div class="tms_hint flex gap-4">
+                    <div>
+                        <!-- <input type="file" id="file_afavicon" name="file_afavicon[]" multiple class="multifile"> -->
+                        <input type="file" id="file_afavicon" name="" multiple class="multifile">
+                        <?php
+                        if(@count($fvc['afvc_f_arr'])){
+                            echo '<ul>'.PHP_EOL;
+                            for($i=0;$i<count($fvc['afvc_f_arr']);$i++) {
+                                echo "<li>[".($i+1).']'.$fvc['afvc_f_arr'][$i]['file']."</li>".PHP_EOL;
+                            }
+                            echo '</ul>'.PHP_EOL;
+                        }
+                        ?>
+                    </div>
+                    <?php if($is_dev_manager){ ?>
                     <div class="tms_hbox">
                         <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_imgproxy_url_str']??''?>
+                            <span>$set_conf['set_aws_region']</span><br>
+                            <span>$set_conf['set_aws_bucket']</span><br>
+                            <span>$set_conf['set_s3_basicurl']</span><br>
+                            <span>$set_conf['set_imgproxy_url']</span>
                         </div>
                     </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <th>비회원 접근가능한 페이지</th>
-            <td colspan="3" class="tms_help">
-                <?php echo tms_help("예)login,logout,register,register_form,register_form,password_lost",1,'#f9fac6','#333333'); ?>
-                <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_nomb_accessiblepages" class="w-[300px]" value="<?=${'set_'.$set_type}['set_nomb_accessiblepages']??''?>">
-                    <div class="tms_hbox">
-                        <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_nomb_accessiblepages_str']??''?>
-                        </div>
-                    </div>
+                    <?php } ?>
                 </div>
             </td>
         </tr>
@@ -121,11 +123,11 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     </div><!-- // .tbl_frm01 -->
 </section><!-- // #anc_cf_default -->
 <section id="anc_cf_widget">
-    <h2 class="h2_frm">Amazon설정</h2>
+    <h2 class="h2_frm">기타설정</h2>
     <?php echo $pg_anchor ?>
     <div class="tbl_frm01 tbl_wrap">
         <table>
-        <caption>아마존설정</caption>
+        <caption>기타설정</caption>
         <colgroup>
             <col class="grid_4" style="width:15%;">
             <col style="width:35%;">
@@ -134,84 +136,14 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         </colgroup>
         <tbody>
         <tr>
-            <th>AWS 리전명</th>
+            <th>기타</th>
             <td colspan="3" class="tms_help">
-                <?php echo tms_help("ap-northeast-2",1,'#f9fac6','#333333'); ?>
+                <?php echo tms_help("etc...",1,'#f9fac6','#333333'); ?>
                 <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_aws_region" class="w-[200px]" value="<?=${'set_'.$set_type}['set_aws_region']??''?>">
+                    <input type="text" name="" class="w-[200px]" value="<?=${'set_'.$set_type}['set_etc']??''?>">
                     <div class="tms_hbox">
                         <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_aws_region_str']??''?>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <th>S3 버킷명</th>
-            <td colspan="3" class="tms_help">
-                <?php echo tms_help("dainpass-bucket-file",1,'#f9fac6','#333333'); ?>
-                <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_aws_bucket" class="w-[200px]" value="<?=${'set_'.$set_type}['set_aws_bucket']??''?>">
-                    <div class="tms_hbox">
-                        <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_aws_bucket_str']??''?>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <th>S3 IAM 사용자명</th>
-            <td colspan="3" class="tms_help">
-                <?php echo tms_help("S3사용을 위한 사용자명(dainpass-s3-admin)",1,'#f9fac6','#333333'); ?>
-                <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_s3iam_user" class="w-[200px]" value="<?=${'set_'.$set_type}['set_s3iam_user']??''?>">
-                    <div class="tms_hbox">
-                        <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_s3iam_user_str']??''?>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <th>S3 엑세스키</th>
-            <td colspan="3" class="tms_help">
-                <?php echo tms_help("S3사용을 위한 엑세스키",1,'#f9fac6','#333333'); ?>
-                <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_s3_accesskey" class="w-[200px]" value="<?=${'set_'.$set_type}['set_s3_accesskey']??''?>">
-                    <div class="tms_hbox">
-                        <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_s3_accesskey_str']??''?>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <th>S3 비밀엑세스키</th>
-            <td colspan="3" class="tms_help">
-                <?php echo tms_help("S3사용을 위한 비밀엑세스키",1,'#f9fac6','#333333'); ?>
-                <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_s3_secretaccesskey" class="w-[300px]" value="<?=${'set_'.$set_type}['set_s3_secretaccesskey']??''?>">
-                    <div class="tms_hbox">
-                        <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_s3_secretaccesskey_str']??''?>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <th>S3 파일 기본URL</th>
-            <td colspan="3" class="tms_help">
-                <?php echo tms_help("S3 파일 기본URL",1,'#f9fac6','#333333'); ?>
-                <div class="tms_hint flex gap-6">
-                    <input type="text" name="set_s3_basicurl" class="w-[400px]" value="<?=${'set_'.$set_type}['set_s3_basicurl']??''?>">
-                    <div class="tms_hbox">
-                        <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_s3_basicurl_str']??''?>
+                            <?=${'set_'.$set_type}['set_etc_str']??''?>
                         </div>
                     </div>
                 </div>

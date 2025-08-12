@@ -5,7 +5,7 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 add_event('admin_common', 'z_adm_common_head',10);
 add_event('tail_sub', 'z_adm_common_tail', 10);
 function z_adm_common_head(){
-	global $g5,$member,$default,$config,$set_menu,$set_conf,$set_com,$menu,$menu2,$sub_menu,$co_id,$w,$pg_anchor,$member_auth_menus,$menu_main_titles,$menu_list_tag;
+	global $g5,$member,$default,$default2,$config,$set_menu,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$menu,$menu2,$sub_menu,$co_id,$w,$pg_anchor,$member_auth_menus,$menu_main_titles,$menu_list_tag;
 
 	// 관리자 index.php 페이지는 _z01/_adm/index.php로 리다이렉트
 	if($g5['dir_name'] == 'adm' && $g5['file_name'] == 'index'){
@@ -95,18 +95,18 @@ function z_adm_common_head(){
 
 
 function z_adm_common_tail(){
-	global $g5,$member,$default,$set_conf,$set_com,$config,$menu,$sub_menu,$co_id,$w,$pg_anchor;
+	global $g5,$member,$default,$default2,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$config,$menu,$sub_menu,$co_id,$w,$pg_anchor;
 	
 	//대체한 DOM요소를 일단 표시
 	@include_once(G5_ZREPLACE_PATH.'/admin.head.php');
-	echo ''.PHP_EOL;
+	// echo ''.PHP_EOL;
 	echo '<script>'.PHP_EOL;
-	echo 'const amenu = '.json_encode($menu).';'.PHP_EOL;
+	echo 'const amenu = \''.json_encode($menu).'\';'.PHP_EOL;
 	echo 'const file_name = "'.$g5['file_name'].'";'.PHP_EOL;
 	echo 'const dir_name = "'.$g5['dir_name'].'";'.PHP_EOL;
 	echo 'const mb_name = "'.$member['mb_name'].'";'.PHP_EOL;
 	echo 'const mb_level = "'.$member['mb_level'].'";'.PHP_EOL;
-	echo 'const g5_community_use = "'.G5_COMMUNITY_USE.'"'.PHP_EOL;
+	echo 'const g5_community_use = "'.G5_COMMUNITY_USE.'";'.PHP_EOL;
 	echo '</script>'.PHP_EOL;
 	// jquery-ui 스타일시트
 	add_stylesheet('<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">',0);

@@ -30,7 +30,13 @@ if($is_member){
 }
 unset($mta_mb_arr);
 
+// 울트라수퍼관리자 여부
+$is_ultra = ($member['mb_level'] == 10) ? true : false;
 // 수퍼관리자 여부
 $is_super = ($member['mb_level'] >= 9) ? true : false;
-// 관리자 여부
-$is_manager = ($member['mb_level'] >= 8) ? true : false;
+// 개발관리자 여부
+$is_dev_manager = ($member['mb_level'] >= 8) ? true : false;
+// 부서장관리자 여부
+$is_team_manager = ($member['mb_level'] >= 7) ? true : false;
+// 일반관리자 여부
+$is_manager = ($member['mb_level'] >= 6) ? true : false;

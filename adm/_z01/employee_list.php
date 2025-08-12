@@ -31,6 +31,10 @@ $sql_common = " FROM {$g5['member_table']} ";
 $where = array();
 $where[] = " mb_level >= 6 ";   // 디폴트 검색조건
 $where[] = " mb_level < 10 ";   // 디폴트 검색조건
+$where[] = " mb_level <= {$member['mb_level']} ";   // 디폴트 검색조건(본인보다 높은 레벨은 검색하지 않음)
+// if($member['mb_level'] == 6) {
+//     $where[] = " mb_id = {$member['mb_id']} ";
+// }
 
 
 // 검색어 설정
@@ -110,7 +114,7 @@ require_once G5_ADMIN_PATH.'/admin.head.php';
 </form>
 
 <div class="local_desc01 local_desc" style="display:no ne;">
-    <p>사원의 회원등급은 기본 6이상입니다.</p>
+    <p>사원의 회원등급은 기본 lv.6 이상입니다.</p>
 </div>
 
 <form name="fmemberlist" id="fmemberlist" action="./employee_list_update.php" onsubmit="return fmemberlist_submit(this);" method="post">
@@ -188,10 +192,9 @@ require_once G5_ADMIN_PATH.'/admin.head.php';
         <td class="td_mb_email w-[250px]"><?php echo $row['mb_email']; ?></td><!--이메일-->
         <td class="td_level w-[100px]">
             <select name="mb_level[<?=$i?>]" id="mb_level_<?=$i?>">
-                <option value="6">lv.6</option>
-                <option value="7">lv.7</option>
-                <option value="8">lv.8</option>
-                <option value="9">lv.9</option>
+                <?php for($j=6; $j<=$member['mb_level']; $j++) { ?>
+                <option value="<?=$j?>">lv.<?=$j?></option>
+                <?php } ?>
             </select>
             <script>$('#mb_level_<?=$i?>').val('<?=$row['mb_level']?>');</script>
         </td><!--권한등급-->

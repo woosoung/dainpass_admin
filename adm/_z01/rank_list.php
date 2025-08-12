@@ -2,10 +2,10 @@
 $sub_menu = "920500";
 include_once('./_common.php');
 
-auth_check($auth[$sub_menu],"r");
+@auth_check($auth[$sub_menu],"r");
 
 // 용어 설정
-$category = ($category) ? $category : 'rank';
+$category = !empty($category) ? $category : 'rank';
 
 
 // include_once(G5_ZSQL_PATH.'/term_rank.php');
@@ -58,7 +58,7 @@ SELECT trm_idx, trm_name, trm_name2, path, trm_desc, trm_left, trm_right, trm_st
 
 $result = sql_query($sql);
 $total_count = sql_num_rows($result);
-
+$listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
 $g5['title'] = '직급관리';
 require_once G5_ADMIN_PATH.'/admin.head.php';
 ?>
@@ -132,13 +132,13 @@ for ($i=0; $row=sql_fetch_array($result); $i++)
 	$row['sub_toggle'] = ($row['has_children']==1) ? '<a href="#">닫기</a>':'-';
 	
     // 추가 부분 unserialize
-    $unser = unserialize(stripslashes($row['trm_more']));
-    if( is_array($unser) ) {
-        foreach ($unser as $key=>$value) {
-            //print_r3($key.'/'.$value);
-            $row[$key] = htmlspecialchars($value, ENT_QUOTES | ENT_NOQUOTES); // " 와 ' 를 html code 로 변환
-        }    
-    }
+    // $unser = unserialize(stripslashes($row['trm_more']));
+    // if( is_array($unser) ) {
+    //     foreach ($unser as $key=>$value) {
+    //         //print_r3($key.'/'.$value);
+    //         $row[$key] = htmlspecialchars($value, ENT_QUOTES | ENT_NOQUOTES); // " 와 ' 를 html code 로 변환
+    //     }    
+    // }
 	
 	$usechecked = ($row['trm_status'] == 'ok') ? '':'checked';
 	$status_txt = ($row['trm_status'] == 'ok') ? 'ok':'hide';

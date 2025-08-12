@@ -20,7 +20,7 @@ if($config['cf_cert_use'] == 2)
     $CST_PLATFORM = 'service';
 else
     $CST_PLATFORM = 'test';
-$CST_MID                = 'si_'.$config['cf_lg_mid'];                       //상점아이디(LG유플러스으로 부터 발급받으신 상점아이디를 입력하세요)
+$CST_MID                = $default2['de_lg_mid'];                       //상점아이디(LG유플러스으로 부터 발급받으신 상점아이디를 입력하세요)
                                                                             //테스트 아이디는 't'를 반드시 제외하고 입력하세요.
 $LGD_MID                = (('test' == $CST_PLATFORM) ? 't' : '').$CST_MID;  //상점아이디(자동생성)
 $LGD_AUTHONLYKEY        = $_POST['LGD_AUTHONLYKEY'];			            //LG유플러스으로부터 부여받은 인증키
@@ -42,8 +42,8 @@ $configPath = G5_LGXPAY_PATH.'/lgdacom'; //LG유플러스에서 제공한 환경
 $xpay = new XPay($configPath, $CST_PLATFORM);
 
 // Mert Key 설정
-$xpay->set_config_value('t'.$LGD_MID, $config['cf_lg_mert_key']);
-$xpay->set_config_value($LGD_MID, $config['cf_lg_mert_key']);
+$xpay->set_config_value('t'.$LGD_MID, $default2['de_lg_mert_key']);
+$xpay->set_config_value($LGD_MID, $default2['de_lg_mert_key']);
 
 $xpay->Init_TX($LGD_MID);
 $xpay->Set("LGD_TXNAME", "AuthOnlyByKey");

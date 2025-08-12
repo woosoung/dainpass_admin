@@ -26,9 +26,9 @@ if($config['cf_cert_use'] == 2)
     $CST_PLATFORM = 'service';
 else
     $CST_PLATFORM = 'test';
-$CST_MID                    = 'si_'.$config['cf_lg_mid'];       // 상점아이디(LG유플러스으로 부터 발급받으신 상점아이디를 입력하세요)
+$CST_MID                    = $default2['de_lg_mid'];       // 상점아이디(LG유플러스으로 부터 발급받으신 상점아이디를 입력하세요)
                                                                 //테스트 아이디는 't'를 반드시 제외하고 입력하세요.
-$LGD_MID                    = (('test' == $CST_PLATFORM) ? 't':'').$CST_MID;  //상점아이디(자동생성)
+$LGD_MID                    = (('test' == $CST_PLATFORM) ? 't_':'').$CST_MID;  //상점아이디(자동생성)
 $LGD_BUYER                  = '홍길동';                         // 성명 (보안을 위해 DB난 세션에서 가져오세요)
 $LGD_BUYERSSN               = '000000';                  // 주민등록번호 (보안을 위해 DB나 세션에서 가져오세요)
                                                                 // 휴대폰 본인인증을 사용할 경우 주민번호는 '0' 13자리를 넘기세요. 예)0000000000000
@@ -55,7 +55,7 @@ $LGD_CUSTOM_SKIN            = 'red';                            // 상점정의 
  * LG유플러스에서 발급한 상점키(MertKey)를 환경설정 파일(lgdacom/conf/mall.conf)에 반드시 입력하여 주시기 바랍니다.
  */
 
-$LGD_MERTKEY    = $config['cf_lg_mert_key'];
+$LGD_MERTKEY    = $default2['de_lg_mert_key'];
 $LGD_HASHDATA   = md5($LGD_MID.$LGD_BUYERSSN.$LGD_TIMESTAMP.$LGD_MERTKEY);
 $LGD_RETURNURL  = G5_PLUGIN_URL.'/lgxpay/returnurl.php';
 if( G5_IS_MOBILE ){

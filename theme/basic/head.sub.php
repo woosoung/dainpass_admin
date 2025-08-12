@@ -1,7 +1,29 @@
 <?php
 // 이 파일은 새로운 파일 생성시 반드시 포함되어야 함
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
-
+// 아래의 조건문의 의미는 관리자가 아닌 사용자가 특정 디렉토리에 접근할 수 없도록 제한하는 것입니다.
+if($is_member && $member['mb_level'] == 2 ){ // 회원 레벨이 2인 경우
+    echo "<script>
+        alert('관리자 승인심사중입니다.');
+        location.href = '/bbs/logout.php';
+    </script>";
+    exit;
+} else if($is_member && $member['mb_level'] > 2 && $g5['dir_name'] != 'adm' 
+    && $g5['dir_name'] != 'shop_admin' 
+    && $g5['dir_name'] != '_z01' 
+    && $g5['dir_name'] != '_adm' 
+    && $g5['dir_name'] != '_shop_admin') { // 회원 레벨이 2보다 큰 경우
+    goto_url(G5_ZADM_URL);
+} else { // 비회원의 경우
+    if (isset($g5['dir_name'], $g5['file_name'], $set_conf['set_nomb_accessiblepages_arr'])){
+        if (defined('_INDEX_') || $g5['dir_name'] === 'bbs' && !in_array($g5['file_name'], $set_conf['set_nomb_accessiblepages_arr'])){
+            goto_url(G5_BBS_URL.'/login.php');
+        }
+    }
+    else {
+        goto_url(G5_BBS_URL.'/login.php');
+    }
+}
 $g5_debug['php']['begin_time'] = $begin_time = get_microtime();
 
 if (!isset($g5['title'])) {
@@ -53,6 +75,8 @@ if($config['cf_add_meta'])
 $shop_css = '';
 if (defined('_SHOP_')) $shop_css = '_shop';
 echo '<link rel="stylesheet" href="'.run_replace('head_css_url', G5_THEME_CSS_URL.'/'.(G5_IS_MOBILE?'mobile':'default').$shop_css.'.css?ver='.G5_CSS_VER, G5_THEME_URL).'">'.PHP_EOL;
+echo '<link rel="apple-touch-icon" href="'.($set_mng['afavicon_url']??'').'" />'.PHP_EOL;
+echo '<link rel="icon" type="image/png" href="'.($set_mng['afavicon_url']??'').'" />'.PHP_EOL;
 ?>
 <!--[if lte IE 8]>
 <script src="<?php echo G5_JS_URL ?>/html5.js"></script>

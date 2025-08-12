@@ -4,10 +4,10 @@ if (!defined("_GNUBOARD_")) exit; // 개별 페이지 접근 불가
 if($od['od_pg'] != 'lg') return;
 
 if($default['de_card_test']) {
-    $mid = 'tsi_'.$config['cf_lg_mid'];
+    $mid = 't_'.$default2['de_lg_mid'];
     $service_url = "https://pgweb.tosspayments.com:9091/pg/wmp/mertadmin/jsp/escrow/rcvdlvinfo.jsp";
 } else {
-    $mid = 'si_'.$config['cf_lg_mid'];
+    $mid = $default2['de_lg_mid'];
     $service_url = "https://pgweb.tosspayments.com/pg/wmp/mertadmin/jsp/escrow/rcvdlvinfo.jsp";
 }
 

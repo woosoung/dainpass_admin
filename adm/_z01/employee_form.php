@@ -111,40 +111,42 @@ else
     alert('제대로 된 값이 넘어오지 않았습니다.');
 
 // 본인확인방법
-switch($mb['mb_certify']) {
-    case 'hp':
-        $mb_certify_case = '휴대폰';
-        $mb_certify_val = 'hp';
-        break;
-    case 'ipin':
-        $mb_certify_case = '아이핀';
-        $mb_certify_val = 'ipin';
-        break;
-    case 'admin':
-        $mb_certify_case = '관리자 수정';
-        $mb_certify_val = 'admin';
-        break;
-    default:
-        $mb_certify_case = '';
-        $mb_certify_val = 'admin';
-        break;
+if($w == 'u'){
+    switch($mb['mb_certify']) {
+        case 'hp':
+            $mb_certify_case = '휴대폰';
+            $mb_certify_val = 'hp';
+            break;
+        case 'ipin':
+            $mb_certify_case = '아이핀';
+            $mb_certify_val = 'ipin';
+            break;
+        case 'admin':
+            $mb_certify_case = '관리자 수정';
+            $mb_certify_val = 'admin';
+            break;
+        default:
+            $mb_certify_case = '';
+            $mb_certify_val = 'admin';
+            break;
+    }
 }
 
 // 본인확인
-$mb_certify_yes  =  $mb['mb_certify'] ? 'checked="checked"' : '';
-$mb_certify_no   = !$mb['mb_certify'] ? 'checked="checked"' : '';
+$mb_certify_yes  =  isset($mb['mb_certify']) ? 'checked="checked"' : '';
+$mb_certify_no   = !isset($mb['mb_certify']) ? 'checked="checked"' : '';
 
 // 성인인증
-$mb_adult_yes       =  $mb['mb_adult']      ? 'checked="checked"' : '';
-$mb_adult_no        = !$mb['mb_adult']      ? 'checked="checked"' : '';
+$mb_adult_yes       =  isset($mb['mb_adult'])      ? 'checked="checked"' : '';
+$mb_adult_no        = !isset($mb['mb_adult'])      ? 'checked="checked"' : '';
 
 //메일수신
-$mb_mailling_yes    =  $mb['mb_mailling']   ? 'checked="checked"' : '';
-$mb_mailling_no     = !$mb['mb_mailling']   ? 'checked="checked"' : '';
+$mb_mailling_yes    =  isset($mb['mb_mailling'])   ? 'checked="checked"' : '';
+$mb_mailling_no     = !isset($mb['mb_mailling'])   ? 'checked="checked"' : '';
 
 // SMS 수신
-$mb_sms_yes         =  $mb['mb_sms']        ? 'checked="checked"' : '';
-$mb_sms_no          = !$mb['mb_sms']        ? 'checked="checked"' : '';
+$mb_sms_yes         =  isset($mb['mb_sms'])        ? 'checked="checked"' : '';
+$mb_sms_no          = !isset($mb['mb_sms'])        ? 'checked="checked"' : '';
 
 // 정보 공개
 $mb_open_yes        =  $mb['mb_open']       ? 'checked="checked"' : '';
@@ -152,7 +154,8 @@ $mb_open_no         = !$mb['mb_open']       ? 'checked="checked"' : '';
 
 
 $g5['title'] = $g5['title'] ?? ''; // 초기화
-if ($mb['mb_intercept_date']) {
+
+if (isset($mb['mb_intercept_date'])) {
     $g5['title'] = "차단된 ";
 }
 
@@ -174,7 +177,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 <input type="hidden" name="<?=$pre?>_idx" value="<?=${$pre."_idx"}?>">
 <?=$form_input?>
 <div class="local_desc01 local_desc" style="display:no ne;">
-    <p>사원정보를 관리하는 페이지입니다.(사원의 회원등급은 기본 6입니다.)</p>
+    <p>사원정보를 관리하는 페이지입니다.(사원의 회원등급은 기본 lv.6 이상입니다.)</p>
 </div>
 <div class="tbl_frm01 tbl_wrap">
     <table>
@@ -190,7 +193,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         <th scope="row"><label for="mb_id">아이디<?=$sound_only??''?></label></th>
         <td>
             <div class="flex gap-3">
-                <input type="text" name="mb_id"<?=(($w!='')?' readonly':'')?> value="<?=$mb['mb_id']?>" id="reg_mb_id" class="frm_input<?=(($w!='')?' readonly':'')?>" size="15"  maxlength="20">
+                <input type="text" name="mb_id"<?=(($w!='')?' readonly':'')?> value="<?=$mb['mb_id']??''?>" id="reg_mb_id" class="frm_input<?=(($w!='')?' readonly':'')?>" size="15"  maxlength="20" autocomplete="off">
                 <?php if($w=='') { ?>
                 <span class="s_id_info"></span>
                 <?php } ?>
@@ -200,7 +203,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         <td>
             <div class="flex gap-3">
                 <?php if($w==''|| !auth_check($auth[$sub_menu]??'','r,w',1) || $member['mb_level'] == $mb['mb_level']) { ?>
-                <input type="password" name="mb_password" id="mb_password" <?php //echo $required_mb_password ?> class="frm_input <?php //echo $required_mb_password ?>" size="15" maxlength="20">
+                <input type="password" name="mb_password" id="mb_password" <?php //echo $required_mb_password ?> class="frm_input <?php //echo $required_mb_password ?>" size="15" maxlength="20" autocomplete="new-password">
                 <?php } else { ?>
                 <span style="color:#aaa;" class="inline-block w-[180px]">비밀번호 수정 불가</span>
                 <?php } ?>
@@ -210,10 +213,10 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     </tr>
     <tr>
         <th scope="row"><label for="mb_name">이름(실명)<strong class="sound_only">필수</strong></label></th>
-        <td><input type="text" name="mb_name" value="<?=$mb['mb_name']?>" id="mb_name" class="frm_input" size="15"  maxlength="20" <?php if(@auth_check($auth[$sub_menu],'r,w',1)) echo 'readonly';?>></td>
+        <td><input type="text" name="mb_name" value="<?=$mb['mb_name']??''?>" id="mb_name" class="frm_input" size="15"  maxlength="20" <?php if(@auth_check($auth[$sub_menu],'r,w',1)) echo 'readonly';?>></td>
         <th scope="row"><label for="mb_nick">닉네임<strong class="sound_only">필수</strong></label></th>
         <td>
-            <input type="text" name="mb_nick" value="<?=$mb['mb_nick']?>" id="reg_mb_nick" class="frm_input" size="15"  maxlength="20" <?php if(@auth_check($auth[$sub_menu],'r,w',1)) echo 'readonly';?>>
+            <input type="text" name="mb_nick" value="<?=$mb['mb_nick']??''?>" id="reg_mb_nick" class="frm_input" size="15"  maxlength="20" <?php if(@auth_check($auth[$sub_menu],'r,w',1)) echo 'readonly';?>>
             <?php if(@!auth_check($auth[$sub_menu],'r,w',1)) { ?>
                 <span class="s_nick_info"></span>
             <?php } ?>
@@ -258,7 +261,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         <th scope="row"><label for="mb_email">이메일<strong class="sound_only">필수</strong></label></th>
         <td>
             <div class="flex gap-3">
-                <input type="text" name="mb_email" value="<?=$mb['mb_email']?>" id="reg_mb_email" class="frm_input w-[200px]" size="15"  maxlength="100">
+                <input type="text" name="mb_email" value="<?=$mb['mb_email']??''?>" id="reg_mb_email" class="frm_input w-[200px]" size="15"  maxlength="100">
                 <span class="s_email_info"></span>
             </div>
         </td>
@@ -267,21 +270,20 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         <th scope="row"><label for="mb_hp">휴대폰번호<strong class="sound_only">필수</strong></label></th>
         <td>
             <div class="flex gap-3">
-                <input type="text" name="mb_hp" value="<?=formatPhoneNumber($mb['mb_hp'])?>" id="reg_mb_hp" class="frm_input w-[200px]" size="15"  maxlength="20">
+                <input type="text" name="mb_hp" value="<?=formatPhoneNumber($mb['mb_hp']??'')?>" id="reg_mb_hp" class="frm_input w-[200px]" size="15"  maxlength="20">
                 <span class="s_hp_info"></span>
             </div>
         </td>
         <th scope="row"><label for="mb_level">권한등급</label></th>
         <td>
-            <select name="mb_level" id="mb_level" class="frm_input">
-                <option value="6">lv.6</option>
-                <option value="7">lv.7</option>
-                <option value="8">lv.8</option>
-                <option value="9">lv.9</option>
+            <select name="mb_level" id="mb_lv" class="frm_input">
+                <?php for($j=6; $j<=$member['mb_level']; $j++) { ?>
+                <option value="<?=$j?>">lv.<?=$j?></option>
+                <?php } ?>
             </select>
             <script>
-            const mb_level = document.querySelector('#mb_level');
-            mb_level.value = '<?=$mb['mb_level']?>';
+            const mb_lv = document.querySelector('#mb_lv');
+            mb_lv.value = '<?=$mb['mb_level']?>';
             </script>
         </td>
     </tr>
@@ -289,16 +291,16 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         <th scope="row">주소</th>
         <td class="td_addr_line">
             <label for="mb_zip" class="sound_only">우편번호</label>
-            <input type="text" name="mb_zip" value="<?php echo $mb['mb_zip1'] . $mb['mb_zip2']; ?>" id="mb_zip" class="frm_input readonly w-[60px]" size="5" maxlength="6">
+            <input type="text" name="mb_zip" value="<?=(($mb['mb_zip1']??'').($mb['mb_zip2']??''))?>" id="mb_zip" class="frm_input readonly w-[60px]" size="5" maxlength="6">
             <button type="button" class="btn_frmline" onclick="win_zip('fmember', 'mb_zip', 'mb_addr1', 'mb_addr2', 'mb_addr3', 'mb_addr_jibeon');">주소 검색</button><br>
-            <input type="text" name="mb_addr1" value="<?php echo $mb['mb_addr1'] ?>" id="mb_addr1" class="frm_input readonly" size="60">
+            <input type="text" name="mb_addr1" value="<?=$mb['mb_addr1']??''?>" id="mb_addr1" class="frm_input readonly" size="60">
             <label for="mb_addr1">기본주소</label><br>
-            <input type="text" name="mb_addr2" value="<?php echo $mb['mb_addr2'] ?>" id="mb_addr2" class="frm_input" size="60">
+            <input type="text" name="mb_addr2" value="<?=$mb['mb_addr2']??''?>" id="mb_addr2" class="frm_input" size="60">
             <label for="mb_addr2">상세주소</label>
             <br>
-            <input type="text" name="mb_addr3" value="<?php echo $mb['mb_addr3'] ?>" id="mb_addr3" class="frm_input" size="60">
+            <input type="text" name="mb_addr3" value="<?=$mb['mb_addr3']??''?>" id="mb_addr3" class="frm_input" size="60">
             <label for="mb_addr3">참고항목</label>
-            <input type="hidden" name="mb_addr_jibeon" value="<?php echo $mb['mb_addr_jibeon']; ?>"><br>
+            <input type="hidden" name="mb_addr_jibeon" value="<?=$mb['mb_addr_jibeon']??''?>"><br>
         </td>
         <th scope="row">사원관련파일</th>
         <td>
@@ -318,19 +320,24 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     <tr>
         <th scope="row"><label for="mb_memo">메모</label></th>
         <td colspan="3">
-            <textarea name="mb_memo" id="mb_memo"><?=$mb['mb_memo']?></textarea>
+            <textarea name="mb_memo" id="mb_memo"><?=$mb['mb_memo']??''?></textarea>
         </td>
     </tr>
     <tr>
         <th scope="row"><label for="mb_datetime">입사일<strong class="sound_only">필수</strong></label></th>
         <td>
-            <input type="text" name="mb_datetime" value="<?=substr($mb['mb_datetime'],0,10)?>" id="mb_datetime" maxlength="100" readonly class="tms_date readonly frm_input datetime w-[100px]" size="30">
+            <input type="text" name="mb_datetime" value="<?=substr($mb['mb_datetime']??'',0,10)?>" id="mb_datetime" maxlength="100" readonly class="tms_date readonly frm_input datetime w-[100px]" size="30">
         </td>
         <th scope="row"><label for="mb_leave_date">퇴사일자</label></th>
         <td>
-            <input type="text" name="mb_leave_date" value="<?=formatDate($mb['mb_leave_date'])?>" id="mb_leave_date" class="readonly tms_date frm_input w-[100px]" maxlength="8">
+            <input type="text" name="mb_leave_date" value="<?=formatDate($mb['mb_leave_date']??'')?>" id="mb_leave_date" class="readonly tms_date frm_input w-[100px]" maxlength="8">
         </td>
     </tr>
+    <?php
+    if($w == 'u') {
+        // 나는 나의 권한을 수정할 수 없다.나보다 등급이 낮은 사람의 권한은 편집할 수 있다.
+        if($is_ultra || ($member['mb_id'] != $mb['mb_id'] && $member['mb_level'] > $mb['mb_level'])){
+    ?>
     <tr>
         <th scope="row">
             관리페이지(권한설정)<br>
@@ -372,7 +379,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
                         $auth_list_tag .= '<span class="auth_d'.(in_array('d', $auths) ? ' act' : '').'">삭제</span>';
                         $auth_list_tag .= '</li>' . PHP_EOL;
                     }
-                    $auth_list_tag .= '</ul></div>'.PHP_EOL;  
+                    $auth_list_tag .= '</ul></div>'.PHP_EOL;
                 }
             }
             $auth_list_tag .= '</div>'.PHP_EOL;
@@ -380,6 +387,10 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             ?>
         </td>
     </tr>
+    <?php 
+        }
+    } 
+    ?>
     </tbody>
 	</table>
 </div>

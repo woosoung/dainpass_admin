@@ -5,7 +5,7 @@ include_once('./_common.php');
 @auth_check($auth[$sub_menu],"r");
 
 // 용어 설정
-$category = ($category) ? $category : 'department';
+$category = !empty($category) ? $category : 'department';
 
 
 // include_once(G5_ZSQL_PATH.'/term_department.php');
@@ -28,7 +28,7 @@ $sql = " WITH RECURSIVE TermPaths AS (
         (SELECT COUNT(*) > 0 FROM {$g5['term_table']} AS child WHERE child.trm_idx_parent = {$g5['term_table']}.trm_idx AND child.trm_status != 'trash') AS has_children
     FROM {$g5['term_table']}
     WHERE trm_idx_parent = 0  -- 루트 노드
-        AND trm_category = '{$category}'
+        AND trm_category = 'department'
         AND trm_status != 'trash'
 
     UNION ALL
@@ -50,14 +50,16 @@ $sql = " WITH RECURSIVE TermPaths AS (
         (SELECT COUNT(*) > 0 FROM {$g5['term_table']} AS child WHERE child.trm_idx_parent = t.trm_idx AND child.trm_status != 'trash') AS has_children
     FROM {$g5['term_table']} t
     JOIN TermPaths tp ON t.trm_idx_parent = tp.trm_idx
-    WHERE t.trm_category = '{$category}'
+    WHERE t.trm_category = 'department'
         AND t.trm_status != 'trash'
 )
 SELECT trm_idx, trm_name, trm_name2, path, trm_desc, trm_left, trm_right, trm_status, depth, has_children FROM TermPaths ORDER BY trm_left;
 ";
 
-$result = sql_query_pg($sql);
-$total_count = sql_num_rows_pg($result);
+$result = sql_query($sql);
+$total_count = sql_num_rows($result);
+
+$listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
 
 $g5['title'] = '조직관리';
 require_once G5_ADMIN_PATH.'/admin.head.php';
@@ -65,7 +67,7 @@ require_once G5_ADMIN_PATH.'/admin.head.php';
 
 
 <div class="local_ov01 local_ov">
-    <?php echo $listall??'' ?>
+    <?php echo $listall ?>
     <span class="btn_ov01"><span class="ov_txt">총분류수 </span><span class="ov_num"> <?php echo number_format($total_count) ?>개 </span></span>
     <div style="display:inline-block;float:right;">
         <select name="category" style="display:none;" class="cp_field" title="분류선택" onFocus='this.initialSelect=this.selectedIndex;' onChange='this.selectedIndex=this.initialSelect;'>
@@ -141,7 +143,7 @@ for ($i=0; $row=sql_fetch_array($result); $i++)
 	$row['sub_toggle'] = ($row['has_children']==1) ? '<a href="#">닫기</a>':'-';
 	
     // 추가 부분 unserialize
-    $unser = unserialize(stripslashes($row['trm_more']));
+    $unser = !empty($row['trm_more']) ? unserialize(stripslashes($row['trm_more'])) : false;
     if( is_array($unser) ) {
         foreach ($unser as $key=>$value) {
             //print_r3($key.'/'.$value);

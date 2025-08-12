@@ -44,7 +44,7 @@ $g5['dain_default_table']                = 'dain_default';
 $g5['dain_file_table']                   = 'dain_file';
 $g5['meta_table']                        = 'meta';
 $g5['setting_table']                     = 'setting';
-$g5['term_table']                        = 'term'; //G5_Z_TABLE_PREFIX.'_term';
+$g5['term_table']                        = G5_Z_TABLE_PREFIX.'_term'; //G5_Z_TABLE_PREFIX.'_term';
 
 $g5['shop_table']                        = 'shop'; //가맹점
 $g5['shop_categories_table']             = 'shop_categories'; //업종(분류)

@@ -30,12 +30,13 @@ for($i=0;$i<sizeof($trm_depth);$i++) {
 
 //-- 먼저 left, right 값 초기화
 $sql = " UPDATE {$g5['term_table']} SET trm_left = '0', trm_right = '0' WHERE trm_category = '".$category."' ";
-sql_query_pg($sql);
+sql_query($sql);
 
 // print_r2($trm_desc);exit;
 $depth_array = array();
 $idx_array = array();	// 부모 idx를 입력하기 위한 정의
 $prev_depth = 0;
+// exit;
 for($i=0;$i<sizeof($trm_name);$i++) {
     
 	//-- leaf node(마지막노드) 체크 / $depth_array[$trm_depth[$i]] = 1
@@ -47,7 +48,7 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 			$depth_array[$j] = 0;
 		}
 	}
-
+	
     // 정렬번호
     if(!$trm_sort[$i])
         $trm_sort[$i] = $i;
@@ -55,19 +56,19 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 	
 	//-- 맨 처음 항목 입력 left=1, right=2 설정
 	if($i == 0) {
-		$sql = "INSERT INTO {$g5['term_table']} (trm_idx,trm_idx_parent,trm_name,trm_name2,trm_type,trm_category,trm_desc,trm_sort,trm_left,trm_right,trm_status,trm_reg_dt) 
-					VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','$trm_name[$i]','$trm_name2[$i]','$trm_type[$i]','".$category."','$trm_desc[$i]','$i', 1, 2, '".$trm_status[$i]."', now())
+		$sql = " INSERT INTO {$g5['term_table']} (trm_idx,trm_idx_parent,trm_name,trm_name2,trm_type,trm_category,trm_desc,trm_sort,trm_left,trm_right,trm_status,trm_reg_dt) 
+					VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','".$trm_name[$i]."','".$trm_name2[$i]."','".$trm_type[$i]."','".$category."','$trm_desc[$i]','".$i."', 1, 2, '".$trm_status[$i]."', now())
 					ON DUPLICATE KEY UPDATE trm_idx_parent = '".$idx_array[$trm_depth[$i]-1]."'
-                                            , trm_name = '$trm_name[$i]'
-                                            , trm_name2 = '$trm_name2[$i]'
-                                            , trm_type = '$trm_type[$i]'
+                                            , trm_name = '".$trm_name[$i]."'
+                                            , trm_name2 = '".$trm_name2[$i]."'
+                                            , trm_type = '".$trm_type[$i]."'
                                             , trm_desc = '".$trm_desc[$i]."'
                                             , trm_sort = '".$trm_sort[$i]."'
                                             , trm_status = '".$trm_status[$i]."'
                                             , trm_left = 1
                                             , trm_right = 2
 		";
-		sql_query_pg($sql);
+		sql_query($sql,1);
 		// echo $sql.'<br><br>';
 	}
 	else {
@@ -76,42 +77,42 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 		if($depth_array[$trm_depth[$i]] == 1) {
 			//echo '부모idx -> '.$idx_array[$trm_depth[$i]-1];
 
-			sql_query_pg("SELECT @myLeft := trm_left FROM {$g5['term_table']} WHERE trm_idx = '".$idx_array[$trm_depth[$i]-1]."' ");
-			sql_query_pg("UPDATE {$g5['term_table']} SET trm_right = trm_right + 2 WHERE trm_right > @myLeft AND trm_category = '".$category."' ");
-			sql_query_pg("UPDATE {$g5['term_table']} SET trm_left = trm_left + 2 WHERE trm_left > @myLeft AND trm_category = '".$category."' ");
-			$sql = "INSERT INTO {$g5['term_table']} (trm_idx, trm_idx_parent, trm_name, trm_name2, trm_type, trm_category, trm_desc, trm_sort, trm_left, trm_right, trm_status, trm_reg_dt) 
-						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','$trm_name[$i]','$trm_name2[$i]','$trm_type[$i]','".$category."','".$trm_desc[$i]."','$i',@myLeft + 1,@myLeft + 2, '".$trm_status[$i]."', now())
+			sql_query(" SELECT @myLeft := trm_left FROM {$g5['term_table']} WHERE trm_idx = '".$idx_array[$trm_depth[$i]-1]."' ");
+			sql_query(" UPDATE {$g5['term_table']} SET trm_right = trm_right + 2 WHERE trm_right > @myLeft AND trm_category = '".$category."' ");
+			sql_query(" UPDATE {$g5['term_table']} SET trm_left = trm_left + 2 WHERE trm_left > @myLeft AND trm_category = '".$category."' ");
+			$sql = " INSERT INTO {$g5['term_table']} (trm_idx, trm_idx_parent, trm_name, trm_name2, trm_type, trm_category, trm_desc, trm_sort, trm_left, trm_right, trm_status, trm_reg_dt) 
+						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','".$trm_name[$i]."','".$trm_name2[$i]."','".$trm_type[$i]."','".$category."','".$trm_desc[$i]."','".$i."',@myLeft + 1,@myLeft + 2, '".$trm_status[$i]."', now())
 						ON DUPLICATE KEY UPDATE trm_idx_parent = '".$idx_array[$trm_depth[$i]-1]."'
-							, trm_name = '$trm_name[$i]'
-							, trm_name2 = '$trm_name2[$i]'
-							, trm_type = '$trm_type[$i]'
+							, trm_name = '".$trm_name[$i]."'
+							, trm_name2 = '".$trm_name2[$i]."'
+							, trm_type = '".$trm_type[$i]."'
 							, trm_desc = '".$trm_desc[$i]."'
 							, trm_sort = '".$trm_sort[$i]."'
 							, trm_status = '".$trm_status[$i]."'
 							, trm_left = @myLeft + 1
 							, trm_right = @myLeft + 2
 			";
-			sql_query_pg($sql,1);
+			sql_query($sql,1);
 			// echo $sql.'<br><br>';
 		}
 		//-- leaf_node가 아니면 동 레벨 idx 참조해서 left, right 생성
 		else {
-			sql_query_pg("SELECT @myRight := trm_right FROM {$g5['term_table']} WHERE trm_idx = '".$idx_array[$trm_depth[$i]]."' ");
-			sql_query_pg("UPDATE {$g5['term_table']} SET trm_right = trm_right + 2 WHERE trm_right > @myRight AND trm_category = '".$category."' ");
-			sql_query_pg("UPDATE {$g5['term_table']} SET trm_left = trm_left + 2 WHERE trm_left > @myRight AND trm_category = '".$category."' ");
-			$sql = "INSERT INTO {$g5['term_table']} (trm_idx, trm_idx_parent, trm_name, trm_name2, trm_type, trm_category, trm_desc, trm_sort, trm_left, trm_right, trm_status, trm_reg_dt) 
-						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','$trm_name[$i]','$trm_name2[$i]','$trm_type[$i]','".$category."','".$trm_desc[$i]."','$i',@myRight + 1,@myRight + 2, '".$trm_status[$i]."', now())
+			sql_query(" SELECT @myRight := trm_right FROM {$g5['term_table']} WHERE trm_idx = '".$idx_array[$trm_depth[$i]]."' ");
+			sql_query(" UPDATE {$g5['term_table']} SET trm_right = trm_right + 2 WHERE trm_right > @myRight AND trm_category = '".$category."' ");
+			sql_query(" UPDATE {$g5['term_table']} SET trm_left = trm_left + 2 WHERE trm_left > @myRight AND trm_category = '".$category."' ");
+			$sql = " INSERT INTO {$g5['term_table']} (trm_idx, trm_idx_parent, trm_name, trm_name2, trm_type, trm_category, trm_desc, trm_sort, trm_left, trm_right, trm_status, trm_reg_dt) 
+						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','".$trm_name[$i]."','".$trm_name2[$i]."','".$trm_type[$i]."','".$category."','".$trm_desc[$i]."','".$i."',@myRight + 1,@myRight + 2, '".$trm_status[$i]."', now())
 						ON DUPLICATE KEY UPDATE trm_idx_parent = '".$idx_array[$trm_depth[$i]-1]."'
-							, trm_name = '$trm_name[$i]'
-							, trm_name2 = '$trm_name2[$i]'
-							, trm_type = '$trm_type[$i]'
+							, trm_name = '".$trm_name[$i]."'
+							, trm_name2 = '".$trm_name2[$i]."'
+							, trm_type = '".$trm_type[$i]."'
 							, trm_desc = '".$trm_desc[$i]."'
 							, trm_sort = '".$trm_sort[$i]."'
 							, trm_status = '".$trm_status[$i]."'
 							, trm_left = @myRight + 1
 							, trm_right = @myRight + 2
 			";
-			sql_query_pg($sql,1);
+			sql_query($sql,1);
 			// echo $sql.'<br><br>';
 		}
 	}
@@ -119,19 +120,20 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 	//echo "<br><br>";
 	$prev_depth = $trm_depth[$i]; 
 	$idx_array[$trm_depth[$i]] = $trm_idx[$i];	//-- left, right 기준 값 저장
-	$idx_array[$trm_depth[$i]] = sql_insert_id_pg({$g5['term_table']});	//-- left, right 기준 값 저장
+	$idx_array[$trm_depth[$i]] = sql_insert_id();	//-- left, right 기준 값 저장
 }
-
+// exit;
 
 // 캐시 파일 삭제 (초기화)
 $files = glob(G5_DATA_PATH.'/cache/term-'.$category.'.php');
+
 if (is_array($files)) {
     foreach ($files as $filename)
-        unlink($filename);
+        @unlink($filename);
 }
 
+$file_name_url = "./".$file_name.".php";
 
-//exit;
 // 앞에서 넘어온 파일명으로 다시 돌려보낸다.
-goto_url("./".$file_name.".php?category=".$category);
+goto_url($file_name_url);
 ?>

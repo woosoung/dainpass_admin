@@ -228,6 +228,46 @@ function pg_table_exists($table, $link = null)
 //--PgSQL 관련 함수 모음 : 여기까지
 /***********************************/
 
+if(!function_exists('pg_setting_check2')){
+function pg_setting_check2($is_print=false){
+	global $g5, $config,$default, $default2, $member;
+
+	$msg = '';
+	$pg_msg = '';
+
+	if( $default2['de_card_test'] ){
+		if( $default2['de_pg_service'] === 'kcp' && $default2['de_kcp_mid'] && $default2['de_kcp_site_key'] ){
+			$pg_msg = 'NHN KCP';
+		} else if ( $default2['de_pg_service'] === 'lg' && $default2['de_lg_mid'] && $default2['de_lg_mert_key'] ){
+			$pg_msg = '토스페이먼츠';
+		} else if ( $default2['de_pg_service'] === 'inicis' && $default2['de_inicis_mid'] && isset($default2['de_inicis_sign_key']) ){
+			$pg_msg = 'KG이니시스';
+		} else if ( $default2['de_pg_service'] === 'nicepay' && $default2['de_nicepay_mid'] && $default2['de_nicepay_key'] ){
+			$pg_msg = 'NICEPAY';
+		}
+	}
+
+    if( function_exists('is_use_easypay') && is_use_easypay('global_nhnkcp') ){
+        if(!extension_loaded('soap') || !class_exists('SOAPClient')) {
+            $msg .= '<script>'.PHP_EOL;
+            $msg .= 'alert("PHP SOAP 확장모듈이 설치되어 있지 않습니다.\n모바일 쇼핑몰 결제 때 사용되오니 SOAP 확장 모듈을 설치하여 주십시오.\nNHN_KCP (네이버페이) 모바일결제가 되지 않습니다.");'.PHP_EOL;
+            $msg .= '</script>'.PHP_EOL;
+        }
+    }
+
+	if( $pg_msg ){
+		$pg_test_conf_link = G5_ZSHOP_ADMIN_URL.'/configform.php#de_card_test1';
+		$msg .= '<div class="admin_pg_notice od_test_caution">(주의!) '.$pg_msg.' 결제의 결제 설정이 현재 테스트결제 로 되어 있습니다.<br>테스트결제시 실제 결제가 되지 않으므로, 쇼핑몰 운영중이면 반드시 실결제로 설정하여 운영하셔야 합니다.<br>아래 링크를 클릭하여 실결제로 설정하여 운영해 주세요.<br><a href="'.$pg_test_conf_link.'" class="pg_test_conf_link">'.$pg_test_conf_link.'</a></div>';
+	}
+	
+	if( $is_print ){
+		echo $msg;
+	} else{
+		return $msg;
+	}
+}
+}
+
 // 특정 절대경로의 디렉토리의 하위 디렉토리 목록을 배열로 반환하는 함수
 if(!function_exists('dir_list_in_path')){
 function dir_list_in_path($dir=''){
@@ -252,39 +292,39 @@ function dir_list_in_path($dir=''){
 
 //gmail SMTP 설정
 //gmailer("수신메일주소", "메일제목", "메일내용");
-if(!function_exists('gmailer')){
-function gmailer($to, $subject, $content, $type=1)
-{
-    global $conf_com_idx, $config;
-    global $conf_com_idx, $g5;
-    // 메일발송 사용을 하지 않는다면
-    if (!$config['cf_email_use']) {
-        return;
-    }
-    if ($type != 1) {
-        $content = nl2br($content);
-    }
-    include_once(G5_PHPMAILER_PATH.'/PHPMailerAutoload.php');
-    $mail = new PHPMailer(); // defaults to using php "mail()"
-    if (defined('G5_SMTP') && G5_SMTP) {
-        $mail->isSMTP();
-        $mail->SMTPAuth = true;
-        $mail->SMTPSecure = "ssl";
-        $mail->Host = "smtp.gmail.com";
-        $mail->Port = 465;
-        $mail->Username = "tomasjoa21"; //사용할 지메일 계정
-        $mail->Password = "jemi0210!@#"; //구글계정 패스워드
-    }
-    $mail->CharSet = 'UTF-8';
-    $mail->From = "tomasjoa21@gmail.com"; //발송메일(=사용할 지메일 계정)
-    $mail->FromName = "다인패스"; // 메일발송자명
-    $mail->Subject = $subject;
-    $mail->AltBody = ""; // optional, comment out and test
-    $mail->msgHTML($content);
-    $mail->addAddress($to);
-    return $mail->send();
-}
-}
+// if(!function_exists('gmailer')){
+// function gmailer($to, $subject, $content, $type=1)
+// {
+//     global $conf_com_idx, $config;
+//     global $conf_com_idx, $g5;
+//     // 메일발송 사용을 하지 않는다면
+//     if (!$config['cf_email_use']) {
+//         return;
+//     }
+//     if ($type != 1) {
+//         $content = nl2br($content);
+//     }
+//     include_once(G5_PHPMAILER_PATH.'/PHPMailerAutoload.php');
+//     $mail = new PHPMailer(); // defaults to using php "mail()"
+//     if (defined('G5_SMTP') && G5_SMTP) {
+//         $mail->isSMTP();
+//         $mail->SMTPAuth = true;
+//         $mail->SMTPSecure = "ssl";
+//         $mail->Host = "smtp.gmail.com";
+//         $mail->Port = 465;
+//         $mail->Username = "tomasjoa21"; //사용할 지메일 계정
+//         $mail->Password = "jemi0210!@#"; //구글계정 패스워드
+//     }
+//     $mail->CharSet = 'UTF-8';
+//     $mail->From = "tomasjoa21@gmail.com"; //발송메일(=사용할 지메일 계정)
+//     $mail->FromName = "다인패스"; // 메일발송자명
+//     $mail->Subject = $subject;
+//     $mail->AltBody = ""; // optional, comment out and test
+//     $mail->msgHTML($content);
+//     $mail->addAddress($to);
+//     return $mail->send();
+// }
+// }
 
 // 기본 디비 배열 + 확장 meta 배열
 // get_table_meta('g5_shop_item','it_id',215021535,'shop_item')	// 4번째 매개변수는 테이블명과 같으면 생략할 수 있다.

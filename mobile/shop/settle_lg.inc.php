@@ -17,7 +17,7 @@ class XPay extends XPayClient
  * 기본정보를 변경하여 주시기 바랍니다.(파라미터 전달시 POST를 사용하세요)
  */
 $CST_PLATFORM           = $default['de_card_test'] ? 'test' : 'service';    //LG유플러스 결제 서비스 선택(test:테스트, service:서비스)
-$CST_MID                = 'si_'.$config['cf_lg_mid'];                       //상점아이디(LG유플러스으로 부터 발급받으신 상점아이디를 입력하세요)
+$CST_MID                = $default2['de_lg_mid'];                       //상점아이디(LG유플러스으로 부터 발급받으신 상점아이디를 입력하세요)
                                                                         //테스트 아이디는 't'를 반드시 제외하고 입력하세요.
 $LGD_MID                = (('test' == $CST_PLATFORM) ? 't' : '').$CST_MID;  //상점아이디(자동생성)
 $LGD_TIMESTAMP          = date('YmdHis');                                   //타임스탬프

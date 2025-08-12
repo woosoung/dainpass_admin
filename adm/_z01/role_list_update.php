@@ -30,7 +30,7 @@ for($i=0;$i<sizeof($trm_depth);$i++) {
 
 //-- 먼저 left, right 값 초기화
 $sql = " UPDATE {$g5['term_table']} SET trm_left = '0', trm_right = '0' WHERE trm_category = '".$category."' ";
-sql_query($sql);
+sql_query($sql, 1);
 
 // print_r2($trm_desc);exit;
 $depth_array = array();
@@ -56,11 +56,11 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 	//-- 맨 처음 항목 입력 left=1, right=2 설정
 	if($i == 0) {
 		$sql = "INSERT INTO {$g5['term_table']} (trm_idx,trm_idx_parent,trm_name,trm_name2,trm_type,trm_category,trm_desc,trm_sort,trm_left,trm_right,trm_status,trm_reg_dt) 
-					VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','$trm_name[$i]','$trm_name2[$i]','$trm_type[$i]','".$category."','$trm_desc[$i]','$i', 1, 2, '".$trm_status[$i]."', now())
+					VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','".$trm_name[$i]."','".$trm_name2[$i]."','".$trm_type[$i]."','".$category."','".$trm_desc[$i]."','$i', 1, 2, '".$trm_status[$i]."', now())
 					ON DUPLICATE KEY UPDATE trm_idx_parent = '".$idx_array[$trm_depth[$i]-1]."'
-                                            , trm_name = '$trm_name[$i]'
-                                            , trm_name2 = '$trm_name2[$i]'
-                                            , trm_type = '$trm_type[$i]'
+                                            , trm_name = '".$trm_name[$i]."'
+                                            , trm_name2 = '".$trm_name2[$i]."'
+                                            , trm_type = '".$trm_type[$i]."'
                                             , trm_desc = '".$trm_desc[$i]."'
                                             , trm_sort = '".$trm_sort[$i]."'
                                             , trm_status = '".$trm_status[$i]."'
@@ -68,7 +68,7 @@ for($i=0;$i<sizeof($trm_name);$i++) {
                                             , trm_right = 2
 		";
 		sql_query($sql,1);
-		echo $sql.'<br><br>';
+		// echo $sql.'<br><br>';
 	}
 	else {
 
@@ -80,11 +80,11 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 			sql_query("UPDATE {$g5['term_table']} SET trm_right = trm_right + 2 WHERE trm_right > @myLeft AND trm_category = '".$category."' ");
 			sql_query("UPDATE {$g5['term_table']} SET trm_left = trm_left + 2 WHERE trm_left > @myLeft AND trm_category = '".$category."' ");
 			$sql = "INSERT INTO {$g5['term_table']} (trm_idx, trm_idx_parent, trm_name, trm_name2, trm_type, trm_category, trm_desc, trm_sort, trm_left, trm_right, trm_status, trm_reg_dt) 
-						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','$trm_name[$i]','$trm_name2[$i]','$trm_type[$i]','".$category."','".$trm_desc[$i]."','$i',@myLeft + 1,@myLeft + 2, '".$trm_status[$i]."', now())
+						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','".$trm_name[$i]."','".$trm_name2[$i]."','".$trm_type[$i]."','".$category."','".$trm_desc[$i]."','$i',@myLeft + 1,@myLeft + 2, '".$trm_status[$i]."', now())
 						ON DUPLICATE KEY UPDATE trm_idx_parent = '".$idx_array[$trm_depth[$i]-1]."'
-							, trm_name = '$trm_name[$i]'
-							, trm_name2 = '$trm_name2[$i]'
-							, trm_type = '$trm_type[$i]'
+							, trm_name = '".$trm_name[$i]."'
+							, trm_name2 = '".$trm_name2[$i]."'
+							, trm_type = '".$trm_type[$i]."'
 							, trm_desc = '".$trm_desc[$i]."'
 							, trm_sort = '".$trm_sort[$i]."'
 							, trm_status = '".$trm_status[$i]."'
@@ -92,7 +92,7 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 							, trm_right = @myLeft + 2
 			";
 			sql_query($sql,1);
-			echo $sql.'<br><br>';
+			// echo $sql.'<br><br>';
 		}
 		//-- leaf_node가 아니면 동 레벨 idx 참조해서 left, right 생성
 		else {
@@ -100,11 +100,11 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 			sql_query("UPDATE {$g5['term_table']} SET trm_right = trm_right + 2 WHERE trm_right > @myRight AND trm_category = '".$category."' ");
 			sql_query("UPDATE {$g5['term_table']} SET trm_left = trm_left + 2 WHERE trm_left > @myRight AND trm_category = '".$category."' ");
 			$sql = "INSERT INTO {$g5['term_table']} (trm_idx, trm_idx_parent, trm_name, trm_name2, trm_type, trm_category, trm_desc, trm_sort, trm_left, trm_right, trm_status, trm_reg_dt) 
-						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','$trm_name[$i]','$trm_name2[$i]','$trm_type[$i]','".$category."','".$trm_desc[$i]."','$i',@myRight + 1,@myRight + 2, '".$trm_status[$i]."', now())
+						VALUES ('$trm_idx[$i]','".$idx_array[$trm_depth[$i]-1]."','".$trm_name[$i]."','".$trm_name2[$i]."','".$trm_type[$i]."','".$category."','".$trm_desc[$i]."','$i',@myRight + 1,@myRight + 2, '".$trm_status[$i]."', now())
 						ON DUPLICATE KEY UPDATE trm_idx_parent = '".$idx_array[$trm_depth[$i]-1]."'
-							, trm_name = '$trm_name[$i]'
-							, trm_name2 = '$trm_name2[$i]'
-							, trm_type = '$trm_type[$i]'
+							, trm_name = '".$trm_name[$i]."'
+							, trm_name2 = '".$trm_name2[$i]."'
+							, trm_type = '".$trm_type[$i]."'
 							, trm_desc = '".$trm_desc[$i]."'
 							, trm_sort = '".$trm_sort[$i]."'
 							, trm_status = '".$trm_status[$i]."'
@@ -112,7 +112,7 @@ for($i=0;$i<sizeof($trm_name);$i++) {
 							, trm_right = @myRight + 2
 			";
 			sql_query($sql,1);
-			echo $sql.'<br><br>';
+			// echo $sql.'<br><br>';
 		}
 	}
 	
