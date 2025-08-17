@@ -674,9 +674,9 @@ function delete_ndr_file_thumbnail($path, $file)
 //멀티일반파일(이미지가 아닌 파일[복수파일])업로드
 //인수(1:파일배열, 2.DB테이블명, 3.DB인덱스, 4.파일타입)
 if(!function_exists('upload_multi_file')){
-function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
+function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_dir='',$fle_type=''){
     global $conf_com_idx, $g5, $config, $member;
-    //echo count($_files['name']);
+    // echo 'tbl='.$tbl.', $idx='.$idx.', fle_dir='.$fle_dir.', fle_type='.$fle_type;exit;
     // 해당 파일이 이미지파일이면 width, height를 구해야 한다.
     $f_flag = (!count($_files['name']) || !$_files['name'][0]) ? false : true;
     if($f_flag){
@@ -704,6 +704,7 @@ function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_type=''){
                                     ,"fle_db_tbl"=>$tbl
                                     ,"fle_db_idx"=>$idx
                                     ,"fle_type"=>$fle_type
+                                    ,"fle_dir"=>$fle_dir
                                     ,"fle_sort"=>$i
                 ));
                 //print_r2($upfile_info);
@@ -743,7 +744,7 @@ function upload_insert_file($fle_array){
     // $upload_file = upload_common_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
     //-- 파일 업로드 처리 (AWS S3 사용)
     // print_r2($fle_array);
-    $upload_file = upload_aws_s3_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_type']);
+    $upload_file = upload_aws_s3_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_dir']);
     // print_r2($upload_file);exit;
 
     // 파일의 mime_type 추출
@@ -755,6 +756,7 @@ function upload_insert_file($fle_array){
             fle_db_tbl,
             fle_db_idx,
             fle_type,
+            fle_dir,
             fle_path,
             fle_name,
             fle_name_orig,
@@ -771,6 +773,7 @@ function upload_insert_file($fle_array){
             '{$fle_array['fle_db_tbl']}',
             '{$fle_array['fle_db_idx']}',
             '{$fle_array['fle_type']}',
+            '{$fle_array['fle_dir']}',
             '{$upload_file['key']}',
             '{$upload_file['filename']}',
             '{$fle_array['fle_name_orig']}',

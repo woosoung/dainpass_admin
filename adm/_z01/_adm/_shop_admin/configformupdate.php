@@ -69,8 +69,9 @@ $check_sanitize_keys = array(
 'de_guest_cart_use',            //비회원 장바구니
 'de_sms_use',                   //SMS 사용
 'de_sms_hp',                    //관리자 휴대폰번호
-'de_aligo_user_id',             //아이코드 회원아이디
-'de_aligo_key',                 //아이코드 비밀번호
+'de_aligo_user_id',             //알리고 회원아이디
+'de_aligo_key',                 //알리고 비밀번호
+'de_sms_max_bytes',             //문자 최대입력 사이즈
 'de_sms_use1',                  //SMS 회원가입시 고객님께 발송
 'de_sms_use2',                  //SMS 주문시 고객님께 발송
 'de_sms_use3',                  //SMS 주문시 주문시 관리자에게 발송
@@ -130,6 +131,7 @@ $de_sms_cont8 = pg_escape_string($g5['connect_pg'], $_POST['de_sms_cont8']);
 $de_sms_cont9 = pg_escape_string($g5['connect_pg'], $_POST['de_sms_cont9']);
 $de_sms_cont10 = pg_escape_string($g5['connect_pg'], $_POST['de_sms_cont10']);
 
+$de_sms_max_bytes = trim($de_sms_max_bytes) === '' ? 0 : (int)$de_sms_max_bytes;
 $de_settle_min_point = trim($de_settle_min_point) === '' ? 0 : (int)$de_settle_min_point;
 $de_settle_max_point = trim($de_settle_max_point) === '' ? 0  : (int)$de_settle_max_point;
 $de_settle_point_unit = trim($de_settle_point_unit) === '' ? 0 : (int)$de_settle_point_unit;
@@ -160,6 +162,7 @@ $sql = " UPDATE {$g5['dain_default_table']}
        de_settle_point_unit          = {$de_settle_point_unit},
        de_point_days                 = {$de_point_days},
        de_pg_service                 = '{$de_pg_service}',
+       de_sms_max_bytes              = '{$de_sms_max_bytes}',
        de_sms_cont1                  = '{$de_sms_cont1}',
        de_sms_cont2                  = '{$de_sms_cont2}',
        de_sms_cont3                  = '{$de_sms_cont3}',

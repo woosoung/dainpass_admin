@@ -13,9 +13,12 @@ $sql_search = "";
 $sfl = in_array($sfl, array('name', 'category_id')) ? $sfl : '';
 
 if ($stx != "") {
-    if ($sfl != "") {
+    if ($sfl == "name") {
         $sql_search .= " $where $sfl like '%$stx%' ";
         $where = " and ";
+    }
+    else if($sfl == "category_id") {
+        $sql_search .= " $where $sfl like '$stx%' ";
     }
     if (isset($save_stx) && $save_stx && ($save_stx != $stx))
         $page = 1;
@@ -50,52 +53,55 @@ $sql  = " SELECT *
              $sql_common
              $sql_order
              LIMIT $rows OFFSET $from_record ";
-
+// echo $sql;
 $result = sql_query_pg($sql);
 
 $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
 ?>
 
 <div class="local_ov01 local_ov">
-    <?php echo $listall; ?>
-    <span class="btn_ov01"><span class="ov_txt">생성된  분류 수</span><span class="ov_num">  <?php echo number_format($total_count); ?>개</span></span>
+    <?=$listall?>
+    <span class="btn_ov01"><span class="ov_txt">생성된  분류 수</span><span class="ov_num">  <?php echo number_format($total_count)?>개</span></span>
 </div>
 
 <form name="flist" class="local_sch01 local_sch">
-<input type="hidden" name="page" value="<?php echo $page; ?>">
-<input type="hidden" name="save_stx" value="<?php echo $stx; ?>">
+<input type="hidden" name="page" value="<?=$page?>">
+<input type="hidden" name="save_stx" value="<?=$stx?>">
 
 <label for="sfl" class="sound_only">검색대상</label>
 <select name="sfl" id="sfl">
-    <option value="name"<?php echo get_selected($sfl, "name", true); ?>>업종명</option>
-    <option value="category_id"<?php echo get_selected($sfl, "category_id", true); ?>>업종코드</option>
+    <option value="name"<?php echo get_selected($sfl, "name", true)?>>업종명</option>
+    <option value="category_id"<?php echo get_selected($sfl, "category_id", true)?>>업종코드</option>
 </select>
 
 <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-<input type="text" name="stx" value="<?php echo $stx; ?>" id="stx" required class="required frm_input">
+<input type="text" name="stx" value="<?=$stx?>" id="stx" required class="required frm_input">
 <input type="submit" value="검색" class="btn_submit">
 
 </form>
 
 <form name="fcategorylist" method="post" action="./categorylistupdate.php" autocomplete="off">
-<input type="hidden" name="sst" value="<?php echo $sst; ?>">
-<input type="hidden" name="sod" value="<?php echo $sod; ?>">
-<input type="hidden" name="sfl" value="<?php echo $sfl; ?>">
-<input type="hidden" name="stx" value="<?php echo $stx; ?>">
-<input type="hidden" name="page" value="<?php echo $page; ?>">
+<input type="hidden" name="sst" value="<?=$sst?>">
+<input type="hidden" name="sod" value="<?=$sod?>">
+<input type="hidden" name="sfl" value="<?=$sfl?>">
+<input type="hidden" name="stx" value="<?=$stx?>">
+<input type="hidden" name="page" value="<?=$page?>">
 
-<div id="sct" class="tbl_head01 tbl_wrap">
+<div id="sct" class="tbl_head01 tbl_wrap tbl_sticky_100">
     <table>
-    <caption><?php echo $g5['title']; ?> 목록</caption>
+    <caption><?=$g5['title']?> 목록</caption>
     <thead>
     <tr>
-        <th scope="col" rowspan="2"><?php echo subject_sort_link("category_id"); ?>업종코드</a></th>
-        <th scope="col" id="sct_cate" rowspan="2">업종명</th>
+        <th scope="col"><?php echo subject_sort_link("category_id")?>업종코드</a></th>
+        <th scope="col" id="sct_img">비활성아이콘</th>
+        <th scope="col" id="sct_img">활성아이콘</th>
+        <th scope="col" id="sct_cate">업종명</th>
+        <th scope="col" id="sct_desc">설명</th>
         <th scope="col" id="sct_amount">가맹점갯수</th>
-        <th scope="col" id="sct_hpcert">본인인증여부</th>
-        <th scope="col" id="sct_hpcert">성인인증여부</th>
-        <th scope="col" id="sct_sell"><?php echo subject_sort_link("use_yn"); ?>활성화여부</a></th>
-        <th scope="col" rowspan="2">관리</th>
+        <th scope="col" id="sct_hpcert">본인인증</th>
+        <th scope="col" id="sct_hpcert">성인인증</th>
+        <th scope="col" id="sct_sell"><?php echo subject_sort_link("use_yn")?>활성화</a></th>
+        <th scope="col">관리</th>
     </tr>
     <tr>
     </tr>
@@ -103,6 +109,8 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
     <tbody>
     <?php
     $s_add = $s_vie = $s_upd = $s_del = '';
+    $i_wd = 80;
+    $i_ht = 80;
     for ($i=0; $row=sql_fetch_array_pg($result); $i++)
     {
         $level = strlen($row['category_id']) / 2 - 1;
@@ -127,7 +135,7 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
         $s_upd = '<a href="./categoryform.php?w=u&amp;category_id='.$row['category_id'].'&amp;'.$qstr.'" class="btn btn_02"><span class="sound_only">'.get_text($row['name']).' </span>수정</a> ';
 
         if ($is_admin == 'super' || $member['mb_level'] >= 9) {
-            $s_del = '<a href="./categoryformupdate.php?w=d&amp;category_id='.$row['category_id'].'&amp;'.$qstr.'" onclick="return delete_confirm(this);" class="btn btn_02"><span class="sound_only">'.get_text($row['name']).' </span>삭제</a> ';
+            $s_del = '<a href="./categoryformupdate.php?w=d&amp;category_id='.$row['category_id'].'&amp;'.$qstr.'" onclick="return delete_confirm(this);" class="btn btn_02 !bg-red-600"><span class="sound_only">'.get_text($row['name']).' </span>삭제</a> ';
         }
         // 해당 분류에 속한 가맹점의 수(한 개의 가맹점이 여러 개의 업종에 속할 수 있으므로, 가맹점 수가 아닌 업종에 속한 가맹점 수를 구함)
         $sql1 = " SELECT COUNT(*) AS cnt FROM {$g5['shop_category_relation_table']}
@@ -135,36 +143,54 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
         // echo $sql1."<br>";continue;
         $row1 = sql_fetch_pg($sql1);
 
+
+        $isql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop_categories' AND fle_type = 'cat_off' AND fle_dir = 'admin/category' AND fle_db_idx = '{$row['category_id']}' ORDER BY fle_reg_dt DESC LIMIT 1 ";
+        // echo $isql."<br>";
+        $rs = sql_fetch_pg($isql);
+        $is_s3file_yn = (isset($rs['fle_path']) && is_s3file($rs['fle_path'])) ? 1 : 0;
+        @$rs['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$i_wd.':'.$i_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$rs['fle_path'];
+        $rs['thumb'] = ($is_s3file_yn) ? '<span class="inline-block bg_transparent"><img src="'.$rs['thumb_url'].'" alt="'.$rs['fle_name_orig'].'" style="width:'.$i_wd.'px;height:'.$i_ht.'px;border:1px solid #ddd;"></span>' : '<span class="inline-block bg_transparent w-['.$i_wd.'px] h-['.$i_ht.'px]" style="opacity:0.3"></span>';
+
+        $isql2 = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop_categories' AND fle_type = 'cat_on' AND fle_dir = 'admin/category' AND fle_db_idx = '{$row['category_id']}' ORDER BY fle_reg_dt DESC LIMIT 1 ";
+        // echo $isql2."<br>";
+        $rs2 = sql_fetch_pg($isql2);
+        $is_s3file_yn = (isset($rs2['fle_path']) && is_s3file($rs2['fle_path'])) ? 1 : 0;
+        @$rs2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$i_wd.':'.$i_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$rs2['fle_path'];
+        $rs2['thumb'] = ($is_s3file_yn) ? '<span class="inline-block bg_transparent"><img src="'.$rs2['thumb_url'].'" alt="'.$rs2['fle_name_orig'].'" style="width:'.$i_wd.'px;height:'.$i_ht.'px;border:1px solid #ddd;"></span>' : '<span class="inline-block bg_transparent w-['.$i_wd.'px] h-['.$i_ht.'px]" style="opacity:0.3"></span>';
+
         $bg = 'bg'.($i%2);
     ?>
-    <tr class="<?php echo $bg; ?>">
+    <tr class="<?=$bg?>">
         <td class="td_code">
-            <input type="hidden" name="category_id[<?php echo $i; ?>]" value="<?php echo $row['category_id']; ?>">
-            <a href="<?php echo 'javascript:void(0);';//shop_category_url($row['category_id']); ?>"><?php echo $row['category_id']; ?></a>
+            <input type="hidden" name="category_id[<?=$i?>]" value="<?=$row['category_id']?>">
+            <a href="<?php echo 'javascript:void(0);';//shop_category_url($row['category_id'])?>"><?=$row['category_id']?></a>
         </td>
-        <td headers="sct_cate" class="sct_name<?php echo $level; ?>"><?php echo $s_level; ?> <input type="text" name="name[<?php echo $i; ?>]" value="<?php echo get_text($row['name']); ?>" id="name_<?php echo $i; ?>" required class="tbl_input full_input required"></td>
-        <td headers="sct_amount" class="td_amount"><?php echo $row1['cnt']; ?></td>
+        <td class="td_img"><?=$rs['thumb']?></td>
+        <td class="td_img2"><?=$rs2['thumb']?></td>
+        <td headers="sct_cate" class="sct_name<?=$level?>"><?=$s_level?> <input type="text" name="name[<?=$i?>]" value="<?php echo get_text($row['name'])?>" id="name_<?=$i?>" required class="tbl_input full_input required"></td>
+        <td headers="sct_desc" class="sct_desc<?=$level?> td_desc"><input type="text" name="description[<?=$i?>]" value="<?php echo get_text($row['description'])?>" id="description_<?=$i?>" class="tbl_input"></td>
+        <td headers="sct_amount" class="td_amount"><?=$row1['cnt']?></td>
         <td headers="sct_hpcert" class="td_possible">
-            <input type="checkbox" name="cert_use_yn[<?php echo $i; ?>]" value="1" id="cert_use_yes<?php echo $i; ?>" <?php if($row['cert_use_yn'] == 'Y') echo 'checked="checked"'; ?>>
-            <label for="cert_use_yes<?php echo $i; ?>">사용</label>
+            <input type="checkbox" name="cert_use_yn[<?=$i?>]" value="1" id="cert_use_yes<?=$i?>" <?php if($row['cert_use_yn'] == 'Y') echo 'checked="checked"'?>>
+            <label for="cert_use_yes<?=$i?>">사용</label>
         </td>
         <td headers="sct_adultcert" class="td_possible">
-            <input type="checkbox" name="adult_use_yn[<?php echo $i; ?>]" value="1" id="adult_use_yes<?php echo $i; ?>" <?php if($row['adult_use_yn'] == 'Y') echo 'checked="checked"'; ?>>
-            <label for="adult_use_yes<?php echo $i; ?>">사용</label>
+            <input type="checkbox" name="adult_use_yn[<?=$i?>]" value="1" id="adult_use_yes<?=$i?>" <?php if($row['adult_use_yn'] == 'Y') echo 'checked="checked"'?>>
+            <label for="adult_use_yes<?=$i?>">사용</label>
         </td>
         <td headers="sct_sell" class="td_possible">
-            <input type="checkbox" name="use_yn[<?php echo $i; ?>]" value="1" id="use_yn<?php echo $i; ?>" <?php echo ($row['use_yn'] == 'Y' ? "checked" : ""); ?>>
-            <label for="use_yn<?php echo $i; ?>">활성화</label>
+            <input type="checkbox" name="use_yn[<?=$i?>]" value="1" id="use_yn<?=$i?>" <?php echo ($row['use_yn'] == 'Y' ? "checked" : "")?>>
+            <label for="use_yn<?=$i?>">활성화</label>
         </td>
         <td class="td_mng td_mng_s">
-            <?php echo $s_add; ?>
-            <?php echo $s_vie; ?>
-            <?php echo $s_upd; ?>
-            <?php echo $s_del; ?>
+            <?=$s_add?>
+            <?=$s_vie?>
+            <?=$s_upd?>
+            <?=$s_del?>
         </td>
     </tr>
     <?php }
-    if ($i == 0) echo "<tr><td colspan=\"7\" class=\"empty_table\">자료가 한 건도 없습니다.</td></tr>\n";
+    if ($i == 0) echo "<tr><td colspan=\"10\" class=\"empty_table\">자료가 한 건도 없습니다.</td></tr>\n";
     ?>
     </tbody>
     </table>
@@ -180,7 +206,7 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
 
 </form>
 
-<?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page="); ?>
+<?php echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "{$_SERVER['SCRIPT_NAME']}?$qstr&amp;page=")?>
 
 <script>
 $(function() {

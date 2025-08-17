@@ -856,13 +856,13 @@ if (window.jQuery)(function ($) {
 		// STRING: collection lets you show messages in different languages
 		STRING: {
 			remove: 'x',
-			denied: 'You cannot select a $ext file.\nTry again...',
+			denied: '$ext 파일을 선택할 수 없습니다.\n다시 시도해 주세요.',
 			file: '$file',
-			selected: 'File selected: $file',
-			duplicate: 'This file has already been selected:\n$file',
-			toomuch: 'The files selected exceed the maximum size permited ($size)',
-			toomany: 'Too many files selected (max: $max)',
-			toobig: '$file is too big (max $size)'
+			selected: '선택파일: $file',
+			duplicate: '이미 선택된 파일입니다:\n$file',
+			toomuch: '선택된 파일이 허용된 최대 크기를 초과했습니다 ($size)',
+			toomany: '선택된 파일이 너무 많습니다 (최대: $max)',
+			toobig: '$file 파일이 너무 큽니다 (최대 $size)'
 		},
 
 		// name of methods that should be automcatically intercepted so the plugin can disable

@@ -113,6 +113,8 @@ a.btn_02{background:#555}
 /* 테이블공통 */
 .td_category{width:auto;}
 .td_code{width:150px;}
+.td_desc{width:450px;}
+.td_img,.td_img2{width:100px;text-align:center;}
 
 /* shop_categories 관련 */
 #sct .sct_name1 {padding-left:25px;background-image:url('../img/sub_menu_ico.gif');background-repeat:no-repeat;background-size:auto;background-position:5px center;}
@@ -122,11 +124,15 @@ a.btn_02{background:#555}
 
 /* 플랫폼기본환경설정 configform.php */
 /* sms 메세지 샘플 */
+#scf_sms_pre dt{
+    width: 220px;
+}
+
 .scf_sms_box {float:left;margin:0 8px 0 9px;width:250px;text-align:center}
 .scf_sms_img {
     border:0px solid red;
     width:250px;
-    height:478px;
+    height:557px;
     background:none;
     background-image: url('../img/mobile_sms.png');
     background-repeat: no-repeat;
@@ -136,7 +142,7 @@ a.btn_02{background:#555}
 .scf_sms_img textarea {
     margin:124px 0 0;
     width:186px;
-    height:275px;
+    height:355px;
     border:0px solid blue;
     background:transparent;
     font-size:0.95em;

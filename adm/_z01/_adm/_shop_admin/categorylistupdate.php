@@ -15,7 +15,8 @@ $post_ca_id_count = (isset($_POST['category_id']) && is_array($_POST['category_i
 for ($i=0; $i<$post_ca_id_count; $i++)
 {
     $p_ca_name = is_array($_POST['name']) ? strip_tags(clean_xss_attributes($_POST['name'][$i])) : '';
-    
+    $p_ca_desc = is_array($_POST['description']) ? strip_tags(clean_xss_attributes($_POST['description'][$i])) : '';
+
     $_POST['cert_use_yn'][$i] = isset($_POST['cert_use_yn'][$i]) && $_POST['cert_use_yn'][$i] ? 'Y' : 'N';
     $_POST['adult_use_yn'][$i] = isset($_POST['adult_use_yn'][$i]) && $_POST['adult_use_yn'][$i] ? 'Y' : 'N';
     $_POST['use_yn'][$i] = isset($_POST['use_yn'][$i]) && $_POST['use_yn'][$i] ? 'Y' : 'N';
@@ -30,6 +31,7 @@ for ($i=0; $i<$post_ca_id_count; $i++)
     
     $sql = " UPDATE {$g5['shop_categories_table']}
                 set name             = '".$p_ca_name."',
+                    description      = '".$p_ca_desc."',
                     use_yn           = '".sql_real_escape_string(strip_tags($_POST['use_yn'][$i]))."',
                     cert_use_yn      = '".sql_real_escape_string(strip_tags($_POST['cert_use_yn'][$i]))."',
                     adult_use_yn     = '".sql_real_escape_string(strip_tags($_POST['adult_use_yn'][$i]))."'

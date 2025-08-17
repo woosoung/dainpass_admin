@@ -223,7 +223,7 @@ if( function_exists('pg_setting_check2') ){
                         <dt>신용카드</dt><dd>1000원 이상, 모든 카드가 테스트 되는 것은 아니므로 여러가지 카드로 결제해 보셔야 합니다.<br>(BC, 현대, 롯데, 삼성카드)</dd>
                         <dt>계좌이체</dt><dd>150원 이상, 계좌번호, 비밀번호는 가짜로 입력해도 되며, 주민등록번호는 공인인증서의 것과 일치해야 합니다.</dd>
                         <dt>가상계좌</dt><dd>1원 이상, 모든 은행이 테스트 되는 것은 아니며 "해당 은행 계좌 없음" 자주 발생함.<br>(광주은행, 하나은행)</dd>
-                        <dt>휴대폰</dt><dd>1004원, 실결제가 되며 다음날 새벽에 일괄 취소됨</dd>
+                        <dt>휴대폰</dt><dd>1004원, 실결제가 되며 다음날 새벽에 일괄 취소됨</dd> 
                     </dl>
                     <strong>에스크로 사용시 테스트 결제</strong><br>
                     <dl>
@@ -268,10 +268,10 @@ function byte_check(el_cont, el_byte)
     var cnt = 0;
     var exceed = 0;
     var ch = '';
-    var limit_num = 3000; //(jQuery("#cf_sms_type").val() == "LMS") ? 1500 : 80;
+    var limit_num = <?=$default2['de_sms_max_bytes']?>; //(jQuery("#cf_sms_type").val() == "LMS") ? 1500 : 80;
 
     if( $("input[name='cf_aligo_key']").length && $("input[name='cf_aligo_key']").val() ){
-        limit_num = 3000;
+        limit_num = <?=$default2['de_sms_max_bytes']?>;
     }
 
     for (i=0; i<cont.value.length; i++) {
@@ -364,6 +364,14 @@ function byte_check(el_cont, el_byte)
                 <a href="https://smartsms.aligo.in/join.html" target="_blank" class="btn_frmline">알리고 회원가입</a>
             </td>
         </tr>
+        <tr>
+            <th scope="row"><label for="de_sms_hp">문자 최대입력 사이즈<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_sms_max_bytes</span><?php } ?></label></th>
+            <td>
+                <p><?php echo help("문자전송시 입력 가능한 최대 문자용량을 입력하세요. 예) 3000"); ?></p>
+                <p><?php echo help('주의! '.(isset($default2['de_sms_max_bytes'])?$default2['de_sms_max_bytes']:0).' bytes 까지만 전송됩니다. (영문 한글자 : 1byte , 한글 한글자 : 2bytes , 특수문자의 경우 1 또는 2 bytes 임)'); ?></p>
+                <input type="text" name="de_sms_max_bytes" value="<?php echo get_sanitize_input($default2['de_sms_max_bytes']); ?>" id="de_sms_max_bytes" class="frm_input" size="20"> bytes
+            </td>
+        </tr>
          </tbody>
         </table>
     </div>
@@ -372,44 +380,57 @@ function byte_check(el_cont, el_byte)
         <h3>사전에 정의된 SMS프리셋</h3>
         <div class="local_desc01 local_desc">
             <dl>
-                <dt>회원가입시</dt>
-                <dd>{이름} {회원아이디} {회사명}</dd>
-                <dt>주문서작성</dt>
-                <dd>{이름} {보낸분} {받는분} {주문번호} {주문금액} {회사명}</dd>
-                <dt>입금확인시</dt>
-                <dd>{이름} {입금액} {주문번호} {회사명}</dd>
-                <dt>상품배송시</dt>
-                <dd>{이름} {택배회사} {운송장번호} {주문번호} {회사명}</dd>
+                <dt>1. 일반회원가입시 등록회원에게 발송</dt>
+                <dd>{이름} {플랫폼명} {회원아이디}</dd>
+                <dt>2. 예약결제시 예약자에게 발송</dt>
+                <dd>{이름} {예약결제번호} {예약결제금액} {플랫폼명}</dd>
+                <dt>3. 예약결제시 가맹점관리자에게 발송</dt>
+                <dd>{가맹점명} {이름} {예약내용} {플랫폼명}</dd>
+                <dt>4. 입금확인시 예약자에게 발송</dt>
+                <dd>{이름} {예약결제번호} {입금액} {플랫폼명}</dd>
+                <dt>5. 예약취소시 예약자에게 발송</dt>
+                <dd>{이름} {취소내용} {플랫폼명}</dd>
+                <dt>6. 예약취소시 가맹점관리자에게 발송</dt>
+                <dd>{가맹점명} {이름} {취소내용} {플랫폼명}</dd>
+                <dt>7. 예약자에게 출발권고 발송</dt>
+                <dd>{이름} {가맹점명} {가맹점별예약일시} {출발권고내용} {플랫폼명}</dd>
+                <dt>8. 인증코드를 회원에게 발송</dt>
+                <dd>{플랫폼명} {인증코드}</dd>
+                <dt>9. 개인결제청구를 예약자에게 발송</dt>
+                <dd>{가맹점명} {이름} {예약일시} {개인결제청구아이디} {개인결제청구내용} {플랫폼명}</dd>
+                <dt>10. 테스트 문자 발송</dt>
+                <dd>{이름} {테스트내용} {플랫폼명}</dd>
             </dl>
-           <p><?php echo help('주의! 3000 bytes 까지만 전송됩니다. (영문 한글자 : 1byte , 한글 한글자 : 2bytes , 특수문자의 경우 1 또는 2 bytes 임)'); ?></p>
+            <p class="text-blue-900">{OOO} 부분을 적절한 데이터로 치환해서 내용을 발송합니다.</p>
+            <p><?php echo help('주의! 3000 bytes 까지만 전송됩니다. (영문 한글자 : 1byte , 한글 한글자 : 2bytes , 특수문자의 경우 1 또는 2 bytes 임)'); ?></p>
         </div>
 
         <div id="scf_sms">
             <?php
             $scf_sms_title = array (
-                1=>"회원가입시 고객님께 발송", 
-                2=>"예약시 고객님께 발송", 
-                3=>"예약시 상점관리자에게 발송", 
-                4=>"입금확인시 고객님께 발송", 
-                5=>"예약취소시 고객님께 발송",
-                6=>"예약취소시 상점관리자에게 발송",
-                7=>"일정의 출발을 권고하는는 발송",
-                8=>"인증코드를 고객님께 발송",
-                9=>"개인결제청구를 고객님께 발송",
+                1=>"일반회원가입시 회원에게 발송", 
+                2=>"예약결제시 예약자에게 발송", 
+                3=>"예약결제시 가맹점관리자에게 발송", 
+                4=>"입금확인시 예약자에게 발송", 
+                5=>"예약취소시 예약자에게 발송",
+                6=>"예약취소시 가맹점관리자에게 발송",
+                7=>"예약자에게 출발권고 발송",
+                8=>"인증코드를 회원에게 발송",
+                9=>"개인결제청구를 회원에게 발송",
                 10=>"테스트 문자 발송"
             );
             for ($i=1; $i<=10; $i++) {
             ?>
             <section class="scf_sms_box mt-7">
                 <h4><?php echo $scf_sms_title[$i]; ?></h4>
-                <?php if($is_dev_manager) { ?><span class="text-red-800">de_sms_use<?=$i?></span><br><?php } ?>
+                <?php if($is_dev_manager) { ?><span class="text-red-800">de_sms_use<?=$i?> [Y/N]</span><br><?php } ?>
                 <input type="checkbox" name="de_sms_use<?php echo $i; ?>" value="1" id="de_sms_use<?php echo $i; ?>" <?php echo ($default2["de_sms_use".$i] == 'Y' ? " checked" : ""); ?>>
                 <label for="de_sms_use<?php echo $i; ?>"><span class="sound_only"><?php echo $scf_sms_title[$i]; ?></span>사용</label>
                 <?php if($is_dev_manager) { ?><br><span class="text-red-800">de_sms_cont<?=$i?></span><?php } ?>
                 <div class="scf_sms_img">
                     <textarea id="de_sms_cont<?php echo $i; ?>" name="de_sms_cont<?php echo $i; ?>" ONKEYUP="byte_check('de_sms_cont<?php echo $i; ?>', 'byte<?php echo $i; ?>');"><?php echo html_purifier($default2['de_sms_cont'.$i]); ?></textarea>
                 </div>
-                <span id="byte<?php echo $i; ?>" class="scf_sms_cnt">0 / 3000 바이트</span>
+                <span id="byte<?php echo $i; ?>" class="scf_sms_cnt">0 / <?=$default2['de_sms_max_bytes']?> 바이트</span>
             </section>
 
             <script>
