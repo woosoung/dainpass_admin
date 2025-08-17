@@ -4,7 +4,7 @@ include_once('./_common.php');
 
 auth_check_menu($auth, $sub_menu, "r");
 
-$g5['title'] = '업종관리';
+$g5['title'] = '업종(분류)관리';
 include_once (G5_ADMIN_PATH.'/admin.head.php');
 
 $where = " where ";

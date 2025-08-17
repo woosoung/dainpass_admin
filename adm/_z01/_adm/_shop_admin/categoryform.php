@@ -23,11 +23,11 @@ $sql_common = " from {$g5['shop_categories_table']} ";
 if ($w == "")
 {
     if ((!$is_dev_manager && !$ca_id) || ($member['mb_level'] < 8 && !$ca_id))
-        alert("최고관리자만 1단계 분류를 추가할 수 있습니다.");
+        alert("최고관리자만 1단계 업종(분류)를 추가할 수 있습니다.");
 
     $len = strlen($ca_id);
     if ($len == 4) //($len == 6)($len == 10)
-        alert("분류를 더 이상 추가할 수 없습니다.\\n\\n2단계 업종까지만 가능합니다."); //alert("분류를 더 이상 추가할 수 없습니다.\\n\\n5단계 업종까지만 가능합니다.");
+        alert("업종(분류)를 더 이상 추가할 수 없습니다.\\n\\n2단계 업종(분류)까지만 가능합니다."); //alert("분류를 더 이상 추가할 수 없습니다.\\n\\n5단계 업종까지만 가능합니다.");
 
     $len2 = $len + 1;
 
@@ -54,12 +54,12 @@ if ($w == "")
     {
         $sql = " SELECT * FROM {$g5['shop_categories_table']} WHERE category_id = '$ca_id' ";
         $ca = sql_fetch_pg($sql);
-        $html_title = $ca['name'] . " 하위업종추가";
+        $html_title = $ca['name'] . " 하위업종(분류)추가";
         $ca['name'] = "";
     }
     else // 1단계 분류
     {
-        $html_title = "1단계업종추가";
+        $html_title = "1단계업종(분류)추가";
         $ca['use_yn'] = 'Y';
     }
 
@@ -310,7 +310,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     </div>
 </section>
 
-<?php if ($w == "u") { ?>
+<?php if (false) { //($w == "u") { ?>
 <section id="frm_etc">
     <h2 class="h2_frm">기타설정</h2>
     <?php echo $pg_anchor; ?>
