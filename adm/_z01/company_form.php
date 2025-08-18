@@ -177,85 +177,58 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     </tr>
 	<tr>
 		<th scope="row">업체명 히스토리</th>
-		<td>
+		<td colspan="3">
 			<?php echo help("업체명이 바뀌면 자동으로 히스토리가 기록됩니다."); ?>
-			<input type="<?=($is_admin)?'text':'hidden';?>" name="com_names" value="<?php echo $com['com_names'] ?>" id="com_names" readonly class="readonly frm_input w-[100%]" <?=(!$is_admin)?'readonly':''?>>
-            <span style="display:<?=($is_admin)?'none':'';?>"><?php echo $com['com_names'] ?></span>
-		</td>
-		<th scope="row">API Key</th>
-		<td>
-			<?php echo help("API Key 할당 또는 갱신할 필요가 있으면 'Key설정'에 체크를 넣고 확인을 눌러 주세요."); ?>
-			<input type="text" name="com_api_key" value="<?=$com['com_api_key']?>" id="com_api_key" readonly class="readonly frm_input w-[60%]">
-			<label for="key_renewal" class="ml-2 text-blue-600">
-				<input type="checkbox" name="key_renewal" id="key_renewal" value="1" class="border"> Key설정
-            </label>
-			<label for="key_clear" class="ml-2 text-red-600">
-				<input type="checkbox" name="key_clear" id="key_clear" value="1" class="border"> Key삭제
-            </label>
-			<?php echo help("API Key를 삭제하려면 'Key삭제'에 체크를 넣고 확인을 눌러 주세요."); ?>
+			<input type="<?=($is_team_manager)?'text':'hidden';?>" name="names" value="<?php echo $com['names'] ?>" id="names" readonly class="readonly frm_input w-[100%]" <?=(!$is_team_manager)?'readonly':''?>>
+            <span style="display:<?=($is_team_manager)?'none':'';?>"><?=$com['names']??''?></span>
 		</td>
 	</tr>
 	<tr> 
 		<th scope="row">대표이메일<strong class="sound_only">필수</strong></th>
 		<td>
 			<?php echo help("세금계산서, 계약서, 약정서 등 모든 거래 시 소통할 수 있는 이메일 정보를 필수로 등록하세요."); ?>
-			<input type="text" name="com_email" value="<?php echo $com['com_email'] ?>" id="com_email" class="frm_input" style="width:60%;">
-			<?=$saler_mark?>
+			<input type="text" name="contact_email" value="<?=$com['contact_email']??''?>" id="contact_email" class="frm_input" style="width:60%;">
+			<?=$saler_mark??''?>
 		</td>
 		<th scope="row">홈페이지주소</th>
 		<td>
 			<?php echo help("http(s):// 없이 그냥 홈페이지 주소만 입력해 주세요. ex. www.naver.com "); ?>
-			<input type="text" name="com_url" value="<?php echo $com['com_url'] ?>" id="com_url" class="frm_input" style="width:60%">
+			<input type="text" name="url" value="<?=$com['url']??''?>" id="com_url" class="frm_input" style="width:60%">
 		</td>
 	</tr>
 	<tr>
-		<th scope="row"><label for="com_president">대표자<strong class="sound_only">필수</strong></label></th>
+		<th scope="row"><label for="owner_name">대표자<strong class="sound_only">필수</strong></label></th>
 		<td>
-			<input type="text" name="com_president" value="<?php echo $com['com_president'] ?>" id="com_president" class="frm_input" size="20" minlength="2" maxlength="30">
+			<input type="text" name="owner_name" value="<?=$com['owner_name']??''?>" id="owner_name" class="frm_input" size="20" minlength="2" maxlength="30">
 		</td>
-		<th scope="row"><label for="com_tel">업체전화<strong class="sound_only">필수</strong></label></th>
+		<th scope="row"><label for="contact_phone">업체전화<strong class="sound_only">필수</strong></label></th>
 		<td>
-			<input type="text" name="com_tel" value="<?=formatPhoneNumber($com['com_tel'])?>" id="com_tel" class="frm_input" size="20" minlength="2" maxlength="30">
+			<input type="text" name="contact_phone" value="<?=formatPhoneNumber($com['contact_phone']??'')?>" id="contact_phone" class="frm_input" size="20" minlength="2" maxlength="30">
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">사업자등록번호</th>
-		<td>
-			<input type="text" name="com_biz_no" value="<?=formatBizNumber($com['com_biz_no'])?>" class="frm_input" size="20" minlength="2" maxlength="12">
-		</td>
-		<th scope="row">팩스</th>
-		<td>
-			<input type="text" name="com_fax" value="<?=formatPhoneNumber($com['com_fax'])?>" id="com_fax" class="frm_input" size="20" minlength="2" maxlength="30">
-		</td>
-	</tr>
-	<tr>
-		<th scope="row">업종</th>
-		<td>
-			<input type="text" name="com_biz_type2" value="<?=$com['com_biz_type2']?>" class="frm_input w-[70%]">
-		</td>
-		<th scope="row">업태</th>
-		<td>
-			<input type="text" name="com_biz_type" value="<?=$com['com_biz_type']?>" class="frm_input w-[70%]">
+		<td colspan="3">
+			<input type="text" name="business_no" value="<?=formatBizNumber($com['business_no']??'')?>" class="frm_input" size="20" minlength="2" maxlength="12">
 		</td>
 	</tr>	
 	<tr>
-		<th scope="row">사업장 주소 <?=$saler_mark?></th>
+		<th scope="row">사업장 주소 <?=$saler_mark??''?></th>
 		<td class="td_addr_line" style="line-height:280%;">
 			<?php echo help("사업장 주소가 명확하지 않은 경우 [주소검색]을 통해 정확히 입력해 주세요."); ?>
-			<label for="com_zip" class="sound_only">우편번호</label>
-			<input type="text" name="com_zip" value="<?php echo $com['com_zip']; ?>" id="com_zip" readonly class="frm_input readonly" maxlength="6" style="width:65px;">
-			<?php if(!auth_check($auth[$sub_menu],'d',1) || $w=='') { ?>
-			<button type="button" class="btn_frmline" onclick="win_zip('form01', 'com_zip', 'com_addr', 'com_addr2', 'com_addr3', 'com_addr_jibeon');">주소 검색</button>
+			<label for="zipcode" class="sound_only">우편번호</label>
+			<input type="text" name="zipcode" value="<?=$com['zipcode']??''?>" id="zipcode" readonly class="frm_input readonly" maxlength="6" style="width:65px;">
+			<?php if(!@auth_check($auth[$sub_menu],'d',1) || $w=='') { ?>
+			<button type="button" class="btn_frmline" onclick="win_zip('form01', 'zipcode', 'addr1', 'addr2', 'addr3');">주소 검색</button>
 			<?php } ?>
 			<br>
-			<input type="text" name="com_addr" value="<?php echo $com['com_addr'] ?>" id="com_addr" readonly class="w-[400px] frm_input readonly">
-			<label for="com_addr1">기본주소</label><br>
-			<input type="text" name="com_addr2" value="<?php echo $com['com_addr2'] ?>" id="com_addr2" readonly class="w-[400px] frm_input readonly">
-			<label for="com_addr2">상세주소</label>
+			<input type="text" name="addr1" value="<?=$com['addr1']??''?>" id="addr1" readonly class="w-[400px] frm_input readonly">
+			<label for="addr1">기본주소</label><br>
+			<input type="text" name="addr2" value="<?=$com['addr2']??''?>" id="addr2" class="w-[400px] frm_input">
+			<label for="addr2">상세주소</label>
 			<br>
-			<input type="text" name="com_addr3" value="<?php echo $com['com_addr3'] ?>" id="com_addr3" class="w-[400px] frm_input">
-			<label for="com_addr3">참고항목</label>
-			<input type="hidden" name="com_addr_jibeon" value="<?php echo $com['com_addr_jibeon']; ?>" id="com_addr_jibeon" class="w-[400px] frm_input">
+			<input type="text" name="addr3" value="<?=$com['addr3']??''?>" id="addr3" class="w-[400px] frm_input">
+			<label for="addr3">참고항목</label>
 		</td>
         <th scope="row">업체관련파일</th>
         <td>
@@ -282,15 +255,18 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 		<td>
 			<?php //echo help("상태값은 관리자만 수정할 수 있습니다."); ?>
 			<select name="status" id="status">
-				<?=$set_conf['set_shop_status_option']?>
+				<option value="active">정상<?=(($is_dev_manager)?'(active)':'')?></option>
+				<option value="pending">대기<?=(($is_dev_manager)?'(pending)':'')?></option>
+				<option value="closed">폐업<?=(($is_dev_manager)?'(closed)':'')?></option>
+				<option value="shutdown">금지<?=(($is_dev_manager)?'(shutdown)':'')?></option>
 			</select>
 			<script>$('select[name="status"]').val('<?=$com['status']?>');</script>
 		</td>
 	</tr>
     <tr>
-        <th scope="row"><label for="com_memo">메모</label></th>
+        <th scope="row"><label for="settlement_memo">메모</label></th>
         <td colspan="3">
-            <textarea name="com_memo" id="mb_memo"><?=$com['com_memo']?></textarea>
+            <textarea name="settlement_memo" id="settlement_memo"><?=$com['settlement_memo']??''?></textarea>
         </td>
     </tr>
 	</tbody>

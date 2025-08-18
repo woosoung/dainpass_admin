@@ -118,6 +118,8 @@ function z_adm_common_tail(){
 	if(is_file(G5_Z_PATH.'/css/adm_override.css')) add_stylesheet('<link rel="stylesheet" href="'.G5_Z_URL.'/css/adm_override.css">',0);
 	// 추가적인 스타일시트
 	if(is_file(G5_Z_PATH.'/css/adm_add.css')) add_stylesheet('<link rel="stylesheet" href="'.G5_Z_URL.'/css/adm_add.css">',0);
+	// 추가적인 스타일시트
+	if(is_file(G5_Z_PATH.'/css/adm_add.css')) add_stylesheet('<link rel="stylesheet" href="'.G5_Z_URL.'/css/_set.css">',0);
 	// _z01개별페이지에 필요한 스타일시트
 	if(is_file(G5_ADMIN_PATH.'/'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css')) add_stylesheet('<link rel="stylesheet" href="'.G5_ADMIN_URL.'/'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css">',0);
 	// adm후킹개별페이지에 필요한 스타일시트

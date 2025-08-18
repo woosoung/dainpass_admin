@@ -228,7 +228,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </td>
         </tr>
         <tr>
-            <th scope="row">본인확인 체크<?php if($is_dev_manager) { ?><br><span class="text-red-800">cert_use_yn</span><?php } ?></th>
+            <th scope="row">본인확인 체크<?php if($is_dev_manager) { ?><br><span class="text-red-800">cert_use_yn [Y/N]</span><?php } ?></th>
             <td>
                 <input type="radio" name="cert_use_yn" value="Y" id="cert_use_yes" <?=$cert_use_y?>>
                 <label for="cert_use_yes">사용함</label>&nbsp;&nbsp;&nbsp;
@@ -237,7 +237,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </td>
         </tr>
         <tr>
-            <th scope="row">성인인증 체크<?php if($is_dev_manager) { ?><br><span class="text-red-800">adult_use_yn</span><?php } ?></th>
+            <th scope="row">성인인증 체크<?php if($is_dev_manager) { ?><br><span class="text-red-800">adult_use_yn [Y/N]</span><?php } ?></th>
             <td>
                 <input type="radio" name="adult_use_yn" value="Y" id="adult_use_yes" <?=$adult_use_y?>>
                 <label for="adult_use_yes">사용함</label>&nbsp;&nbsp;&nbsp;

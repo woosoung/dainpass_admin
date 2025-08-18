@@ -1138,10 +1138,44 @@ function tms_help($help="",$iup=0,$bgcolor='#ffffff',$fontcolor='#555555'){
 }
 }
 
+//범위(range) input form 생성 함수
+if(!function_exists('tms_input_range')){
+function tms_input_range($rname='',$val='1',$w='',$min='0',$max='1',$step='0.1',$width='100',$padding_right=29,$unit=''){
+	global $conf_com_idx,$g5,$config,$default,$member,$is_admin;
+	
+	if(preg_match("/%/", $width)){
+		$width = substr($width,0,-1);
+		$wd_class = ' bp_wdp'.$width;
+	}else{
+		$wd_class = ' bp_wdx'.$width;
+	}
+	
+	$output_show = '';
+	if(!$padding_right || $padding_right == '0'){
+		$output_show = 'display:none;';
+		$padding_right_style='';
+		$wd_class = '';
+	}else{
+		$padding_right_style = 'padding-right:'.$padding_right.'px;';
+	}
+	
+	$rid = 'r_'.bpwg_uniqid();
+	$rinid = 'rin_'.bpwg_uniqid();
+	$rotid = 'rot_'.bpwg_uniqid();
+	
+	ob_start();
+    include G5_Z_PATH.'/form/input_range.skin.php';
+    $input_content = ob_get_contents();
+    ob_end_clean();
+
+    return $input_content;
+}	
+}
+
 //색상/투명도 설정 input form 생성 함수
 if(!function_exists('tms_input_color')){
 function tms_input_color($name='',$value='#333333',$w='',$alpha_flag=0){
-    global $conf_com_idx, $g5,$config,$default,$member,$is_admin;
+    global $conf_com_idx,$g5,$config,$default,$member,$is_admin;
     
     //if($name == '') return '컬러픽커 name값이 없습니다.';
     
