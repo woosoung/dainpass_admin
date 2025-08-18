@@ -100,7 +100,7 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
         <th scope="col" id="sct_amount">가맹점갯수</th>
         <th scope="col" id="sct_hpcert">본인인증</th>
         <th scope="col" id="sct_hpcert">성인인증</th>
-        <th scope="col" id="sct_sell"><?php echo subject_sort_link("use_yn")?>활성화</a></th>
+        <th scope="col" id="sct_sell"><?php echo subject_sort_link("use_yn")?>예약가능</a></th>
         <th scope="col">관리</th>
     </tr>
     <tr>
@@ -180,7 +180,7 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
         </td>
         <td headers="sct_sell" class="td_possible">
             <input type="checkbox" name="use_yn[<?=$i?>]" value="1" id="use_yn<?=$i?>" <?php echo ($row['use_yn'] == 'Y' ? "checked" : "")?>>
-            <label for="use_yn<?=$i?>">활성화</label>
+            <label for="use_yn<?=$i?>">가능</label>
         </td>
         <td class="td_mng td_mng_s">
             <?=$s_add?>

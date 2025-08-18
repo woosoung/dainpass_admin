@@ -2,7 +2,7 @@
 $sub_menu = "920800";
 include_once('./_common.php');
 
-auth_check($auth[$sub_menu],'w');
+@auth_check($auth[$sub_menu],'w');
 
 // 추가적인 검색조건 (ser_로 시작하는 검색필드)
 foreach($_REQUEST as $key => $value ) {
@@ -20,14 +20,47 @@ foreach($_REQUEST as $key => $value ) {
     }
 }
 
-$html_title = ($w=='')?'추가':'수정'; 
 
-$g5['title'] = '가맹점 '.$html_title;
-//include_once('./_top_menu_company.php');
-include_once(G5_ADMIN_PATH.'/admin.head.php');
-include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 //echo $g5['container_sub_title'];
-
+/*
+$com['shop_id'] => 600
+$com['category_id'] => a020
+$com['name'] => 워시존스페셜
+$com['business_no'] => 012-31-87659
+$com['owner_name'] => 정서현
+$com['contact_email'] => washzonespecial600@carwash.com
+$com['contact_phone'] => 010-6000-0600
+$com['zipcode'] => 63334 
+$com['addr1'] => 부산광역시 북구 낙동대로1766번길 81-24
+$com['addr2'] => 1층
+$com['addr3'] => 
+$com['latitude'] => 35.207
+$com['longitude'] => 129.002
+$com['url'] => https://washzonespecial600.co.kr
+$com['max_capacity'] => 50
+$com['status'] => active
+$com['created_at'] => 2025-04-17 22:50:00
+$com['updated_at'] => 2025-04-17 22:50:00
+$com['reservelink_yn'] => N
+$com['reservelink'] => 
+$com['reserve_tel'] => 
+$com['shop_description'] => 워시존스페셜에 오신 것을 진심으로 환영합니다. 저희는 친환경 세차, 프리미엄 스팀 세차, 버블 세차 등 다양한 차량 관리 서비스를 제공하며, 고객님의 소중한 차량을 깨끗하고 산뜻하게 유지해드립니다. 편안한 공간과 전문적인 서비스로 만족을 드리겠습니다. 워시존스페셜에서 내 차의 새로운 변화를 경험해보세요!
+$com['bank_account'] => 318-83-247789
+$com['bank_name'] => 
+$com['bank_holder'] => 
+$com['settlement_type'] => manual
+$com['settlement_cycle'] => monthly
+$com['settlement_day'] => 25
+$com['tax_type'] => with_vat
+$com['settlement_memo'] => 
+$com['is_active'] => Y
+$com['shop_name'] => 워시존스페셜
+$com['cancel_policy'] => 예약취소규정입니다
+$com['point_rate'] => 5.00
+$com['names'] => 워시존스페셜
+$com['branch'] => 본사
+$com['shop_parent_id'] => 0
+*/
 if ($w == '') {
     $com_idx = 0;
     $com['status'] = 'ok';
@@ -36,6 +69,7 @@ if ($w == '') {
 }
 else if ($w == 'u') {
 	$com = get_table_meta_pg('shop','shop_id',$shop_id);
+	// print_r2($com);exit;
 	
 	if (!$com['shop_id'])
 		alert('존재하지 않는 가맹점자료입니다.');
@@ -60,9 +94,7 @@ else if ($w == 'u') {
 	// $sql = "SELECT * FROM {$g5['dain_file_table']} 
 	// 		WHERE fle_db_tbl = 'company' AND fle_db_idx = '".$com['com_idx']."' ORDER BY fle_sort, fle_reg_dt DESC ";
 	// $rs = sql_query($sql,1);
-
-	
-	
+	// exit;
 }
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');
@@ -73,6 +105,13 @@ $check_array=array();
 for ($i=0;$i<sizeof($check_array);$i++) {
 	${$check_array[$i].'_'.$com[$check_array[$i]]} = ' checked';
 }
+
+$html_title = ($w=='')?'추가':'수정'; 
+
+$g5['title'] = '가맹점 '.$html_title;
+//include_once('./_top_menu_company.php');
+include_once(G5_ADMIN_PATH.'/admin.head.php');
+include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 // add_javascript('js 구문', 출력순서); 숫자가 작을 수록 먼저 출력됨
 add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js

@@ -60,7 +60,7 @@ if (!$sst) {
 }
 
 $sql_order = " ORDER BY {$sst} {$sod} ";
-$rows = $config['cf_page_rows'];
+$rows = 20;//$config['cf_page_rows'];
 if (!$page) $page = 1; // 페이지가 없으면 첫 페이지 (1 페이지)
 $from_record = ($page - 1) * $rows; // 시작 열을 구함
 
@@ -133,7 +133,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <input type="hidden" name="token" value="">
     <input type="hidden" name="w" value="">
     <div class="tbl_head01 tbl_wrap">
-        <table class="table table-bordered table-condensed">
+        <table class="table table-bordered table-condensed tbl_sticky_100">
             <caption><?php echo $g5['title']; ?> 목록</caption>
             <thead>
                 <tr class="success">
@@ -197,7 +197,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <div class="btn_fixed_top">
         <input type="submit" name="act_button" value="디폴트업체변경" onclick="document.pressed=this.value" class="btn_03 btn" style="margin-right:50px;display:none;">
 
-        <?php if(!auth_check($auth[$sub_menu],"d",1)) { ?>
+        <?php if(!@auth_check($auth[$sub_menu],"d",1)) { ?>
         <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn" style="display:none;">
         <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
         <?php } ?>

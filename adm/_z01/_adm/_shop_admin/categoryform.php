@@ -181,7 +181,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 <?php if($is_dev_manager) { ?>
 <div class="local_desc02 local_desc">
     <p>
-        <span class="text-red-800">여기의 데이터는 dain_file 테이블관련 데이터입니다.</span>
+        <span class="text-red-800">여기는 shop_categories 테이블관련 데이터입니다.</span>
     </p>
 </div>
 <?php } ?>
@@ -202,8 +202,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             <th scope="row"><label for="category_id">분류코드</label><?php if($is_dev_manager) { ?><br><span class="text-red-800">category_id</span><?php } ?></th>
             <td>
             <?php if ($w == "") { ?>
-                <?php echo help("자동으로 보여지는 업종코드를 사용하시길 권해드리지만 직접 입력한 값으로도 사용할 수 있습니다.\n업종코드는 나중에 수정이 되지 않으므로 신중하게 결정하여 사용하십시오.\n\n업종코드는 2자리씩 10자리를 사용하여 5단계를 표현할 수 있습니다.\n0~z까지 입력이 가능하며 한 업종당 최대 1296가지를 표현할 수 있습니다.\n그러므로 총 3656158440062976가지의 업종을 사용할 수 있습니다."); ?>
-                <input type="text" name="category_id" value="<?php echo $subid; ?>" id="category_id" required class="required frm_input" size="<?php echo $sublen; ?>" maxlength="<?php echo $sublen; ?>">
+                <?php ;//echo help("자동으로 보여지는 업종코드를 사용하시길 권해드리지만 직접 입력한 값으로도 사용할 수 있습니다.\n업종코드는 나중에 수정이 되지 않으므로 신중하게 결정하여 사용하십시오.\n\n업종코드는 2자리씩 10자리를 사용하여 5단계를 표현할 수 있습니다.\n0~z까지 입력이 가능하며 한 업종당 최대 1296가지를 표현할 수 있습니다.\n그러므로 총 3656158440062976가지의 업종을 사용할 수 있습니다."); ?>
+                <?php echo help("업종코드는 자동으로 설정됩니댜."); ?>
+                <input type="text" name="category_id" value="<?php echo $subid; ?>" id="category_id" readonly required class="readonly required frm_input" size="<?php echo $sublen; ?>" maxlength="<?php echo $sublen; ?>">
             <?php } else { ?>
                 <input type="hidden" name="category_id" value="<?php echo $ca['category_id']; ?>">
                 <span class="frm_ca_id"><?php echo $ca['category_id']; ?></span>

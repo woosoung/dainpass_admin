@@ -33,10 +33,16 @@ $('#file_favicon').MultiFile({
         }
     },
 });
-// $('#file_ogimg').MultiFile({
-//     max:1,
-//     accept:'jpg|jpeg|png|gif',
-// });
+
+$('#file_plflogo').MultiFile({
+    max:1,
+    accept:'jpg|jpeg|png|gif',
+});
+
+$('#file_ogimg').MultiFile({
+    max:1,
+    accept:'jpg|jpeg|png|gif',
+});
 // $('#file_sitemap').MultiFile({
 //     max:1,
 //     accept:'xml',
@@ -49,4 +55,24 @@ function fconfigform_submit(f) {
     f.action = update_file;
     return true;
 }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+  const copyIcons = document.querySelectorAll(".copy_url");
+
+  copyIcons.forEach(icon => {
+    icon.addEventListener("click", function () {
+      const targetSpan = this.nextElementSibling;
+      if (targetSpan && targetSpan.classList.contains("copied_url")) {
+        const text = targetSpan.textContent;
+        navigator.clipboard.writeText(text)
+          .then(() => alert("텍스트가 복사되었습니다!"))
+          .catch(err => {
+            alert("복사에 실패했습니다.");
+            console.error("Clipboard copy failed:", err);
+          });
+      }
+    });
+  });
+});
 </script>
