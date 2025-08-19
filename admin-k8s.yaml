@@ -44,10 +44,10 @@ metadata:
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
     # 발급받은 SSL 인증서의 ARN을 여기에 추가하세요.
-    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:289652921928:certificate/dc7c73ee-a4b6-4b72-b75d-01a6a03ced64
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:289652921928:certificate/d0bc9f08-dc65-4d6f-b783-4cd2fe0849db
 spec:
   rules:
-    - host: jv.dainpass.com
+    - host: k8s.dainpass.com
       http:
         paths:
           - path: /
