@@ -37,7 +37,7 @@ jobs:
       - name: Build and push Docker image to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: dainpass/php-admin # ECR 리포지토리 이름
+          ECR_REPOSITORY: dainpass/php-admin-page # ECR 리포지토리 이름
           IMAGE_TAG: ${{ steps.image_tag.outputs.TAG }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
