@@ -1,0 +1,64 @@
+name: PHP Admin CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      # 1. 소스 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. AWS 자격 증명 설정
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 3. Amazon ECR 로그인
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 4. 이미지 태그 정의 (날짜 + 짧은 커밋 해시)
+      - name: Define readable image tag
+        id: image_tag
+        run: echo "TAG=$(date +'%Y%m%d')-${{ github.sha_short }}" >> $GITHUB_OUTPUT
+
+      # 5. 도커 이미지 빌드 및 ECR에 푸시
+      - name: Build and push Docker image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: dainpass/php-admin # ECR 리포지토리 이름
+          IMAGE_TAG: ${{ steps.image_tag.outputs.TAG }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      # 6. EKS 클러스터에 접근하도록 kubectl 설정
+      - name: Update kubeconfig for EKS
+        run: aws eks update-kubeconfig --region ap-northeast-2 --name dainpass-cluster
+
+      # 7. Kubernetes에 배포
+      - name: Deploy to EKS
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: dainpass/php-admin-page
+          IMAGE_TAG: ${{ steps.image_tag.outputs.TAG }}
+        run: |
+          # YAML 파일 내의 이미지 주소를 동적으로 변경
+          sed -i.bak "s|image:.*|image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" admin-k8s.yaml
+          
+          echo "--- Deploying admin-k8s.yaml with new image ---"
+          cat admin-k8s.yaml # 배포 전 변경된 내용 확인
+          
+          # 변경된 YAML 파일을 클러스터에 적용
+          kubectl apply -f admin-k8s.yaml
