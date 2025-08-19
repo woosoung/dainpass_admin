@@ -47,7 +47,7 @@ metadata:
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:289652921928:certificate/dc7c73ee-a4b6-4b72-b75d-01a6a03ced64
 spec:
   rules:
-    - host: admin.dainpass.com
+    - host: jv.dainpass.com
       http:
         paths:
           - path: /
