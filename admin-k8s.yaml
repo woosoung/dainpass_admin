@@ -8,8 +8,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 20Gi  # 그누보드는 더 많은 저장공간 필요 (파일 업로드, 이미지 등)
-  storageClassName: gp3  # gp3가 더 성능이 좋고 비용 효율적
+      storage: 5Gi  # 그누보드는 더 많은 저장공간 필요 (파일 업로드, 이미지 등)
+  storageClassName: gp2  # gp3가 더 성능이 좋고 비용 효율적
 ---
 # 1. Secret: 데이터베이스 연결 정보
 apiVersion: v1
