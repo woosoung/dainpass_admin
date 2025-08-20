@@ -25,30 +25,126 @@ $g5['connect_pg'] = $connect_pg;
 // postgreSQL DB : end
 
 
-if(!function_exists('sql_query_pg')){
+// if(!function_exists('sql_query_pg')){
+// function sql_query_pg($sql, $error=G5_DISPLAY_SQL_ERROR, $link=null)
+// {
+//     global $conf_com_idx, $g5;
+    
+//     if(!$link)
+//         $link = $g5['connect_pg'];
+
+//     // Blind SQL Injection 취약점 해결
+//     $sql = trim($sql);
+
+//     if ($error) {
+//         $result = pg_query($link, $sql) or die("<p>$sql</p> <p>error file : {$_SERVER['SCRIPT_NAME']}</p>");
+//     } else {
+//         try {
+//             $result = @pg_query($link, $sql);
+//         } catch (Exception $e) {
+//             $result = null;
+//         }
+//     }
+
+//     return $result;
+// }
+// }
+
+// --- 1) 래퍼 클래스 정의 ---
+if (!class_exists('PGSQLResultWrapper')) {
+    class PGSQLResultWrapper {
+        /** @var resource|\PgSql\Result 실제 pg_query 결과 */
+        public $result;
+
+        /** @var int 현재 필드 인덱스(호환용) */
+        public $current_field = 0;
+
+        /** @var int 필드 수 */
+        public $field_count = 0;
+
+        /** @var array<int,int>|null 현재 로우의 각 컬럼 길이(호환용) */
+        public $lengths = null;
+
+        /** @var int 결과 행 수 */
+        public $num_rows = 0;
+
+        /** @var int 타입(호환용, 고정 0) */
+        public $type = 0;
+
+        public function __construct($pg_result) {
+            $this->result       = $pg_result;
+            $this->field_count  = @pg_num_fields($pg_result) ?: 0;
+            $this->num_rows     = @pg_num_rows($pg_result) ?: 0;
+            // $this->lengths 는 현재 로우를 fetch한 뒤에만 의미가 있어 기본 null 유지
+        }
+    }
+}
+
+// --- 2) 래퍼 판별 유틸 ---
+if (!function_exists('is_pg_wrapper')) {
+function is_pg_wrapper($res) {
+    return ($res instanceof PGSQLResultWrapper);
+}
+}
+
+// --- 3) sql_query_pg : 래퍼를 반환하도록 변경 ---
+if (!function_exists('sql_query_pg')) {
 function sql_query_pg($sql, $error=G5_DISPLAY_SQL_ERROR, $link=null)
 {
-    global $conf_com_idx, $g5;
-    
+    global $g5;
+
     if(!$link)
         $link = $g5['connect_pg'];
 
-    // Blind SQL Injection 취약점 해결
+    // Blind SQL Injection 취약점 최소화
     $sql = trim($sql);
 
     if ($error) {
-        $result = pg_query($link, $sql) or die("<p>$sql</p> <p>error file : {$_SERVER['SCRIPT_NAME']}</p>");
+        $raw = @pg_query($link, $sql) or die("<p>$sql</p> <p>error file : {$_SERVER['SCRIPT_NAME']}</p>");
     } else {
         try {
-            $result = @pg_query($link, $sql);
+            $raw = @pg_query($link, $sql);
         } catch (Exception $e) {
-            $result = null;
+            $raw = null;
         }
     }
 
-    return $result;
+    // SELECT/SHOW 등 결과셋이 있는 경우만 래퍼 생성
+    if ($raw) {
+        return new PGSQLResultWrapper($raw);
+    }
+
+    // INSERT/UPDATE/DELETE 등 영향만 있는 경우에는 그대로 null/false 반환
+    return $raw;
 }
 }
+
+// --- 6) (선택) 메타만 필요할 때 꺼내보는 헬퍼 ---
+if (!function_exists('sql_result_meta_pg')) {
+function sql_result_meta_pg($result)
+{
+    if (is_pg_wrapper($result)) {
+        return [
+            'current_field' => $result->current_field,
+            'field_count'   => $result->field_count,
+            'lengths'       => $result->lengths,
+            'num_rows'      => $result->num_rows,
+            'type'          => $result->type,
+        ];
+    } elseif ($result) {
+        return [
+            'current_field' => 0,
+            'field_count'   => @pg_num_fields($result) ?: 0,
+            'lengths'       => null,
+            'num_rows'      => @pg_num_rows($result) ?: 0,
+            'type'          => 0,
+        ];
+    }
+    return null;
+}
+}
+
+
 
 if(!function_exists('sql_insert_id_pg')){
 /*
@@ -141,7 +237,7 @@ function sql_field_names_pg($table, $link=null)
 			WHERE table_name = '".$table."'
 	";
     $result = sql_query_pg($sql,1);
-	while($field = sql_fetch_array_pg($result)) {
+	while($field = sql_fetch_array_pg($result->result)) {
 		// print_r2($field);
 		// echo $field['column_name'].'<br>';
 		$columns[] = $field['column_name'];
@@ -161,7 +257,7 @@ function sql_fetch_pg($sql, $error=G5_DISPLAY_SQL_ERROR, $link=null)
         $link = $g5['connect_pg'];
 
     $result = sql_query_pg($sql, $error, $link);
-    $row = sql_fetch_array_pg($result);
+    $row = sql_fetch_array_pg($result->result);
     return $row;
 }
 }
@@ -454,7 +550,7 @@ function get_meta($db_table,$db_id,$code64=1)
     // echo $sql.'<br>';exit;
     $rs = sql_query_pg($sql);
     
-    for($i=0;$row=sql_fetch_array_pg($rs);$i++) {
+    for($i=0;$row=sql_fetch_array_pg($rs->result);$i++) {
         $mta2[$row['mta_key']] = $row['mta_value'];
         //echo $row['mta_key'].'='.$row['mta_value'].'<br>';
         if(is_serialized($row['mta_value'])) {
@@ -1159,9 +1255,9 @@ function tms_input_range($rname='',$val='1',$w='',$min='0',$max='1',$step='0.1',
 		$padding_right_style = 'padding-right:'.$padding_right.'px;';
 	}
 	
-	$rid = 'r_'.bpwg_uniqid();
-	$rinid = 'rin_'.bpwg_uniqid();
-	$rotid = 'rot_'.bpwg_uniqid();
+	$rid = 'r_'.tms_uniqid();
+	$rinid = 'rin_'.tms_uniqid();
+	$rotid = 'rot_'.tms_uniqid();
 	
 	ob_start();
     include G5_Z_PATH.'/form/input_range.skin.php';
@@ -1499,5 +1595,16 @@ function tms_g5_url_check($url){
     }
     
     return $complete_url;
+}
+}
+
+if(!function_exists('category_tree_array')){
+function category_tree_array($cat_code){
+    $cat_arr = array();
+    $cnt = strlen($cat_code)/2;
+    for($i=1;$i<=$cnt;$i++){
+        array_push($cat_arr,substr($cat_code,0,$i*2));
+    }
+    return $cat_arr;
 }
 }

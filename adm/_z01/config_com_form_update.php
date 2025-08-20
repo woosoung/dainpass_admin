@@ -12,7 +12,7 @@ $r = sql_query_pg(" SELECT column_name
       AND table_name = '{$g5['setting_table']}'
     ORDER BY ordinal_position ");
 $db_fields = [];
-while ( $d = sql_fetch_array_pg($r) ) {$db_fields[] = $d['column_name'];}
+while ( $d = sql_fetch_array_pg($r->result) ) {$db_fields[] = $d['column_name'];}
 $db_prefix = substr($db_fields[0],0,3);
 
 

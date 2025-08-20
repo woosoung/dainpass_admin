@@ -8,7 +8,7 @@ $set_sql = " SELECT * FROM {$g5['setting_table']}
                         AND set_type = '{$set_type}' ";
 $set_res = sql_query_pg($set_sql);
 
-for($i=0;$row=sql_fetch_array_pg($set_res);$i++){
+for($i=0;$row=sql_fetch_array_pg($set_res->result);$i++){
     ${'set_'.$row['set_type']}[$row['set_name']] = $row['set_value'];
     // if(preg_match("/(_subject|_content|_title|_ttl|_desc|_description)$/",$row['set_name']) ) continue;
     if(!preg_match("/,/",${'set_'.$row['set_type']}[$row['set_name']])){

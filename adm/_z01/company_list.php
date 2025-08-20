@@ -155,7 +155,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             </thead>
             <tbody>
                 <?php
-                for ($i=0; $row=sql_fetch_array_pg($result); $i++){
+                for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $s_mod = '<a href="./company_form.php?'.$qstr.'&amp;w=u&amp;shop_id='.$row['shop_id'].'">수정</a>';
 
 

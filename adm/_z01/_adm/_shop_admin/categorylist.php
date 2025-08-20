@@ -111,7 +111,7 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
     $s_add = $s_vie = $s_upd = $s_del = '';
     $i_wd = 80;
     $i_ht = 80;
-    for ($i=0; $row=sql_fetch_array_pg($result); $i++)
+    for ($i=0; $row=sql_fetch_array_pg($result->result); $i++)
     {
         $level = strlen($row['category_id']) / 2 - 1;
         $p_ca_name = '';

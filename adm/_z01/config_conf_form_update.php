@@ -16,7 +16,7 @@ $rsql = " SELECT column_name
 $r = sql_query_pg($rsql);
 
 $db_fields = [];
-while ( $d = sql_fetch_array_pg($r) ) {$db_fields[] = $d['column_name'];}
+while ( $d = sql_fetch_array_pg($r->result) ) {$db_fields[] = $d['column_name'];}
 $db_prefix = substr($db_fields[0],0,3);
 
 

@@ -7,7 +7,7 @@ $set_menu_sql = " SELECT * FROM {$g5['setting_table']}
                         AND set_type = '{$set_type}' ";
 $set_menu_res = sql_query_pg($set_menu_sql);
 
-for($i=0;$row=sql_fetch_array_pg($set_menu_res);$i++){
+for($i=0;$row=sql_fetch_array_pg($set_menu_res->result);$i++){
     ${'set_'.$row['set_type']}[$row['set_name']] = $row['set_value'];
     // A=B 형태를 가지고 있으면 자동 할당
     $set_values = explode(',', preg_replace("/\s+/", "", ${'set_'.$row['set_type']}[$row['set_name']]));

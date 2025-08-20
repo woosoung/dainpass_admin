@@ -22,11 +22,14 @@ if( function_exists('pg_setting_check2') ){
     pg_setting_check2(true);
 }
 
+
+
 // if(!$default2['de_kakaopay_cancelpwd']){
 //     $default2['de_kakaopay_cancelpwd'] = '1111';
 // }
+add_stylesheet('<link rel="stylesheet" href="'.G5_Z_URL.'/js/colpick/colpick.css">', 0);
+add_javascript('<script src="'.G5_Z_URL.'/js/colpick/colpick.js"></script>',0);
 ?>
-
 <form name="fconfig" action="./configformupdate.php" onsubmit="return fconfig_check(this)" method="post" enctype="MULTIPART/FORM-DATA">
 <input type="hidden" name="token" value="">
 <section id="anc_scf_info">
@@ -466,6 +469,26 @@ function byte_check(el_cont, el_byte)
             <td>
                  <?php echo help("비회원 장바구니 기능을 사용하려면 체크하십시오."); ?>
                 <input type="checkbox" name="de_guest_cart_use" value="1" id="de_guest_cart_use"<?php echo $default2['de_guest_cart_use'] == 'Y'?' checked':''; ?>> 사용
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="de_schedule_max_day">최대일정날짜수<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_max_date</span><?php } ?></label></th>
+            <td>
+                 <?php echo help("일정을 구성하는 최대 날짜수(예를들어 5 로 지정하면:5일치의 일정까지만 등록이 가능합니다."); ?>
+                <?php echo tms_input_range('de_schedule_max_day',$default2['de_schedule_max_day']??'5',$w,1,10,1,'40',48,'일'); ?>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">일정날짜별 코스색상<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_selected_course1 ~ 5 [#333333]</span><?php } ?></th>
+            <td>
+                <?php echo $default2['de_schedule_max_day']; ?>
+                <?php echo tms_input_color('de_selected_course1',$default2['de_selected_course1']??'#cccccc',$w); ?>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">일정선택업체별 색상<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_selected_com1 ~ 100 [#333333]</span><?php } ?></th>
+            <td>
+                
             </td>
         </tr>
          </tbody>

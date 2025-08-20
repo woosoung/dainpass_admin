@@ -100,7 +100,7 @@ else if ($w == "u")
     $cof['cof_fidxs'] = array();
     $cof['cof_lst_idx'] = 0;
     $cof['fle_db_idx'] = $ca_id;
-    for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
+    for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
         $is_s3file_yn = is_s3file($row2['fle_path']);
         $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$cof_wd.':'.$cof_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
         $row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$cof_wd.'px;height:'.$cof_ht.'px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
@@ -125,7 +125,7 @@ else if ($w == "u")
     $con['con_fidxs'] = array();
     $con['con_lst_idx'] = 0;
     $con['fle_db_idx'] = $ca_id;
-    for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
+    for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
         $is_s3file_yn = is_s3file($row2['fle_path']);
         $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$con_wd.':'.$con_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
         $row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$con_wd.'px;height:'.$con_ht.'px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;

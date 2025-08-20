@@ -40,7 +40,7 @@ $fvc['afvc_f_arr'] = array();
 $fvc['afvc_fidxs'] = array();
 $fvc['afvc_lst_idx'] = 0;
 $fvc['fle_db_idx'] = 'afavicon';
-for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
+for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
     $is_s3file_yn = is_s3file($row2['fle_path']);
     $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$fvc_wd.':'.$fvc_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
     $row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$fvc_wd.'px;height:'.$fvc_ht.'px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
@@ -66,7 +66,7 @@ $mnglogo['mnglogo_f_arr'] = array();
 $mnglogo['mnglogo_fidxs'] = array();
 $mnglogo['mnglogo_lst_idx'] = 0;
 $mnglogo['fle_db_idx'] = 'mnglogo';
-for($i=0;$row2=sql_fetch_array_pg($rs2);$i++) {
+for($i=0;$row2=sql_fetch_array_pg($rs2->result);$i++) {
     $is_s3file_yn = is_s3file($row2['fle_path']);
     $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$mnglogo_wd.':'.$mnglogo_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
     $row2['thumb'] = '<img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$mnglogo_wd.'px;height:'.$mnglogo_ht.'px;margin-left:20px;border:1px solid #ddd;"><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;

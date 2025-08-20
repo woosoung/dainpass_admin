@@ -19,7 +19,7 @@ $fc['fvc_f_arr'] = array();
 $fc['fvc_fidxs'] = array();
 $fc['fvc_lst_idx'] = 0;
 $fc['fle_db_idx'] = 'favicon';
-for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
+for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
     $is_s3file_yn = is_s3file($row2['fle_path']);
     $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$fc_wd.':'.$fc_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
     $row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$fc_wd.'px;height:'.$fc_ht.'px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
@@ -44,7 +44,7 @@ $plflogo['plflogo_f_arr'] = array();
 $plflogo['plflogo_fidxs'] = array();
 $plflogo['plflogo_lst_idx'] = 0;
 $plflogo['fle_db_idx'] = 'plflogo';
-for($i=0;$row2=sql_fetch_array_pg($rs2);$i++) {
+for($i=0;$row2=sql_fetch_array_pg($rs2->result);$i++) {
     // print_r2($row2);
     $is_s3file_yn = is_s3file($row2['fle_path']);
     $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$plflogo_wd.':'.$plflogo_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
@@ -71,7 +71,7 @@ $og['og_f_arr'] = array();
 $og['og_fidxs'] = array();
 $og['og_lst_idx'] = 0;
 $og['fle_db_idx'] = 'ogimg';
-for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
+for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
     // print_r2($row2);
     $is_s3file_yn = is_s3file($row2['fle_path']);
     $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$og_wd.':'.$og_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];

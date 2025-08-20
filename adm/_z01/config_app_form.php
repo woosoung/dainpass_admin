@@ -37,7 +37,7 @@ $fvc['afvc_f_arr'] = array();
 $fvc['afvc_fidxs'] = array();
 $fvc['afvc_lst_idx'] = 0;
 $fvc['fle_db_idx'] = 'XXXX';
-for($i=0;$row2=sql_fetch_array_pg($rs);$i++) {
+for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
     $is_s3file_yn = is_s3file($row2['fle_path']);
     $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:80:80:1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
     $row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:80px;height:80px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;

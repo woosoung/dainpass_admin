@@ -44,6 +44,7 @@ $(function(){
 		$('#<?=$cid?>').siblings('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 
 		$('#<?=$aid?>').colpick({
+			layout:'hex',
 			onSubmit:function(hsb,hex,rgb,el,bySetColor) {
 				$(el).val('#'+hex);
 				$(el).colpickHide();
@@ -69,6 +70,7 @@ $(function(){
 	<?php }else{ // 여기까지는 $alpha_flag == true ?>
 		//색상만 설정
 		$('#<?=$aid?>').colpick({
+			layout:'hex',
 			onSubmit:function(hsb,hex,rgb,el,bySetColor) {
 				$(el).val('#'+hex);
 				$(el).colpickHide();

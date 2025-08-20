@@ -1,7 +1,6 @@
 <?php
 $sub_menu = "920800";
 include_once('./_common.php');
-
 @auth_check($auth[$sub_menu],'w');
 
 // 추가적인 검색조건 (ser_로 시작하는 검색필드)

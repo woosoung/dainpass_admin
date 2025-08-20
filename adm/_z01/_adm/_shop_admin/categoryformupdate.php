@@ -148,7 +148,7 @@ else if ($w == "d")
     
     $result = sql_query_pg($sql);
 
-    for ($i=0; $row=sql_fetch_array_pg($result); $i++)
+    for ($i=0; $row=sql_fetch_array_pg($result->result); $i++)
     {
         // if ($i % 10 == 0) $str .= "\\n";
         $str .= "$comma{$row['shop_id']}";
