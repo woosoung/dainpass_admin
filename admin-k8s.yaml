@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: gnuboard-pvc
+  name: php-admin-pvc
 spec:
   accessModes:
     - ReadWriteOnce
@@ -63,32 +63,19 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gnuboard-deployment
+  name: php-admin-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gnuboard
+      app: php-admin
   template:
     metadata:
       labels:
-        app: gnuboard
+        app: php-admin
     spec:
       # 그누보드 설치 및 권한 설정을 위한 초기화 컨테이너
       initContainers:
-      - name: check-existing-data
-        image: mariadb:10.6
-        command: ['sh', '-c']
-        args:
-        - |
-          echo "Checking existing database..."
-          TABLES=$(mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME -e "SHOW TABLES LIKE 'g5_%';" | wc -l)
-          if [ $TABLES -gt 0 ]; then
-            echo "Found existing Gnuboard tables: $TABLES"
-            echo "Data will be preserved!"
-          else
-            echo "No existing tables found - fresh installation"
-          fi
       - name: download-gnuboard
         image: curlimages/curl:8.4.0
         command: ['sh', '-c']
@@ -231,7 +218,7 @@ spec:
       volumes:
       - name: app-storage
         persistentVolumeClaim:
-          claimName: gnuboard-pvc
+          claimName: php-admin-pvc
       - name: config-volume
         configMap:
           name: gnuboard-config
@@ -240,10 +227,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: gnuboard-service
+  name: php-admin-service
 spec:
   selector:
-    app: gnuboard
+    app: php-admin
   ports:
   - port: 80
     targetPort: 80
@@ -253,7 +240,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: gnuboard-ingress
+  name: admin-ingress
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -274,6 +261,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: gnuboard-service
+                name: php-admin-service
                 port:
                   number: 80
