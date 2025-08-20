@@ -1,50 +1,270 @@
-# php-admin/admin-k8s.yaml
-
-# 1. Deployment: Admin 파드를 어떻게 실행할지에 대한 정의
+# 0. PersistentVolumeClaim: 데이터 영속성을 위한 EBS 스토리지
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gnuboard-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi  # 그누보드는 더 많은 저장공간 필요 (파일 업로드, 이미지 등)
+  storageClassName: gp3  # gp3가 더 성능이 좋고 비용 효율적
+---
+# 1. Secret: 데이터베이스 연결 정보
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gnuboard-db-secret
+type: Opaque
+stringData:
+  DB_HOST: dpass-mariadb1.cryaauiikrfz.ap-northeast-2.rds.amazonaws.com
+  DB_NAME: psd_admin_pass
+  DB_USER: psd
+  DB_PASSWORD: psd217
+---
+# 2. ConfigMap: PHP 및 Apache 설정
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gnuboard-config
+data:
+  php.ini: |
+    upload_max_filesize = 100M
+    post_max_size = 100M
+    max_execution_time = 300
+    memory_limit = 512M
+    session.gc_maxlifetime = 1440
+    session.cookie_httponly = On
+    session.use_strict_mode = On
+    max_file_uploads = 20
+    
+  apache.conf: |
+    <VirtualHost *:80>
+        DocumentRoot /var/www/html
+        DirectoryIndex index.php index.html
+        
+        <Directory /var/www/html>
+            Options Indexes FollowSymLinks
+            AllowOverride All
+            Require all granted
+        </Directory>
+        
+        # 그누보드 보안 설정
+        <Directory /var/www/html/data>
+            Options -Indexes
+        </Directory>
+        
+        ErrorLog /var/log/apache2/error.log
+        CustomLog /var/log/apache2/access.log combined
+    </VirtualHost>
+---
+# 3. Deployment: 그누보드 애플리케이션
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: php-admin-deployment
+  name: gnuboard-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: php-admin
+      app: gnuboard
   template:
     metadata:
       labels:
-        app: php-admin
+        app: gnuboard
     spec:
+      # 그누보드 설치 및 권한 설정을 위한 초기화 컨테이너
+      initContainers:
+      - name: check-existing-data
+        image: mariadb:10.6
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Checking existing database..."
+          TABLES=$(mysql -h $DB_HOST -u $DB_USER -p$DB_PASSWORD $DB_NAME -e "SHOW TABLES LIKE 'g5_%';" | wc -l)
+          if [ $TABLES -gt 0 ]; then
+            echo "Found existing Gnuboard tables: $TABLES"
+            echo "Data will be preserved!"
+          else
+            echo "No existing tables found - fresh installation"
+          fi
+      - name: download-gnuboard
+        image: curlimages/curl:8.4.0
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Downloading Gnuboard..."
+          cd /tmp
+          # 그누보드 최신 버전 다운로드
+          curl -L -o gnuboard.tar.gz "https://github.com/gnuboard/gnuboard5/archive/refs/heads/master.tar.gz"
+          tar -xzf gnuboard.tar.gz
+          # 파일 복사 (기존 파일이 있으면 덮어쓰지 않음)
+          if [ ! -f /var/www/html/index.php ]; then
+            cp -r gnuboard5-master/* /var/www/html/
+            echo "Gnuboard files copied"
+          else
+            echo "Gnuboard files already exist"
+          fi
+        volumeMounts:
+        - name: app-storage
+          mountPath: /var/www/html
+        securityContext:
+          runAsUser: 0
+          
+      - name: setup-permissions
+        image: busybox:1.35
+        command: ['sh', '-c']
+        args:
+        - |
+          echo "Setting up Gnuboard permissions..."
+          # 필요한 디렉토리 생성
+          mkdir -p /var/www/html/data/cache
+          mkdir -p /var/www/html/data/session
+          mkdir -p /var/www/html/data/file
+          mkdir -p /var/www/html/data/log
+          mkdir -p /var/www/html/data/member
+          mkdir -p /var/www/html/data/member_image
+          
+          # 그누보드 필수 권한 설정
+          chown -R 33:33 /var/www/html  # www-data 사용자
+          chmod -R 755 /var/www/html
+          chmod -R 707 /var/www/html/data
+          chmod 666 /var/www/html/config.php 2>/dev/null || true
+          
+          echo "Permissions setup completed"
+        volumeMounts:
+        - name: app-storage
+          mountPath: /var/www/html
+        securityContext:
+          runAsUser: 0
+          
       containers:
-      - name: php-admin
-        # 이 image 주소는 CI/CD 과정에서 동적으로 변경됩니다.
+      - name: gnuboard
+        # 기존 이미지를 기반으로 하되, PHP 확장 설치가 필요할 수 있음
         image: 289652921928.dkr.ecr.ap-northeast-2.amazonaws.com/dainpass/php-admin-page:latest
         ports:
         - containerPort: 80
+        
+        # 데이터베이스 연결 환경변수
+        env:
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: gnuboard-db-secret
+              key: DB_HOST
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: gnuboard-db-secret
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: gnuboard-db-secret
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: gnuboard-db-secret
+              key: DB_PASSWORD
+        - name: PHP_UPLOAD_MAX_FILESIZE
+          value: "100M"
+        - name: PHP_POST_MAX_SIZE
+          value: "100M"
+        - name: PHP_MEMORY_LIMIT
+          value: "512M"
+          
+        # 볼륨 마운트
+        volumeMounts:
+        - name: app-storage
+          mountPath: /var/www/html
+        - name: config-volume
+          mountPath: /usr/local/etc/php/conf.d/gnuboard.ini
+          subPath: php.ini
+          
+        # 리소스 제한 (그누보드는 더 많은 리소스 필요)
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+            
+        # 헬스체크 설정
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 60  # 초기화 시간 고려
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          
+        # 컨테이너 시작 후 PHP 확장 설치 (필요시)
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - |
+                # 그누보드 필수 PHP 확장 설치 확인 및 설치
+                php -m | grep -q mysqli || docker-php-ext-install mysqli
+                php -m | grep -q pdo_mysql || docker-php-ext-install pdo_mysql
+                php -m | grep -q gd || (apt-get update && apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev && docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install gd)
+                php -m | grep -q mbstring || docker-php-ext-install mbstring
+                php -m | grep -q zip || (apt-get install -y libzip-dev && docker-php-ext-install zip)
+                a2enmod rewrite
+                service apache2 reload
+      
+      # 볼륨 설정
+      volumes:
+      - name: app-storage
+        persistentVolumeClaim:
+          claimName: gnuboard-pvc
+      - name: config-volume
+        configMap:
+          name: gnuboard-config
 ---
-# 2. Service: Admin 파드 그룹에 대한 내부 주소 생성
+# 4. Service: 그누보드 서비스
 apiVersion: v1
 kind: Service
 metadata:
-  name: php-admin-service
+  name: gnuboard-service
 spec:
   selector:
-    app: php-admin
+    app: gnuboard
   ports:
   - port: 80
     targetPort: 80
+  type: ClusterIP
 ---
-# 3. Ingress: 'admin.dainpass.com' 주소와 Service를 연결
+# 5. Ingress: 외부 접근 설정
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: admin-ingress
+  name: gnuboard-ingress
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    # 발급받은 SSL 인증서의 ARN을 여기에 추가하세요.
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:289652921928:certificate/d0bc9f08-dc65-4d6f-b783-4cd2fe0849db
+    alb.ingress.kubernetes.io/group.name: dainpass-services
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    # 그누보드 업로드를 위한 요청 크기 제한 증가
+    alb.ingress.kubernetes.io/load-balancer-attributes: routing.http2.enabled=true,idle_timeout.timeout_seconds=300
+    # 세션 유지 (필요시)
+    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400
 spec:
   rules:
     - host: k8s.dainpass.com
@@ -54,6 +274,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: php-admin-service
+                name: gnuboard-service
                 port:
                   number: 80
