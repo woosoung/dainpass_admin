@@ -7,6 +7,12 @@
 // 이 상수가 정의되지 않으면 각각의 개별 페이지는 별도로 실행될 수 없음
 define('_GNUBOARD_', true);
 
+// ALB에서 전달되는 HTTPS 헤더 처리 (EKS 환경 최적화)
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+    $_SERVER['SERVER_PORT'] = 443;
+}
+
 include_once($g5_path['path'].'/version.php');   // 설정 파일
 
 // 기본 시간대 설정
@@ -23,8 +29,9 @@ date_default_timezone_set("Asia/Seoul");
 보안서버주소가 없다면 공란으로 두시면 되며 보안서버주소 뒤에 / 는 붙이지 않습니다.
 입력 예) https://www.domain.com:443/gnuboard5
 */
-define('G5_DOMAIN', 'https://admin.dainpass.com');
-define('G5_HTTPS_DOMAIN', 'https://admin.dainpass.com');
+// EKS 환경에 맞게 도메인 수정
+define('G5_DOMAIN', 'https://k8s.dainpass.com');
+define('G5_HTTPS_DOMAIN', 'https://k8s.dainpass.com');
 
 // 그누보드 디버그바 설정입니다, 실제 서버운영시 false 로 설정해 주세요.
 define('G5_DEBUG', false);
@@ -34,18 +41,18 @@ define('G5_COLLECT_QUERY', false);
 // DB에 테이블 생성 시 테이블의 기본 스토리지 엔진을 설정할 수 있습니다.
 // InnoDB 또는 MyISAM 으로 설정 가능합니다.
 // 빈값으로 두면 DB 버전이나 호스팅사 정책의 기본값에 따라 설정됩니다.
-define('G5_DB_ENGINE', '');
+define('G5_DB_ENGINE', 'InnoDB'); // MariaDB 환경에 최적화
 
 // Set Database table default Charset
 // utf8, utf8mb4 등 지정 가능 기본값은 utf8, 설치전에 utf8mb4 으로 수정 시 모든 테이블에 이모지 입력이 가능합니다.
 // utf8mb4 인코딩은 MySQL 또는 MariaDB 5.5 버전 이상을 요구합니다.
-define('G5_DB_CHARSET', 'utf8');
+define('G5_DB_CHARSET', 'utf8mb4'); // MariaDB 환경에서 이모지 지원
 
 /*
 www.sir.kr 과 sir.kr 도메인은 서로 다른 도메인으로 인식합니다. 쿠키를 공유하려면 .sir.kr 과 같이 입력하세요.
 이곳에 입력이 없다면 www 붙은 도메인과 그렇지 않은 도메인은 쿠키를 공유하지 않으므로 로그인이 풀릴 수 있습니다.
 */
-define('G5_COOKIE_DOMAIN',  '');
+define('G5_COOKIE_DOMAIN',  '.dainpass.com'); // 서브도메인 간 쿠키 공유
 
 define('G5_DBCONFIG_FILE',  'dbconfig.php');
 
@@ -89,7 +96,7 @@ if (G5_DOMAIN) {
 if (isset($g5_path['path'])) {
     define('G5_PATH', $g5_path['path']);
 } else {
-    define('G5_PATH', '');
+    define('G5_PATH', '/var/www/html'); // EKS 컨테이너 경로
 }
 
 define('G5_ADMIN_URL',      G5_URL.'/'.G5_ADMIN_DIR);
@@ -240,3 +247,13 @@ define('G5_IP_DISPLAY', '\\1.♡.\\3.\\4');
 
 // KAKAO 우편번호 서비스 CDN
 define('G5_POSTCODE_JS', '<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js" async></script>');
+
+// EKS 환경을 위한 추가 보안 헤더
+if (!headers_sent()) {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+    header('Content-Security-Policy: upgrade-insecure-requests');
+    header('X-Content-Type-Options: nosniff');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-XSS-Protection: 1; mode=block');
+}
+?>

@@ -76,36 +76,13 @@ spec:
     spec:
       # 그누보드 설치 및 권한 설정을 위한 초기화 컨테이너
       initContainers:
-      - name: download-gnuboard
-        image: curlimages/curl:8.4.0
-        command: ['sh', '-c']
-        args:
-        - |
-          echo "Downloading Gnuboard..."
-          cd /tmp
-          # 그누보드 최신 버전 다운로드
-          curl -L -o gnuboard.tar.gz "https://github.com/gnuboard/gnuboard5/archive/refs/heads/master.tar.gz"
-          tar -xzf gnuboard.tar.gz
-          # 파일 복사 (기존 파일이 있으면 덮어쓰지 않음)
-          if [ ! -f /var/www/html/index.php ]; then
-            cp -r gnuboard5-master/* /var/www/html/
-            echo "Gnuboard files copied"
-          else
-            echo "Gnuboard files already exist"
-          fi
-        volumeMounts:
-        - name: app-storage
-          mountPath: /var/www/html
-        securityContext:
-          runAsUser: 0
-          
       - name: setup-permissions
         image: busybox:1.35
         command: ['sh', '-c']
         args:
         - |
           echo "Setting up Gnuboard permissions..."
-          # 필요한 디렉토리 생성
+          # Git에서 가져온 파일들이 이미 있으므로 디렉토리만 확인하고 생성
           mkdir -p /var/www/html/data/cache
           mkdir -p /var/www/html/data/session
           mkdir -p /var/www/html/data/file
@@ -113,7 +90,7 @@ spec:
           mkdir -p /var/www/html/data/member
           mkdir -p /var/www/html/data/member_image
           
-          # 그누보드 필수 권한 설정
+          # 그누보드 필수 권한 설정 (Git 파일들 보존)
           chown -R 33:33 /var/www/html  # www-data 사용자
           chmod -R 755 /var/www/html
           chmod -R 707 /var/www/html/data
@@ -125,6 +102,56 @@ spec:
           mountPath: /var/www/html
         securityContext:
           runAsUser: 0
+      # - name: download-gnuboard
+      #   image: curlimages/curl:8.4.0
+      #   command: ['sh', '-c']
+      #   args:
+      #   - |
+      #     echo "Downloading Gnuboard..."
+      #     cd /tmp
+      #     # 그누보드 최신 버전 다운로드
+      #     curl -L -o gnuboard.tar.gz "https://github.com/gnuboard/gnuboard5/archive/refs/heads/master.tar.gz"
+      #     tar -xzf gnuboard.tar.gz
+      #     # 파일 복사 (기존 파일이 있으면 덮어쓰지 않음)
+      #     if [ ! -f /var/www/html/index.php ]; then
+      #       cp -r gnuboard5-master/* /var/www/html/
+      #       echo "Gnuboard files copied"
+      #     else
+      #       echo "Gnuboard files already exist"
+      #     fi
+      #   volumeMounts:
+      #   - name: app-storage
+      #     mountPath: /var/www/html
+      #   securityContext:
+      #     runAsUser: 0
+          
+      # - name: setup-permissions
+      #   image: busybox:1.35
+      #   command: ['sh', '-c']
+      #   args:
+      #   - |
+      #     echo "Setting up Gnuboard permissions..."
+      #     # 필요한 디렉토리 생성
+      #     mkdir -p /var/www/html/data/cache
+      #     mkdir -p /var/www/html/data/session
+      #     mkdir -p /var/www/html/data/file
+      #     mkdir -p /var/www/html/data/log
+      #     mkdir -p /var/www/html/data/member
+      #     mkdir -p /var/www/html/data/member_image
+          
+      #     # 그누보드 필수 권한 설정
+      #     chown -R 33:33 /var/www/html  # www-data 사용자
+      #     chmod -R 755 /var/www/html
+      #     chmod -R 707 /var/www/html/data
+      #     chmod 666 /var/www/html/config.php 2>/dev/null || true
+          
+      #     echo "Permissions setup completed"
+      #   volumeMounts:
+      #   - name: app-storage
+      #     mountPath: /var/www/html
+      #   securityContext:
+      #     runAsUser: 0
+      
           
       containers:
       - name: gnuboard
@@ -197,7 +224,7 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 5
           
-        # 컨테이너 시작 후 PHP 확장 설치 (필요시)
+        # 컨테이너 시작 후 PHP 확장 설치 및 Apache 설정
         lifecycle:
           postStart:
             exec:
@@ -206,12 +233,18 @@ spec:
               - -c
               - |
                 # 그누보드 필수 PHP 확장 설치 확인 및 설치
-                php -m | grep -q mysqli || docker-php-ext-install mysqli
-                php -m | grep -q pdo_mysql || docker-php-ext-install pdo_mysql
-                php -m | grep -q gd || (apt-get update && apt-get install -y libfreetype6-dev libjpeg62-turbo-dev libpng-dev && docker-php-ext-configure gd --with-freetype --with-jpeg && docker-php-ext-install gd)
-                php -m | grep -q mbstring || docker-php-ext-install mbstring
-                php -m | grep -q zip || (apt-get install -y libzip-dev && docker-php-ext-install zip)
+                apt-get update && apt-get install -y \
+                  libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
+                  libzip-dev libonig-dev libxml2-dev curl
+                
+                # PHP 확장 설치
+                docker-php-ext-configure gd --with-freetype --with-jpeg
+                docker-php-ext-install -j$(nproc) \
+                  gd pdo_mysql mysqli zip mbstring xml curl fileinfo
+                
+                # Apache 모듈 활성화
                 a2enmod rewrite
+                a2enmod headers
                 service apache2 reload
       
       # 볼륨 설정
