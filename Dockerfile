@@ -4,66 +4,49 @@ FROM php:8.1-apache
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Seoul
 
-# 기본 도구들만 설치 (문제되는 패키지 제외)
+# 기본 도구들 설치
 RUN apt-get update && apt-get install -y \
     curl \
     zip \
     unzip \
     wget \
-    sudo \
-    vim \
     git \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# PHP 확장을 위한 필수 라이브러리만 설치
+# PHP 확장을 위한 라이브러리 설치 (검증된 것만)
 RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
     libzip-dev \
-    libonig-dev \
     libxml2-dev \
     libcurl4-openssl-dev \
     libpq-dev \
-    libbz2-dev \
-    libgmp-dev \
-    libxslt1-dev \
-    libsqlite3-dev \
-    libicu-dev \
+    libonig-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# PHP 기본 확장 설치 (단계별로 나누어서)
+# GD 확장 설치 (가장 먼저)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd
+    && docker-php-ext-install gd
 
-# 기본 확장들 설치
-RUN docker-php-ext-install -j$(nproc) \
-    zip \
-    mbstring \
-    xml \
-    curl
+# 기본 확장들 설치 (확실히 작동하는 것들)
+RUN docker-php-ext-install zip
+RUN docker-php-ext-install mbstring
+RUN docker-php-ext-install xml
+RUN docker-php-ext-install curl
 
-# 데이터베이스 관련 확장 설치
-RUN docker-php-ext-install -j$(nproc) \
-    pdo_mysql \
-    mysqli \
-    pgsql \
-    pdo_pgsql
+# 데이터베이스 확장 설치
+RUN docker-php-ext-install pdo_mysql
+RUN docker-php-ext-install mysqli
+RUN docker-php-ext-install pgsql
+RUN docker-php-ext-install pdo_pgsql
 
-# 확실히 작동하는 확장들만 설치
+# 수학 관련 확장 (bcmath는 기본 포함)
 RUN docker-php-ext-install bcmath
 
-RUN docker-php-ext-install bz2
-
-# intl 확장 설치 (ICU 라이브러리 필요)
-RUN docker-php-ext-configure intl && docker-php-ext-install intl
-
-# XML 처리 확장 설치
-RUN docker-php-ext-install sqlite3
-
-# 간단한 PECL 확장만 설치
+# PECL 확장 설치 (간단한 것만)
 RUN pecl install redis apcu \
     && docker-php-ext-enable redis apcu \
     && pecl clear-cache
