@@ -48,18 +48,11 @@ define('G5_DB_ENGINE', 'InnoDB'); // MariaDB 환경에 최적화
 // utf8mb4 인코딩은 MySQL 또는 MariaDB 5.5 버전 이상을 요구합니다.
 define('G5_DB_CHARSET', 'utf8mb4'); // MariaDB 환경에서 이모지 지원
 
-// MySQL/MariaDB 설정
-define('G5_MYSQL_HOST', getenv('DB_HOST'));
-define('G5_MYSQL_USER', getenv('DB_USER'));
-define('G5_MYSQL_PASSWORD', getenv('DB_PASSWORD'));
-define('G5_MYSQL_DB', getenv('DB_NAME'));
-define('G5_MYSQL_SET_MODE', true);
-
 // PostgreSQL 설정 (오류 방지용)
-define('G5_PGSQL_HOST', '');
-define('G5_PGSQL_USER', '');
-define('G5_PGSQL_PASSWORD', '');
-define('G5_PGSQL_DB', '');
+define('G5_PGSQL_HOST', 'dainpass-dev-pg-cluster-instance-1.cryaauiikrfz.ap-northeast-2.rds.amazonaws.com');
+define('G5_PGSQL_USER', 'wsd');
+define('G5_PGSQL_PASSWORD', 'wsd217');
+define('G5_PGSQL_DB', 'dainpass_db');
 define('G5_PGSQL_SET_MODE', false);
 
 /*
