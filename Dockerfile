@@ -17,7 +17,7 @@ COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && mkdir -p /var/www/html/data_template/{cache,session,file,log,member,member_image} \
-    && chmod -R 707 /var/www/html/data \
+    # && chmod -R 707 /var/www/html/data \
     && rm -rf /var/www/html/install
 
 EXPOSE 80
