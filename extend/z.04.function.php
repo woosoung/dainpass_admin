@@ -308,11 +308,14 @@ function pg_table_exists($table, $link = null)
     if (!$link)
         $link = $g5['connect_pg'];
 
+    // pg_escape_string에 연결 리소스 명시적으로 전달
+    $escaped_table = pg_escape_string($link, $table);
+
     $sql = "
         SELECT 1
         FROM information_schema.tables
         WHERE table_schema = 'public'
-          AND table_name = '".pg_escape_string($table)."'
+          AND table_name = '$escaped_table'
     ";
 
     $result = pg_query($link, $sql);
