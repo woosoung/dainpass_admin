@@ -174,7 +174,6 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 3
           
-        # postStart 제거 - Dockerfile에서 모든 설정 완료
         # lifecycle 부분 완전 제거
       
       # 볼륨 설정

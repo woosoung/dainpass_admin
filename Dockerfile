@@ -6,7 +6,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev libonig-dev libxml2-dev libcurl4-openssl-dev \
     curl zip unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo_mysql mysqli zip mbstring xml curl \
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql mysqli zip mbstring xml curl pgsql pdo_pgsql \
     && a2enmod rewrite headers \
     && rm -rf /var/lib/apt/lists/*
 
