@@ -1,4 +1,4 @@
-# 0. PersistentVolumeClaim: 데이터 영속성을 위한 EBS 스토리지
+# 1. PersistentVolumeClaim: 데이터 영속성을 위한 EBS 스토리지
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -10,18 +10,6 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: gp2
----
-# 1. Secret: 데이터베이스 연결 정보
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gnuboard-db-secret
-type: Opaque
-stringData:
-  DB_HOST: dpass-mariadb1.cryaauiikrfz.ap-northeast-2.rds.amazonaws.com
-  DB_NAME: psd_admin_pass
-  DB_USER: psd
-  DB_PASSWORD: psd217
 ---
 # 2. ConfigMap: PHP 및 Apache 설정
 apiVersion: v1
@@ -146,6 +134,9 @@ spec:
         - name: config-volume
           mountPath: /usr/local/etc/php/conf.d/gnuboard.ini
           subPath: php.ini
+        - name: pgconfig-volume
+          mountPath: /var/www/html/extend/z.03.pgconfig.php
+          subPath: z.03.pgconfig.php
           
         # 리소스 제한
         resources:
@@ -184,6 +175,9 @@ spec:
       - name: config-volume
         configMap:
           name: gnuboard-config
+      - name: pgconfig-volume
+        configMap:
+          name: pgconfig-file
 ---
 # 4. Service: 그누보드 서비스
 apiVersion: v1
