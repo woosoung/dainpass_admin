@@ -33,24 +33,35 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# PHP 기본 확장 설치 (복잡한 것들 제외)
+# PHP 기본 확장 설치 (단계별로 나누어서)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
-        gd \
-        zip \
-        mbstring \
-        xml \
-        curl \
-        pdo_mysql \
-        mysqli \
-        pgsql \
-        pdo_pgsql \
-        bcmath \
-        bz2 \
-        gmp \
-        intl \
-        xsl \
-        sqlite3
+    && docker-php-ext-install -j$(nproc) gd
+
+# 기본 확장들 설치
+RUN docker-php-ext-install -j$(nproc) \
+    zip \
+    mbstring \
+    xml \
+    curl
+
+# 데이터베이스 관련 확장 설치
+RUN docker-php-ext-install -j$(nproc) \
+    pdo_mysql \
+    mysqli \
+    pgsql \
+    pdo_pgsql
+
+# 수학/문자열 처리 확장 설치
+RUN docker-php-ext-install -j$(nproc) \
+    bcmath \
+    bz2 \
+    gmp \
+    intl
+
+# XML 처리 확장 설치
+RUN docker-php-ext-install -j$(nproc) \
+    xsl \
+    sqlite3
 
 # 간단한 PECL 확장만 설치
 RUN pecl install redis apcu \
