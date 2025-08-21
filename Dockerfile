@@ -53,7 +53,7 @@ COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html
 
-# data 디렉토리 생성 및 권한
+# data 디렉토리 생성 및 권한.
 RUN mkdir -p /var/www/html/data/{cache,session,file,log,member,member_image}
 RUN chmod -R 707 /var/www/html/data
 
