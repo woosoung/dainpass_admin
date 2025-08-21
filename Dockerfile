@@ -51,17 +51,15 @@ RUN docker-php-ext-install -j$(nproc) \
     pgsql \
     pdo_pgsql
 
-# 수학/문자열 처리 확장 설치
-RUN docker-php-ext-install -j$(nproc) \
-    bcmath \
-    bz2 \
-    gmp \
-    intl
+# 확실히 작동하는 확장들만 설치
+RUN docker-php-ext-install bcmath
 
-# XML 처리 확장 설치
-RUN docker-php-ext-install -j$(nproc) \
-    xsl \
-    sqlite3
+RUN docker-php-ext-install bz2
+
+RUN docker-php-ext-install intl
+
+# XML 처리 확장 설치 (sqlite3, xsl 제외 - 문제 가능성)
+RUN docker-php-ext-install sqlite3
 
 # 간단한 PECL 확장만 설치
 RUN pecl install redis apcu \
