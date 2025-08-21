@@ -28,11 +28,11 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# GD 확장 설치 (가장 먼저)
+# GD 확장 설치
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd
 
-# 기본 확장들 설치 (확실히 작동하는 것들)
+# 기본 확장들 설치
 RUN docker-php-ext-install zip
 RUN docker-php-ext-install mbstring
 RUN docker-php-ext-install xml
@@ -47,10 +47,10 @@ RUN docker-php-ext-install pdo_pgsql
 # 수학 관련 확장
 RUN docker-php-ext-install bcmath
 
-# 국제화 확장 (intl)
+# 국제화 확장
 RUN docker-php-ext-configure intl && docker-php-ext-install intl
 
-# PECL 확장 설치 (간단한 것만)
+# PECL 확장 설치
 RUN pecl install redis apcu \
     && docker-php-ext-enable redis apcu \
     && pecl clear-cache
@@ -64,26 +64,21 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 # 애플리케이션 파일 복사
 COPY . /var/www/html/
 
-# 기존 AWS SDK 제거 후 새로 설치
+# 기존 AWS SDK 제거
 RUN rm -rf /var/www/html/lib/aws
 
-# AWS SDK 설치 (단계별로 디버깅)
-RUN mkdir -p /var/www/html/lib
+# AWS SDK 설치 (Pod에서 성공한 방법 그대로)
+WORKDIR /var/www/html
+RUN composer require aws/aws-sdk-php
+RUN mv vendor lib/aws
 
-# AWS SDK 설치 (올바른 방법)
-RUN cd /var/www/html/lib && \
-    echo '{"require": {"aws/aws-sdk-php": "^3.0"}}' > composer.json && \
-    composer install --no-dev --optimize-autoloader && \
-    mv vendor/aws ./aws && \
-    rm -rf vendor composer.json composer.lock
-
-# Composer 캐시 정리
-RUN composer clear-cache
-
-# 권한 설정 및 정리
+# 권한 설정
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && rm -rf /var/www/html/install
+
+# Composer 파일 정리
+RUN rm -f composer.json composer.lock
 
 EXPOSE 80
 CMD ["apache2-foreground"]
