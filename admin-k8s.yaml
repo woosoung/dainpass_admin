@@ -73,6 +73,9 @@ spec:
     metadata:
       labels:
         app: php-admin
+      annotations:
+        # 강제 업데이트를 위한 timestamp
+        deployment.kubernetes.io/revision: "${TIMESTAMP}"
     spec:
       # 권한 설정만 수행하는 간단한 initContainer
       initContainers:
@@ -96,13 +99,14 @@ spec:
           echo "Data setup completed"
         volumeMounts:
         - name: app-storage
-          mountPath: /var/www/html
+          mountPath: /var/www/html/data
         securityContext:
           runAsUser: 0
       
       containers:
       - name: gnuboard
         image: 289652921928.dkr.ecr.ap-northeast-2.amazonaws.com/dainpass/php-admin-page:latest
+        imagePullPolicy: Always  # 항상 최신 이미지 풀
         ports:
         - containerPort: 80
         
