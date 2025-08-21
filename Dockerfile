@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     libgmp-dev \
     libxslt1-dev \
     libsqlite3-dev \
+    libicu-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -56,9 +57,10 @@ RUN docker-php-ext-install bcmath
 
 RUN docker-php-ext-install bz2
 
-RUN docker-php-ext-install intl
+# intl 확장 설치 (ICU 라이브러리 필요)
+RUN docker-php-ext-configure intl && docker-php-ext-install intl
 
-# XML 처리 확장 설치 (sqlite3, xsl 제외 - 문제 가능성)
+# XML 처리 확장 설치
 RUN docker-php-ext-install sqlite3
 
 # 간단한 PECL 확장만 설치
