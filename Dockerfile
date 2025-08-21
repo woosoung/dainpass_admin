@@ -61,34 +61,24 @@ RUN a2enmod rewrite headers
 # Composer 설치
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# 애플리케이션 파일 복사
+COPY . /var/www/html/
+
+# 기존 AWS SDK 제거 후 새로 설치
+RUN rm -rf /var/www/html/lib/aws
+
 # AWS SDK 설치 (단계별로 디버깅)
-WORKDIR /var/www/html
-RUN mkdir -p lib
+RUN mkdir -p /var/www/html/lib
 
-# Composer 프로젝트 초기화
-RUN cd lib && composer init \
-    --name="temp/aws-project" \
-    --description="Temporary project for AWS SDK" \
-    --no-interaction
-
-# AWS SDK 의존성 추가
-RUN cd lib && composer require aws/aws-sdk-php:^3.0 --no-interaction
-
-# vendor 디렉토리를 lib/aws로 이동
-RUN cd lib && \
-    if [ -d "vendor/aws" ]; then \
-        mv vendor/aws ./aws && \
-        rm -rf vendor composer.json composer.lock; \
-    else \
-        echo "AWS SDK installation failed"; \
-        exit 1; \
-    fi
+# AWS SDK 설치 (올바른 방법)
+RUN cd /var/www/html/lib && \
+    echo '{"require": {"aws/aws-sdk-php": "^3.0"}}' > composer.json && \
+    composer install --no-dev --optimize-autoloader && \
+    mv vendor/aws ./aws && \
+    rm -rf vendor composer.json composer.lock
 
 # Composer 캐시 정리
 RUN composer clear-cache
-
-# 애플리케이션 파일 복사
-COPY . /var/www/html/
 
 # 권한 설정 및 정리
 RUN chown -R www-data:www-data /var/www/html \
