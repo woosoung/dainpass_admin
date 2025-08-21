@@ -16,7 +16,7 @@ COPY . /var/www/html/
 # 권한 설정 및 정리
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
-    && mkdir -p /var/www/html/data_template/{cache,session,file,log,member,member_image}
+    && mkdir -p /var/www/html/data_template/{cache,session,file,log,member,member_image} \
     && chmod -R 707 /var/www/html/data \
     && rm -rf /var/www/html/install
 
