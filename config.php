@@ -48,6 +48,20 @@ define('G5_DB_ENGINE', 'InnoDB'); // MariaDB 환경에 최적화
 // utf8mb4 인코딩은 MySQL 또는 MariaDB 5.5 버전 이상을 요구합니다.
 define('G5_DB_CHARSET', 'utf8mb4'); // MariaDB 환경에서 이모지 지원
 
+// MySQL/MariaDB 설정
+define('G5_MYSQL_HOST', getenv('DB_HOST'));
+define('G5_MYSQL_USER', getenv('DB_USER'));
+define('G5_MYSQL_PASSWORD', getenv('DB_PASSWORD'));
+define('G5_MYSQL_DB', getenv('DB_NAME'));
+define('G5_MYSQL_SET_MODE', true);
+
+// PostgreSQL 설정 (오류 방지용)
+define('G5_PGSQL_HOST', '');
+define('G5_PGSQL_USER', '');
+define('G5_PGSQL_PASSWORD', '');
+define('G5_PGSQL_DB', '');
+define('G5_PGSQL_SET_MODE', false);
+
 /*
 www.sir.kr 과 sir.kr 도메인은 서로 다른 도메인으로 인식합니다. 쿠키를 공유하려면 .sir.kr 과 같이 입력하세요.
 이곳에 입력이 없다면 www 붙은 도메인과 그렇지 않은 도메인은 쿠키를 공유하지 않으므로 로그인이 풀릴 수 있습니다.
