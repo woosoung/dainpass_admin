@@ -81,15 +81,19 @@ spec:
         command: ['sh', '-c']
         args:
         - |
-          echo "Setting up permissions for data directory..."
-          # data 디렉토리만 권한 설정 (Dockerfile에서 이미 생성됨)
-          if [ -d "/var/www/html/data" ]; then
-            chmod -R 707 /var/www/html/data
+          echo "Checking data directory..."
+          # data 디렉토리가 이미 데이터를 포함하고 있다면 건드리지 않음
+          if [ "$(ls -A /var/www/html/data 2>/dev/null)" ]; then
+            echo "Data directory already contains files - preserving them"
             chown -R 33:33 /var/www/html/data
-            echo "Data directory permissions updated"
+            chmod -R 707 /var/www/html/data
           else
-            echo "Data directory not found - will be created by main container"
+            echo "Data directory is empty - setting up basic structure"
+            mkdir -p /var/www/html/data/{cache,session,file,log,member,member_image}
+            chown -R 33:33 /var/www/html/data
+            chmod -R 707 /var/www/html/data
           fi
+          echo "Data setup completed"
         volumeMounts:
         - name: app-storage
           mountPath: /var/www/html
