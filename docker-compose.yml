@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  php-app:
+    build:
+      context: .
+      target: development
+    ports:
+      - "1234:80"
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - PHP_ENV=development
+    restart: unless-stopped  # 자동 재시작
