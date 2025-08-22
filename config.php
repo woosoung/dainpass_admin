@@ -33,9 +33,18 @@ date_default_timezone_set("Asia/Seoul");
 if($_SERVER['HTTP_HOST'] === 'localhost:1234' || $_SERVER['HTTP_HOST'] === 'localhost') {
     define('G5_DOMAIN', 'http://localhost:1234');
     define('G5_HTTPS_DOMAIN', 'http://localhost:1234');
+    
+    // 쿠키 도메인 설정 추가
+    define('G5_COOKIE_DOMAIN', 'localhost');  // 빈 문자열 또는 localhost
+    ini_set('session.cookie_domain', 'localhost');
+    
 } else {
     define('G5_DOMAIN', 'https://k8s.dainpass.com');
     define('G5_HTTPS_DOMAIN', 'https://k8s.dainpass.com');
+    
+    // 프로덕션 쿠키 도메인
+    define('G5_COOKIE_DOMAIN', '.dainpass.com');
+    ini_set('session.cookie_domain', '.dainpass.com');
 }
 
 // 그누보드 디버그바 설정입니다, 실제 서버운영시 false 로 설정해 주세요.
@@ -57,7 +66,6 @@ define('G5_DB_CHARSET', 'utf8mb4'); // MariaDB 환경에서 이모지 지원
 www.sir.kr 과 sir.kr 도메인은 서로 다른 도메인으로 인식합니다. 쿠키를 공유하려면 .sir.kr 과 같이 입력하세요.
 이곳에 입력이 없다면 www 붙은 도메인과 그렇지 않은 도메인은 쿠키를 공유하지 않으므로 로그인이 풀릴 수 있습니다.
 */
-define('G5_COOKIE_DOMAIN',  '.dainpass.com'); // 서브도메인 간 쿠키 공유
 
 define('G5_DBCONFIG_FILE',  'dbconfig.php');
 
