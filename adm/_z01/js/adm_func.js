@@ -114,4 +114,74 @@ function is_checked_tms(hidden_chk_list_name){
     
     return checked;
 }
-}    
+} 
+
+
+// rgbToHsv 함수는 RGB 색상 모델을 HSV 색상 모델로 변환
+// r, g, b 값은 0에서 255 사이의 정수
+if(typeof(rgbToHsv) != 'function'){
+function rgbToHsv(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h;
+  if (delta === 0) {
+    h = 0;
+  } else if (max === r) {
+    h = 60 * (((g - b) / delta) % 6);
+  } else if (max === g) {
+    h = 60 * ((b - r) / delta + 2);
+  } else {
+    h = 60 * ((r - g) / delta + 4);
+  }
+
+  if (h < 0) h += 360;
+
+  const s = max === 0 ? 0 : delta / max;
+  const v = max;
+
+  return [h, s, v];
+}
+}
+
+// 아래 함수는 원하는 개수 만큼의 선명한 색상코드(HEX값)을 랜덤하게생성합니다.
+if(typeof(generateVividColors) != 'function'){
+function generateVividColors(count = 100, minDistance = 100, minSaturation = 0.5) {
+  const colors = [];
+
+  while (colors.length < count) {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+
+    const [h, s, v] = rgbToHsv(r, g, b);
+
+    // 채도 필터링: 흰색, 회색, 검정 제외
+    if (s < minSaturation) continue;
+
+    const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`.toUpperCase();
+
+    if (colors.includes(hex)) continue;
+
+    // 이웃 색상과 충분한 거리 확보
+    if (colors.length > 0) {
+      const prevHex = colors[colors.length - 1];
+      const pr = parseInt(prevHex.slice(1, 3), 16);
+      const pg = parseInt(prevHex.slice(3, 5), 16);
+      const pb = parseInt(prevHex.slice(5, 7), 16);
+
+      const distance = Math.sqrt((r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2);
+      if (distance < minDistance) continue;
+    }
+
+    colors.push(hex);
+  }
+
+  return colors;
+}
+}

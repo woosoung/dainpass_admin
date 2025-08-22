@@ -40,6 +40,10 @@ if(isset($_POST['de_easy_pays'])){
     $de_easy_pay_services = implode(",", $tmps);
 }
 
+
+$check_sanitize_keys = sql_field_names_pg($g5['dain_default_table']);
+// print_r2($fields); // 디버깅용 출력
+/*
 //KVE-2019-0689, KVE-2019-0691, KVE-2019-0694
 $check_sanitize_keys = array(
 'de_admin_company_name',        //회사명
@@ -93,7 +97,7 @@ $check_sanitize_keys = array(
 'de_sms_cont9',                  //SMS 상품배송시 고객님께 발송
 'de_sms_cont10',                 //SMS 상품배송시 고객님께 발송
 );
-
+*/
 foreach( $check_sanitize_keys as $key ){
     if( in_array($key, array('de_bank_account')) ){
         $$key = isset($_POST[$key]) ? clean_xss_tags($_POST[$key], 1, 1, 0, 0) : '';
@@ -141,6 +145,8 @@ $de_cart_keep_term = trim($de_cart_keep_term) === '' ? 0 : (int)$de_cart_keep_te
 $de_tax_flag_use = isset($_POST['de_tax_flag_use']) ? 'Y' : 'N';
 // 비회원 장바구니 체크박스
 $de_guest_cart_use = isset($_POST['de_guest_cart_use']) ? 'Y' : 'N';
+
+
 
 $sql = " UPDATE {$g5['dain_default_table']}
    SET de_admin_company_owner        = '{$de_admin_company_owner}',

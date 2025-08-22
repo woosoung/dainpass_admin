@@ -58,7 +58,7 @@ $(function(){
 				<?php } ?>
 			}
 		});
-		
+		<?php if(!$name_exists){ ?>
 		$('#<?=$bid?>').on('change',function(){
 			<?=$eid?>_rgbacolor = bwg_hex2rgba($('#<?=$aid?>').val(), $(this).val());
 			$(this).siblings('.output_span').find('output').text($(this).val());
@@ -67,6 +67,7 @@ $(function(){
 			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 		});
+		<?php } ?>
 	<?php }else{ // 여기까지는 $alpha_flag == true ?>
 		//색상만 설정
 		$('#<?=$aid?>').colpick({

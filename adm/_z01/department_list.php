@@ -55,7 +55,7 @@ $sql = " WITH RECURSIVE TermPaths AS (
 )
 SELECT trm_idx, trm_name, trm_name2, path, trm_desc, trm_left, trm_right, trm_status, depth, has_children FROM TermPaths ORDER BY trm_left;
 ";
-
+// echo $sql;exit;
 $result = sql_query($sql);
 $total_count = sql_num_rows($result);
 

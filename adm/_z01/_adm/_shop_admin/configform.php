@@ -1,6 +1,7 @@
 <?php
 $sub_menu = '920050';
 include_once('./_common.php');
+include_once('./configform_field_add.php');
 include_once(G5_EDITOR_LIB);
 
 auth_check_menu($auth, $sub_menu, "r");
@@ -471,30 +472,72 @@ function byte_check(el_cont, el_byte)
                 <input type="checkbox" name="de_guest_cart_use" value="1" id="de_guest_cart_use"<?php echo $default2['de_guest_cart_use'] == 'Y'?' checked':''; ?>> 사용
             </td>
         </tr>
+        <?php if($is_ultra) { //################################ 개발범위 시작 #################################### ?>
         <tr>
-            <th scope="row"><label for="de_schedule_max_day">최대일정날짜수<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_max_date</span><?php } ?></label></th>
+            <th scope="row"><label for="de_schedule_max_days">최대일정날짜수<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_max_days</span><?php } ?></label></th>
             <td>
-                 <?php echo help("일정을 구성하는 최대 날짜수(예를들어 5 로 지정하면:5일치의 일정까지만 등록이 가능합니다."); ?>
-                <?php echo tms_input_range('de_schedule_max_day',$default2['de_schedule_max_day']??'5',$w,1,10,1,'40',48,'일'); ?>
+                 <?php echo help("일정을 구성하는 최대 날짜수(예를들어 5 로 지정하면:5일차일정까지의 색상등록이 가능합니다.)"); ?>
+                <?php echo tms_input_range('de_schedule_max_days',$default2['de_schedule_max_days']??'5',$w,1,10,1,'100',48,'일'); ?>
             </td>
         </tr>
         <tr>
-            <th scope="row">일정날짜별 코스색상<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_selected_course1 ~ 5 [#333333]</span><?php } ?></th>
+            <th scope="row">일정날짜별 코스색상<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_days_colors [#333333,#555555,...]</span><?php } ?></th>
             <td>
-                <?php echo $default2['de_schedule_max_day']; ?>
-                <?php echo tms_input_color('de_selected_course1',$default2['de_selected_course1']??'#cccccc',$w); ?>
-            </td>
-        </tr>
-        <tr>
-            <th scope="row">일정선택업체별 색상<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_selected_com1 ~ 100 [#333333]</span><?php } ?></th>
-            <td>
+                <?php
+                $day_cnt = isset($default2['de_schedule_max_day']) ? (int)$default2['de_schedule_max_day'] : 5;
+                $schedule_days_colors = isset($default2['de_schedule_days_colors']) ? explode(',', $default2['de_schedule_days_colors']) : [];
                 
+                $daysColors = generateVividColors($day_cnt, 160, 0.6); // 최소 RGB 거리 150
+                ?>
+                <input type="text" name="de_schedule_days_colors" value="<?php echo get_sanitize_input($default2['de_schedule_days_colors']); ?>" id="de_schedule_days_colors" class="selected_colors frm_input w-[100%]" size="50">
+                <ul class="flex gap-3 [&>li>p]:text-center">
+                <?php
+                for ($i=1; $i<=$day_cnt; $i++) {
+                ?>
+                <li class="de_schedule_days_colors">
+                    <p><?=$i?>일차</p>
+                    <?php echo tms_input_color(''.$i,$schedule_days_colors[$i]??$daysColors[$i-1],$w); ?>
+                </li>
+                <?php } ?>
+                </ul>
             </td>
         </tr>
+        <tr>
+            <th scope="row"><label for="de_schedule_com_counts">최대일정업체수<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_com_counts</span><?php } ?></label></th>
+            <td>
+                 <?php echo help("일정을 구성하는 최대 업체수(예를들어 100 로 지정하면:100개업체까지의 개별색상이 등록가능합니다.)"); ?>
+                 <?php  //$rname='',$val='1',$w='',$min='0',$max='1',$step='0.1',$width='100',$padding_right=29,$unit='' ?>
+                <?php echo tms_input_range('de_schedule_com_counts',$default2['de_schedule_com_counts']??'100',$w,10,100,10,'100',48,'개'); ?>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">일정선택업체별 색상<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_com_colors [#333333,#555555,...]</span><?php } ?></th>
+            <td>
+                <?php
+                $coms_cnt = isset($default2['de_schedule_com_counts']) ? (int)$default2['de_schedule_com_counts'] : 100;
+                // $coms_cnt = 50;
+                $schedule_com_colors = isset($default2['de_schedule_com_colors']) ? explode(',', $default2['de_schedule_com_colors']) : [];
+                
+                $comColors = generateVividColors($coms_cnt, 150, 0.6); // 최소 RGB 거리 150
+                // print_r2($comColors); // 디버깅용 출력
+                ?>
+                <input type="text" name="de_schedule_com_colors" value="<?php echo get_sanitize_input($default2['de_schedule_com_colors']); ?>" id="de_schedule_com_colors" class="selected_colors frm_input w-[100%]" size="50">
+                <ul class="flex gap-3 flex-wrap [&>li>p]:text-center">
+                <?php
+                for ($i=1; $i<=$coms_cnt; $i++) {
+                ?>
+                <li class="de_schedule_com_colors">
+                    <p><?=$i?>번째</p>
+                    <?php echo tms_input_color(''.$i,$schedule_com_colors[$i]??$comColors[$i-1],$w); ?>
+                </li>
+                <?php } ?>
+                </ul>
+            </td>
+        </tr>
+        <?php }  //############################################### 개발범위 종료 #################################### ?>
          </tbody>
         </table>
-    </div>
-
+    </div>               
 </section>
 
 
@@ -508,9 +551,9 @@ function byte_check(el_cont, el_byte)
 <script>
 function fconfig_check(f)
 {
-    <?php echo get_editor_js('de_baesong_content'); ?>
-    <?php echo get_editor_js('de_change_content'); ?>
-    <?php echo get_editor_js('de_guest_privacy'); ?>
+    <?php ;//echo get_editor_js('de_baesong_content'); ?>
+    <?php ;//echo get_editor_js('de_change_content'); ?>
+    <?php ;//echo get_editor_js('de_guest_privacy'); ?>
     
     var msg = "",
         pg_msg = "";
@@ -536,76 +579,7 @@ function fconfig_check(f)
     }
 }
 
-$(function() {
 
-    $(document).ready(function () {
-        
-        $("#de_global_nhnkcp_naverpay").on("click", function(e){
-            if ( $(this).prop('checked') ) {
-                $("#de_easy_nhnkcp_naverpay").prop('checked', true);
-            }
-        });
-
-        function hash_goto_scroll(hash){
-            var $elem = hash ? $("#"+hash) : $('#' + window.location.hash.replace('#', ''));
-            if($elem.length) {
-
-                var admin_head_height = $("#hd_top").height() + $("#container_title").height() + 30;
-
-                $('html, body').animate({
-                    scrollTop: ($elem.offset().top - admin_head_height) + 'px'
-                }, 500, 'swing');
-            }
-        }
-
-        hash_goto_scroll();
-        
-        $(document).on("click", ".pg_test_conf_link", function(e){
-            e.preventDefault();
-
-            var str_hash = this.href.split("#")[1];
-
-            if( str_hash ){
-                hash_goto_scroll(str_hash);
-            }
-        });
-    });
-
-    $(document).on("click", ".de_pg_tab a", function(e){
-
-        var pg = $(this).attr("data-value"),
-            class_name = "tab-current";
-
-        $("#de_pg_service").val(pg);
-        $(this).parent("li").addClass(class_name).siblings().removeClass(class_name);
-
-        $(".scf_cardtest").addClass("scf_cardtest_hide");
-        $("."+pg+"_cardtest").removeClass("scf_cardtest_hide");
-        $(".scf_cardtest_tip_adm").addClass("scf_cardtest_tip_adm_hide");
-        $("#"+pg+"_cardtest_tip").removeClass("scf_cardtest_tip_adm_hide");
-    });
-
-    $("#de_pg_service").on("change", function() {
-        var pg = $(this).val();
-        $(".scf_cardtest").addClass("scf_cardtest_hide");
-        $("."+pg+"_cardtest").removeClass("scf_cardtest_hide");
-        $(".scf_cardtest_tip_adm").addClass("scf_cardtest_tip_adm_hide");
-        $("#"+pg+"_cardtest_tip").removeClass("scf_cardtest_tip_adm_hide");
-    });
-
-    $(".scf_cardtest_btn").bind("click", function() {
-        var $cf_cardtest_tip = $("#scf_cardtest_tip");
-        var $cf_cardtest_btn = $(".scf_cardtest_btn");
-
-        $cf_cardtest_tip.toggle();
-
-        if($cf_cardtest_tip.is(":visible")) {
-            $cf_cardtest_btn.text("테스트결제 팁 닫기");
-        } else {
-            $cf_cardtest_btn.text("테스트결제 팁 더보기");
-        }
-    });
-});
 </script>
 
 <?php
