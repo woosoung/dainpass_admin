@@ -5,22 +5,24 @@ if($w == '' || $w == 'u'){
     $del_arr = array();
     // set_XXX.php단에서 unset($set_type);이 있으므로 $set_type로 받아야 함
     // _XXXX_에서 XXXX는 해당 fle_db_idx로 대체되어야 함
-    if(@count(${$_POST['set_type'].'_favicon_del'})){
+    
+    // 기존 코드에서 @count 대신 안전한 체크로 변경
+    if(isset(${$_POST['set_type'].'_favicon_del'}) && @count(${$_POST['set_type'].'_favicon_del'})){
         foreach(${$_POST['set_type'].'_favicon_del'} as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
-    if(@count(${$_POST['set_type'].'_plflogo_del'})){
+    if(isset(${$_POST['set_type'].'_plflogo_del'}) && @count(${$_POST['set_type'].'_plflogo_del'})){
         foreach(${$_POST['set_type'].'_plflogo_del'} as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
-    if(@count(${$_POST['set_type'].'_ogplfimg_del'})){
+    if(isset(${$_POST['set_type'].'_ogplfimg_del'}) && @count(${$_POST['set_type'].'_ogplfimg_del'})){
         foreach(${$_POST['set_type'].'_ogplfimg_del'} as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
-    
+         
     if(count($merge_del)){
         foreach($merge_del as $k=>$v) {
             array_push($del_arr,$k);
