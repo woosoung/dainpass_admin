@@ -1248,6 +1248,8 @@ function tms_input_range($rname='',$val='1',$w='',$min='0',$max='1',$step='0.1',
 	}else{
 		$wd_class = ' bp_wdx'.$width;
 	}
+
+    $rname_exists = (isset($rname) && $rname) ? 1 : 0;
 	
 	$output_show = '';
 	if(!$padding_right || $padding_right == '0'){
@@ -1284,8 +1286,9 @@ function tms_input_color($name='',$value='#333333',$w='',$alpha_flag=0){
     //그외 랜덤id값
     $did = tms_get_random_string('az',4).'_'.tms_uniqid();
     $eid = tms_get_random_string('az',4).'_'.tms_uniqid();
-    
-    
+
+    $name_exists = (isset($name) && $name) ? 1 : 0;
+
     if($alpha_flag){
         if(substr($value,0,1) == '#') $value = 'rgba('.tms_rgb2hex2rgb($value).',1)';
         $input_color = (isset($value)) ? $value : 'rgba(51, 51, 51, 1)';
@@ -1609,5 +1612,76 @@ function category_tree_array($cat_code){
         array_push($cat_arr,substr($cat_code,0,$i*2));
     }
     return $cat_arr;
+}
+}
+
+// rgbToHsv 함수는 RGB 색상 모델을 HSV 색상 모델로 변환
+// r, g, b 값은 0에서 255 사이의 정수여야
+if(!function_exists('rgbToHsv')){
+function rgbToHsv($r, $g, $b) {
+    $r /= 255;
+    $g /= 255;
+    $b /= 255;
+
+    $max = max($r, $g, $b);
+    $min = min($r, $g, $b);
+    $delta = $max - $min;
+
+    // Hue 계산
+    if ($delta == 0) {
+        $h = 0;
+    } elseif ($max == $r) {
+        $h = 60 * fmod((($g - $b) / $delta), 6);
+    } elseif ($max == $g) {
+        $h = 60 * ((($b - $r) / $delta) + 2);
+    } else {
+        $h = 60 * ((($r - $g) / $delta) + 4);
+    }
+    if ($h < 0) $h += 360;
+
+    // Saturation 계산
+    $s = ($max == 0) ? 0 : ($delta / $max);
+
+    // Value 계산
+    $v = $max;
+
+    return [$h, $s, $v];
+}
+}
+
+// 아래 함수는 원하는 개수 만큼의 선명한 색상코드(HEX값)을 랜덤하게생성합니다.
+if(!function_exists('generateVividColors')){
+function generateVividColors($count = 100, $minDistance = 100, $minSaturation = 0.5) {
+    $colors = [];
+
+    while (count($colors) < $count) {
+        // 랜덤 RGB
+        $r = rand(0, 255);
+        $g = rand(0, 255);
+        $b = rand(0, 255);
+
+        // HSV 변환
+        list($h, $s, $v) = rgbToHsv($r, $g, $b);
+
+        // 채도 필터링: 낮은 채도는 건너뛰기
+        if ($s < $minSaturation) continue;
+
+        $hex = sprintf("#%02X%02X%02X", $r, $g, $b);
+
+        // 중복 체크
+        if (in_array($hex, $colors)) continue;
+
+        // 이웃 색상 대비 체크
+        if (!empty($colors)) {
+            $prev = $colors[count($colors) - 1];
+            list($pr, $pg, $pb) = sscanf($prev, "#%02X%02X%02X");
+            $distance = sqrt(($r - $pr)**2 + ($g - $pg)**2 + ($b - $pb)**2);
+            if ($distance < $minDistance) continue;
+        }
+
+        $colors[] = $hex;
+    }
+
+    return $colors;
 }
 }
