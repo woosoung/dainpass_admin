@@ -827,9 +827,10 @@ function upload_insert_file($fle_array){
     $fle_array['fle_dest_file'] = preg_replace("/\s+/", "", $fle_array['fle_name_orig']);
     $fle_array['fle_dest_file'] = preg_replace("/[#\&\+\-%@=\/\\:;,'\"\^`~\|\!\?\*\$#<>\(\)\[\]\{\}]/", "", $fle_array['fle_dest_file']);
     $fle_array['fle_dest_file'] = preg_replace_callback(
-                            "/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+/",
-                            create_function('$matches', 'return base64_encode($matches[0]);'),
-                            $fle_array['fle_dest_file']);
+                                    "/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]+/",
+                                    function($matches) { return base64_encode($matches[0]); },
+                                    $fle_array['fle_dest_file']
+                                );
     $fle_array['fle_dest_file'] = preg_replace("/\+/", "", $fle_array['fle_dest_file']);	// 한글변환후 + 기호가 있으면 제거해야 함
     $fle_array['fle_dest_file'] = preg_replace("/\//", "", $fle_array['fle_dest_file']);	// 한글변환후 / 기호가 있으면 제거해야 함
 
