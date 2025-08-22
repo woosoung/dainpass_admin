@@ -1,7 +1,7 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
-require_once G5_LIB_PATH . '/aws/autoload.php'; // AWS SDK 오토로더 포함
+require_once G5_LIB_PATH . '/aws/aws-autoloader.php'; // AWS SDK 오토로더 포함
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
 use Aws\Exception\AwsException;
