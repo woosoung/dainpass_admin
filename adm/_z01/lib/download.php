@@ -1,6 +1,6 @@
 <?php
 include_once('./_common.php');
-require_once G5_LIB_PATH . '/aws/aws-autoloader.php';
+require_once G5_LIB_PATH . '/aws/autoload.php';
 
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
