@@ -111,7 +111,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
                             <span>$set_conf['set_aws_region']</span><br>
                             <span>$set_conf['set_aws_bucket']</span><br>
                             <span>$set_conf['set_s3_basicurl']</span><br>
-                            <span>$set_conf['set_imgproxy_url']</span>
+                            <span>$set_conf['set__url']</span>
                         </div>
                     </div>
                     <?php } ?>
