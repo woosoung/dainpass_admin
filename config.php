@@ -40,8 +40,8 @@ if($_SERVER['HTTP_HOST'] === 'localhost:1234' || $_SERVER['HTTP_HOST'] === 'loca
     ini_set('session.cookie_domain', 'localhost');
     
 } else {
-    define('G5_DOMAIN', 'https://k8s.dainpass.com');
-    define('G5_HTTPS_DOMAIN', 'https://k8s.dainpass.com');
+    define('G5_DOMAIN', 'https://admin.dainpass.com');
+    define('G5_HTTPS_DOMAIN', 'https://admin.dainpass.com');
     
     // 프로덕션 쿠키 도메인
     define('G5_COOKIE_DOMAIN', '.dainpass.com');

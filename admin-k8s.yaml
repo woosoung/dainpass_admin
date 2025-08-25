@@ -208,7 +208,7 @@ metadata:
     alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true,stickiness.lb_cookie.duration_seconds=86400
 spec:
   rules:
-    - host: k8s.dainpass.com
+    - host: admin.dainpass.com
       http:
         paths:
           - path: /
