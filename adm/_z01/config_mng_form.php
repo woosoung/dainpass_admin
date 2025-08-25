@@ -60,7 +60,7 @@ for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 $sql2 = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'set' AND fle_type = 'admin/{$set_type}' AND fle_db_idx = 'mnglogo' ORDER BY fle_reg_dt DESC ";
 // echo $sql;exit;
 $rs2 = sql_query_pg($sql2);
-$mnglogo_wd = 150;
+$mnglogo_wd = 200;
 $mnglogo_ht = 24;
 $mnglogo['mnglogo_f_arr'] = array();
 $mnglogo['mnglogo_fidxs'] = array();

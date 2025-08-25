@@ -1,7 +1,7 @@
 <script>
 let afavicon_img_src = '<?=(($set_mng['afavicon_url'] != '') ? $set_mng['afavicon_url'] : '')?>';
 let mnglogo_img_src = '<?=(($set_mng['mnglogo_url'] != '') ? $set_mng['mnglogo_url'] : '')?>';
-
+// alert(mnglogo_img_src);
 document.addEventListener("DOMContentLoaded", function() {
     // 모든 h3 태그를 가져옴
     const h3Elements = document.querySelectorAll("h3");

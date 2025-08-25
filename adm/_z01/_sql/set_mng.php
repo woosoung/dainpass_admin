@@ -80,7 +80,7 @@ $sql = "SELECT * FROM {$g5['dain_file_table']}
         ORDER BY fle_reg_dt DESC 
             LIMIT 1 ";
 $rs = sql_fetch_pg($sql);
-$set_mng['mnglogo_url'] = isset($rs['fle_path']) ? $set_conf['set_imgproxy_url'].'/rs:fill:150:24:1/plain/'.$set_conf['set_s3_basicurl'].'/'.$rs['fle_path'] : '';
+$set_mng['mnglogo_url'] = isset($rs['fle_path']) ? $set_conf['set_imgproxy_url'].'/rs:fill:200:24:1/plain/'.$set_conf['set_s3_basicurl'].'/'.$rs['fle_path'] : '';
 
 
 unset($set_key);
