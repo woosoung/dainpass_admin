@@ -1,5 +1,6 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
+// echo $name_exists;exit;
 ?>
 <ul class="color_ul">
 	<?php if($alpha_flag) {?>
@@ -34,7 +35,7 @@ $(function(){
 
 	<?php if($alpha_flag) {?>
 		//색상과 투명도 설정
-		var <?=$eid?>_rgbacolor = bwg_hex2rgba($('#<?=$aid?>').val(), <?=$bga?>);
+		var <?=$eid?>_rgbacolor = tms_hex2rgba($('#<?=$aid?>').val(), <?=$bga?>);
 		//console.log(<?=$eid?>_rgbacolor);
 		//console.log('<?=$bga?>');
 		//console.log('<?=$input_color?>');
@@ -48,7 +49,7 @@ $(function(){
 			onSubmit:function(hsb,hex,rgb,el,bySetColor) {
 				$(el).val('#'+hex);
 				$(el).colpickHide();
-				<?=$eid?>_rgbacolor = bwg_hex2rgba($(el).val(), $('#<?=$bid?>').val());
+				<?=$eid?>_rgbacolor = tms_hex2rgba($(el).val(), $('#<?=$bid?>').val());
 				$(el).parent().siblings('.color_li3').find('input').val(<?=$eid?>_rgbacolor);
 				$(el).parent().siblings('.color_li3').find('input').siblings('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 				
@@ -58,16 +59,16 @@ $(function(){
 				<?php } ?>
 			}
 		});
-		<?php if(!$name_exists){ ?>
+		
 		$('#<?=$bid?>').on('change',function(){
-			<?=$eid?>_rgbacolor = bwg_hex2rgba($('#<?=$aid?>').val(), $(this).val());
+			// console.log('1');
+			<?=$eid?>_rgbacolor = tms_hex2rgba($('#<?=$aid?>').val(), $(this).val());
 			$(this).siblings('.output_span').find('output').text($(this).val());
-			//console.log(<?=$eid?>_rgbacolor);
+			// console.log(<?=$eid?>_rgbacolor);
 			$(this).parent().parent().siblings('.color_li3').find('input').val(<?=$eid?>_rgbacolor);
 			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 		});
-		<?php } ?>
 	<?php }else{ // 여기까지는 $alpha_flag == true ?>
 		//색상만 설정
 		$('#<?=$aid?>').colpick({
@@ -79,6 +80,15 @@ $(function(){
 				$(el).css({'border':'1px solid #ddd','font-size':0,'background':$(el).val()});
 				<?php } ?>
 			}
+		});
+		$('#<?=$bid?>').on('change',function(){
+			// console.log('2');
+			<?=$eid?>_rgbacolor = tms_hex2rgba($('#<?=$aid?>').val(), $(this).val());
+			$(this).siblings('.output_span').find('output').text($(this).val());
+			// console.log(<?=$eid?>_rgbacolor);
+			$(this).parent().parent().siblings('.color_li3').find('input').val(<?=$eid?>_rgbacolor);
+			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
+			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 		});
 	<?php } // 여기까지는 $alpha_flag == false ?>
 });

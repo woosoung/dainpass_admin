@@ -1288,8 +1288,8 @@ function tms_input_color($name='',$value='#333333',$w='',$alpha_flag=0){
     $did = tms_get_random_string('az',4).'_'.tms_uniqid();
     $eid = tms_get_random_string('az',4).'_'.tms_uniqid();
 
-    $name_exists = (isset($name) && $name) ? 1 : 0;
-
+    $name_exists = (isset($name) && $name != '') ? 'Y' : 'N';
+    // echo $name_exists;
     if($alpha_flag){
         if(substr($value,0,1) == '#') $value = 'rgba('.tms_rgb2hex2rgb($value).',1)';
         $input_color = (isset($value)) ? $value : 'rgba(51, 51, 51, 1)';

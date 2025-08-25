@@ -496,7 +496,7 @@ function byte_check(el_cont, el_byte)
                 ?>
                 <li class="de_schedule_days_colors">
                     <p><?=$i?>일차</p>
-                    <?php echo tms_input_color(''.$i,$schedule_days_colors[$i]??$daysColors[$i-1],$w); ?>
+                    <?php echo tms_input_color('',$schedule_days_colors[$i]??$daysColors[$i-1],$w); ?>
                 </li>
                 <?php } ?>
                 </ul>
