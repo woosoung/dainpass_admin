@@ -98,7 +98,7 @@ else if ($w == 'u')
     $emp['emp_f_arr'] = array();
     $emp['emp_fidxs'] = array();//회의 파일번호(fle_idx) 목록이 담긴 배열
     $emp['emp_lst_idx'] = 0;//회의 파일중에 가장 최신버전의 파일번호
-    for($i=0;$row2=sql_fetch_array($rs->result);$i++) {
+    for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
         $file_down_del = (is_file(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name'])) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_fullpath='.urlencode(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name']).'&file_name_orig='.$row2['fle_name_orig'].'" file_path="'.$row2['fle_path'].'">[파일다운로드]</a>&nbsp;&nbsp;'.$row2['fle_reg_dt'].'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$row2['fle_type'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>':''.PHP_EOL;
         @array_push($emp['emp_f_arr'],array('file'=>$file_down_del));
         @array_push($emp['emp_fidxs'],$row2['fle_idx']);
@@ -174,7 +174,6 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 <input type="hidden" name="sod" value="<?=$sod?>">
 <input type="hidden" name="page" value="<?=$page?>">
 <input type="hidden" name="token" value="">
-<input type="hidden" name="<?=$pre?>_idx" value="<?=${$pre."_idx"}?>">
 <?=$form_input?>
 <div class="local_desc01 local_desc" style="display:no ne;">
     <p>사원정보를 관리하는 페이지입니다.(사원의 회원등급은 기본 lv.6 이상입니다.)</p>

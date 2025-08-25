@@ -32,7 +32,6 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 <input type="hidden" name="set_key" value="<?=$set_key?>">
 <input type="hidden" name="set_type" value="<?=$set_type?>">
 <input type="hidden" name="file_name" value="<?=$g5['file_name']?>">
-<input type="hidden" name="fle_db_idx" value="<?=$fvc['fle_db_idx']?>">
 <section id="anc_cf_default">
     <h2 class="h2_frm">기본설정</h2>
     <?php echo $pg_anchor ?>

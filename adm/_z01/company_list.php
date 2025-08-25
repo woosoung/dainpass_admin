@@ -163,6 +163,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     // $row['default_com_class'] = ($_SESSION['ss_shop_id']==$row['shop_id']&&$member['mb_manager_yn']) ? 'b_default_company' : '';
                     // 삭제인 경우 그레이 표현
                     $row['com_status_trash_class']	= ($row['status'] == 'trash') ? " tr_trash" : "";
+                    $row['default_com_class'] = $row['default_com_class'] ?? '';
                     $bg = 'bg'.($i%2);
 
                 ?>

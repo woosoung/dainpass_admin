@@ -158,6 +158,8 @@ require_once G5_ADMIN_PATH.'/admin.head.php';
         }
         unset($mta_mb_arr);
         $s_mod = '<a href="./employee_form.php?'.$qstr.'&amp;w=u&amp;mb_id='.$row['mb_id'].'" class="btn btn_03">수정</a>';
+    // Alternate row background class and ensure $bg is defined
+    $bg = ($i % 2) ? 'bg1' : 'bg0';
     ?>
     <tr class="<?php echo $bg; ?>" tr_id="<?=$row['mb_id']?>">
         <td class="td_chk">

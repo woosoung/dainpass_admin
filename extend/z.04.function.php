@@ -1184,7 +1184,7 @@ function uriReturnGetArea($uri,$ky){
 
 //루프(loop)코드에서 생성하는 자릿수가 일정한 타임베이스의 유니크값을 반환하는 함수
 if(!function_exists('loop_time_uniqid')){
-function loop_time_uniqid($l=2,$n){ //자릿수, 각루프값(주로 $i값)
+function loop_time_uniqid($n, $l=2){ //자릿수, 각루프값(주로 $i값)
     if(!preg_match('/\d/',$n) || !preg_match('/\d/',$l)) return 0;
     $uniq = time().sprintf('%0'.$l.'d',$n);
     return $uniq;
