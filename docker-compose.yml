@@ -1,13 +1,24 @@
+
 version: '3.8'
+
 services:
   php-app:
     build:
       context: .
       target: development
+    container_name: admin-page:dev
     ports:
       - "1234:80"
     volumes:
+      # 소스코드 실시간 동기화
       - ./:/var/www/html
+      # Composer 캐시 (빌드 속도 향상)
+      - composer-cache:/root/.composer
     environment:
       - PHP_ENV=development
+      - APP_DEBUG=true
     restart: unless-stopped  # 자동 재시작
+
+volumes:
+  composer-cache:
+    driver: local

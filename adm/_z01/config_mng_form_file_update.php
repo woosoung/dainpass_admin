@@ -5,14 +5,18 @@ if($w == '' || $w == 'u'){
     $del_arr = array();
     // set_XXX.php단에서 unset($set_type);이 있으므로 $set_type로 받아야 함
     // _XXXX_에서 XXXX는 해당 fle_db_idx로 대체되어야 함
-    if(@count(${$_POST['set_type'].'_afavicon_del'})){
-        foreach(${$_POST['set_type'].'_afavicon_del'} as $k=>$v) {
+    
+    // 변수 존재 여부와 배열인지 확인 후 count 사용
+    $afavicon_del_var = ${$_POST['set_type'].'_afavicon_del'} ?? null;
+    if(is_array($afavicon_del_var) && count($afavicon_del_var)){
+        foreach($afavicon_del_var as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
 
-    if(@count(${$_POST['set_type'].'_mnglogo_del'})){
-        foreach(${$_POST['set_type'].'_mnglogo_del'} as $k=>$v) {
+    $mnglogo_del_var = ${$_POST['set_type'].'_mnglogo_del'} ?? null;
+    if(is_array($mnglogo_del_var) && count($mnglogo_del_var)){
+        foreach($mnglogo_del_var as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }

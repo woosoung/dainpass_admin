@@ -5,8 +5,11 @@ if($w == '' || $w == 'u'){
     $del_arr = array();
     // set_XXX.php단에서 unset($set_type);이 있으므로 $set_type로 받아야 함
     // _XXXX_에서 XXXX는 해당 fle_db_idx로 대체되어야 함
-    if(@count(${$_POST['set_type'].'_XXXX_del'})){
-        foreach(${$_POST['set_type'].'_XXXX_del'} as $k=>$v) {
+    
+    // 변수 존재 여부와 배열인지 확인 후 count 사용
+    $xxxx_del_var = ${$_POST['set_type'].'_XXXX_del'} ?? null;
+    if(is_array($xxxx_del_var) && count($xxxx_del_var)){
+        foreach($xxxx_del_var as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
