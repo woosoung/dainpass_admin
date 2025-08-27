@@ -790,8 +790,8 @@ function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_dir='',$fle_type=
                     $width = 0;
                     $height = 0;
                 }
-                $upfile_info = upload_insert_file(array("fle_idx"=>$fle_idx
-                                    ,"fle_mb_id"=>$member['mb_id']
+                $upfile_info = upload_insert_file(array(
+                                    "fle_mb_id"=>$member['mb_id']
                                     ,"fle_name"=>$_files['tmp_name'][$i]
                                     ,"fle_name_orig"=>$_files['name'][$i]
                                     ,"fle_mime_type"=>$_files['type'][$i]
@@ -849,7 +849,7 @@ function upload_insert_file($fle_array){
 
     // 파일의 mime_type 추출
     if(!$fle_array['fle_mime_type'])
-        $fle_array['fle_mime_type'] = mime_content_type($filename);
+        $fle_array['fle_mime_type'] = mime_content_type($fle_array['fle_name']);
 
     $sql = " INSERT INTO {$g5['dain_file_table']} (
             fle_mb_id,

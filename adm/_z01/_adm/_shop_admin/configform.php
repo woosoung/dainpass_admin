@@ -472,7 +472,6 @@ function byte_check(el_cont, el_byte)
                 <input type="checkbox" name="de_guest_cart_use" value="1" id="de_guest_cart_use"<?php echo $default2['de_guest_cart_use'] == 'Y'?' checked':''; ?>> 사용
             </td>
         </tr>
-        <?php if($is_ultra) { //################################ 개발범위 시작 #################################### ?>
         <tr>
             <th scope="row"><label for="de_schedule_max_days">최대일정날짜수<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_max_days</span><?php } ?></label></th>
             <td>
@@ -484,19 +483,23 @@ function byte_check(el_cont, el_byte)
             <th scope="row">일정날짜별 코스색상<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_schedule_days_colors [#333333,#555555,...]</span><?php } ?></th>
             <td>
                 <?php
-                $day_cnt = isset($default2['de_schedule_max_day']) ? (int)$default2['de_schedule_max_day'] : 5;
+                $day_cnt = isset($default2['de_schedule_max_days']) ? (int)$default2['de_schedule_max_days'] : 5;
+                $day_colors = generateVividColors($day_cnt, 160, 0.6);
                 $schedule_days_colors = isset($default2['de_schedule_days_colors']) ? explode(',', $default2['de_schedule_days_colors']) : [];
-                
-                $daysColors = generateVividColors($day_cnt, 160, 0.6); // 최소 RGB 거리 150
+                for($j=0; $j<$day_cnt; $j++) {
+                    if(isset($schedule_days_colors[$j]) && $schedule_days_colors[$j]) {
+                        $day_colors[$j] = $schedule_days_colors[$j];
+                    }
+                }
                 ?>
-                <input type="text" name="de_schedule_days_colors" value="<?php echo get_sanitize_input($default2['de_schedule_days_colors']); ?>" id="de_schedule_days_colors" class="selected_colors frm_input w-[100%]" size="50">
+                <input type="hidden" name="de_schedule_days_colors" value="<?php echo get_sanitize_input($default2['de_schedule_days_colors']); ?>" id="de_schedule_days_colors" class="selected_colors frm_input w-[100%]" size="50">
                 <ul class="flex gap-3 [&>li>p]:text-center">
                 <?php
                 for ($i=1; $i<=$day_cnt; $i++) {
                 ?>
                 <li class="de_schedule_days_colors">
                     <p><?=$i?>일차</p>
-                    <?php echo tms_input_color('',$schedule_days_colors[$i]??$daysColors[$i-1],$w); ?>
+                    <?php echo tms_input_color('',$day_colors[$i-1],$w); ?>
                 </li>
                 <?php } ?>
                 </ul>
@@ -516,25 +519,29 @@ function byte_check(el_cont, el_byte)
                 <?php
                 $coms_cnt = isset($default2['de_schedule_com_counts']) ? (int)$default2['de_schedule_com_counts'] : 100;
                 // $coms_cnt = 50;
+                $com_colors = generateVividColors($coms_cnt, 150, 0.6);
                 $schedule_com_colors = isset($default2['de_schedule_com_colors']) ? explode(',', $default2['de_schedule_com_colors']) : [];
-                
-                $comColors = generateVividColors($coms_cnt, 150, 0.6); // 최소 RGB 거리 150
+
+                for($j=0; $j<$coms_cnt; $j++) {
+                    if(isset($schedule_com_colors[$j]) && $schedule_com_colors[$j]) {
+                        $com_colors[$j] = $schedule_com_colors[$j];
+                    }
+                }
                 // print_r2($comColors); // 디버깅용 출력
                 ?>
-                <input type="text" name="de_schedule_com_colors" value="<?php echo get_sanitize_input($default2['de_schedule_com_colors']); ?>" id="de_schedule_com_colors" class="selected_colors frm_input w-[100%]" size="50">
+                <input type="hidden" name="de_schedule_com_colors" value="<?php echo get_sanitize_input($default2['de_schedule_com_colors']); ?>" id="de_schedule_com_colors" class="selected_colors frm_input w-[100%]" size="50">
                 <ul class="flex gap-3 flex-wrap [&>li>p]:text-center">
                 <?php
                 for ($i=1; $i<=$coms_cnt; $i++) {
                 ?>
                 <li class="de_schedule_com_colors">
                     <p><?=$i?>번째</p>
-                    <?php echo tms_input_color(''.$i,$schedule_com_colors[$i]??$comColors[$i-1],$w); ?>
+                    <?php echo tms_input_color('',$com_colors[$i-1],$w); ?>
                 </li>
                 <?php } ?>
                 </ul>
             </td>
         </tr>
-        <?php }  //############################################### 개발범위 종료 #################################### ?>
          </tbody>
         </table>
     </div>               
@@ -549,6 +556,7 @@ function byte_check(el_cont, el_byte)
 </form>
 
 <script>
+
 function fconfig_check(f)
 {
     <?php ;//echo get_editor_js('de_baesong_content'); ?>

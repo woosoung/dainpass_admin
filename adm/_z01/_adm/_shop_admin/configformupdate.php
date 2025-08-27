@@ -148,6 +148,7 @@ $de_guest_cart_use = isset($_POST['de_guest_cart_use']) ? 'Y' : 'N';
 
 
 
+
 $sql = " UPDATE {$g5['dain_default_table']}
    SET de_admin_company_owner        = '{$de_admin_company_owner}',
        de_admin_company_name         = '{$de_admin_company_name}',
@@ -193,11 +194,15 @@ $sql = " UPDATE {$g5['dain_default_table']}
        de_sms_use                    = '{$de_sms_use}',
        de_aligo_user_id              = '{$de_aligo_user_id}',
        de_aligo_key                  = '{$de_aligo_key}',
-       de_cart_keep_term             = {$de_cart_keep_term},
+       de_cart_keep_term             =  {$de_cart_keep_term},
        de_guest_cart_use             = '{$de_guest_cart_use}',
        de_admin_buga_no              = '{$de_admin_buga_no}',
        de_escrow_use                 = '{$de_escrow_use}',
-       de_tax_flag_use               = '{$de_tax_flag_use}'
+       de_tax_flag_use               = '{$de_tax_flag_use}',
+       de_schedule_max_days          = '{$de_schedule_max_days}',
+       de_schedule_days_colors       = '{$de_schedule_days_colors}',
+       de_schedule_com_counts        = '{$de_schedule_com_counts}',
+       de_schedule_com_colors        = '{$de_schedule_com_colors}'
 ";
 
 // WHERE 절 추가 (없으면 전체 레코드 수정됨)

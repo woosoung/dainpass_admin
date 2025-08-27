@@ -53,21 +53,10 @@ $(function(){
 				$(el).parent().siblings('.color_li3').find('input').val(<?=$eid?>_rgbacolor);
 				$(el).parent().siblings('.color_li3').find('input').siblings('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 				
-				
 				<?php if($g5['is_explorer']){?>
 				$(el).css({'border':'1px solid #ddd','font-size':0,'background':$(el).val()});
 				<?php } ?>
 			}
-		});
-		
-		$('#<?=$bid?>').on('change',function(){
-			// console.log('1');
-			<?=$eid?>_rgbacolor = tms_hex2rgba($('#<?=$aid?>').val(), $(this).val());
-			$(this).siblings('.output_span').find('output').text($(this).val());
-			// console.log(<?=$eid?>_rgbacolor);
-			$(this).parent().parent().siblings('.color_li3').find('input').val(<?=$eid?>_rgbacolor);
-			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
-			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 		});
 	<?php }else{ // 여기까지는 $alpha_flag == true ?>
 		//색상만 설정
@@ -76,19 +65,23 @@ $(function(){
 			onSubmit:function(hsb,hex,rgb,el,bySetColor) {
 				$(el).val('#'+hex);
 				$(el).colpickHide();
-				<?php if($g5['is_explorer']){?>
-				$(el).css({'border':'1px solid #ddd','font-size':0,'background':$(el).val()});
+				$(el).parent().find('input').val('#'+hex);
+				
+				<?php if($name_exists == 'N') { ?>
+				let input_colors = $(el).parent().parent().parent().parent().siblings('input');
+				if(input_colors.length == 1){
+					input_colors.val('');
+					let lis_color_str = '';
+					let lis = $('.'+$(el).parent().parent().parent().attr('class'));
+					lis.each(function(index){
+						lis_color_str += $(this).find('.color_ul').find('.color_li').find('input').val();
+						if(index < lis.length-1) lis_color_str += ',';
+					});
+					// alert(lis_color_str);
+					input_colors.val(lis_color_str);
+				}
 				<?php } ?>
 			}
-		});
-		$('#<?=$bid?>').on('change',function(){
-			// console.log('2');
-			<?=$eid?>_rgbacolor = tms_hex2rgba($('#<?=$aid?>').val(), $(this).val());
-			$(this).siblings('.output_span').find('output').text($(this).val());
-			// console.log(<?=$eid?>_rgbacolor);
-			$(this).parent().parent().siblings('.color_li3').find('input').val(<?=$eid?>_rgbacolor);
-			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
-			$(this).parent().parent().siblings('.color_li3').find('.color_result_bg').find('.color_result').css('background',<?=$eid?>_rgbacolor);
 		});
 	<?php } // 여기까지는 $alpha_flag == false ?>
 });
