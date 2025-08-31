@@ -6,12 +6,22 @@ check_demo();
 
 @auth_check($auth[$sub_menu],"w");
 
+// 안전한 기본값 초기화 (요청 파라미터 정규화)
+$w = isset($_POST['w']) ? (string)$_POST['w'] : (isset($_GET['w']) ? (string)$_GET['w'] : '');
+$mb_leave_date = isset($_POST['mb_leave_date']) ? (string)$_POST['mb_leave_date'] : '';
+$auths = isset($_POST['auths']) ? (string)$_POST['auths'] : null;
+$auth_renewal = isset($_POST['auth_renewal']) ? (bool)$_POST['auth_renewal'] : false;
+$emp_del = isset($_POST['emp_del']) ? $_POST['emp_del'] : [];
+if (!is_array($emp_del)) { $emp_del = []; }
+$qstr = '';
+
 //-- 필드명 추출 & mb_ 와 같은 앞자리 3자 추출 --//
 $r = getPrefixFields($g5['member_table']);//arr['prefix'], arr['fields']를 반환
 
 // $_REQUEST로 넘어온 데이터중에 추출한 접두어를 가진 필드중에 테이블에 존재하지 않는 데이터만 추출해서 배열로 반환
 // 이 배열은 meta테이블에 따로 저장하기 위해 사용됨
 $exArr = getExTableData($r['prefix'],$r['fields'],$_REQUEST);
+if (!is_array($exArr)) { $exArr = []; }
 
 $mb_id = trim($_POST['mb_id']);
 $sql_password = '';
@@ -73,20 +83,20 @@ sql_query($sql,1);
 
 
 $skip_arr = array('mb_zip');
-if(count($exArr)){
+if(!empty($exArr)){
     foreach($exArr as $k => $v){
         if(in_array($k,$skip_arr)) continue;
         meta_update(array("mta_db_tbl"=>"member","mta_db_idx"=>$mb_id,"mta_key"=>$k,"mta_value"=>$v));
     }
 }
-$auth_renewal = isset($auth_renewal) ? true : false;
+// $auth_renewal: 권한 갱신 여부 (체크박스/hidden 등에서 전달됨)
 // echo $auth_renewal.':';exit;
 // $auth_renewal = $auth_renewal ?? true; // 권한갱신 여부
 if($auth_renewal){
     $auth_del_sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id = '{$mb_id}' ";
     sql_query($auth_del_sql,1);
     $auth_arr = isset($auths) ? explode(',',$auths) : array();
-    if(count($auth_arr)){
+    if(!empty($auth_arr)){
         $auth_sql = " INSERT INTO {$g5['auth_table']} VALUES ('{$mb_id}', '100000', 'r') "; // 기본적으로 메인페이지 즉, '대시보드' 권한을 부여
         foreach($auth_arr as $v){
             $arr = explode('_', $v);
@@ -111,21 +121,21 @@ if($w == '' || $w == 'u'){
     //파일 삭제처리
     $merge_del = array();
     $del_arr = array();
-    if(@count($emp_del)){
-        foreach($emp_del as $k=>$v) {
+    if(!empty($mbf_del)){
+        foreach($mbf_del as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
     
-    if(count($merge_del)){
+    if(!empty($merge_del)){
         foreach($merge_del as $k=>$v) {
             array_push($del_arr,$k);
         }
     }
-    if(count($del_arr)) delete_idx_file($del_arr);
+    if(!empty($del_arr)) delete_idx_s3_file($del_arr);
     
     //멀티파일처리
-    upload_multi_file($_FILES['emp_datas'],'member',$mb_id,'emp');
+    upload_multi_file($_FILES['mbf_datas'],'member',$mb_id,'admin/member','mbf');
 }
 
 
@@ -142,6 +152,6 @@ foreach($_REQUEST as $key => $value ) {
         }
     }
 }
-
+// exit;
 $msg = ($w == '') ? '등록' : '수정';
 alert('사원정보가 '.$msg.'되었습니다.','./employee_list.php?'.$qstr, false);

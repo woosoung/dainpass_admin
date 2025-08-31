@@ -27,6 +27,39 @@ foreach($_REQUEST as $key => $value ) {
     }
 }
 
+$mb_id = ($w == '') ? '' : $mb_id;
+
+// 관리자사이트 Favicon 이미지
+$sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'member' AND fle_dir = 'admin/member' AND fle_db_idx = '{$mb_id}' ORDER BY fle_reg_dt DESC ";
+// echo $sql;exit;
+$rs = sql_query_pg($sql);
+
+$mbf['mbf_f_arr'] = array();
+$mbf['mbf_fidxs'] = array();
+$mbf['mbf_lst_idx'] = 0;
+$mbf['fle_db_idx'] = $mb_id;
+for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
+    $is_s3file_yn = is_s3file($row2['fle_path']);
+    $row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="mbf_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+    $row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
+    '<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+    <br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+    $mbf['fle_db_idx'] = $row2['fle_db_idx'];
+    @array_push($mbf['mbf_f_arr'], array('file'=>$row2['down_del']));
+    @array_push($mbf['mbf_fidxs'], $row2['fle_idx']);
+}
+
+
+//회의관련 파일 idx배열에 요소가 1개이상 존재하면 그중에 첫번째 요소(fle_idx)를 변수에 담는다.
+if(@count($mbf['mbf_fidxs'])) $mbf['mbf_lst_idx'] = $mbf['mbf_fidxs'][0];
+
+// exit;
+
+
+
+
+
+
 
 if ($w == '') {
     $required_mb_id = 'required';
@@ -90,22 +123,7 @@ else if ($w == 'u')
         array_push($auth_list,$row['au_menu'].'_'.$auth_bar);
     }
 
-    //관련파일 추출
-	$sql = "SELECT * FROM {$g5['dain_file_table']}
-        WHERE fle_db_tbl = 'member' AND fle_type = 'emp' AND fle_db_idx = '{$mb_id}' ORDER BY fle_reg_dt DESC ";
-    $rs = sql_query_pg($sql);
-    //echo $rs->num_rows;echo "<br>";
-    $emp['emp_f_arr'] = array();
-    $emp['emp_fidxs'] = array();//회의 파일번호(fle_idx) 목록이 담긴 배열
-    $emp['emp_lst_idx'] = 0;//회의 파일중에 가장 최신버전의 파일번호
-    for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
-        $file_down_del = (is_file(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name'])) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_fullpath='.urlencode(G5_DATA_PATH.$row2['fle_path'].'/'.$row2['fle_name']).'&file_name_orig='.$row2['fle_name_orig'].'" file_path="'.$row2['fle_path'].'">[파일다운로드]</a>&nbsp;&nbsp;'.$row2['fle_reg_dt'].'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$row2['fle_type'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>':''.PHP_EOL;
-        @array_push($emp['emp_f_arr'],array('file'=>$file_down_del));
-        @array_push($emp['emp_fidxs'],$row2['fle_idx']);
-    }
-
-    //회의관련 파일 idx배열에 요소가 1개이상 존재하면 그중에 첫번째 요소(fle_idx)를 변수에 담는다.
-    if(@count($emp['emp_fidxs'])) $emp['emp_lst_idx'] = $emp['emp_fidxs'][0];
+    
 }
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');
@@ -230,7 +248,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </select>
             <script>
             const mb_department = document.querySelector('#mb_department');
-            mb_department.value = '<?=$mb['mb_department']?>';
+            if (mb_department) mb_department.value = <?= json_encode($mb['mb_department'] ?? "") ?>;
             </script>
         </td>
         <th scope="row"><label for="mb_department">직급<strong class="sound_only">필수</strong></label></th>
@@ -241,7 +259,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </select>
             <script>
             const mb_rank = document.querySelector('#mb_rank');
-            mb_rank.value = '<?=$mb['mb_rank']?>';
+            if (mb_rank) mb_rank.value = <?= json_encode($mb['mb_rank'] ?? "") ?>;
             </script>
         </td>
     </tr>
@@ -254,7 +272,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </select>
             <script>
             const mb_role = document.querySelector('#mb_role');
-            mb_role.value = '<?=$mb['mb_role']?>';
+            if (mb_role) mb_role.value = <?= json_encode($mb['mb_role'] ?? "") ?>;
             </script>
         </td>
         <th scope="row"><label for="mb_email">이메일<strong class="sound_only">필수</strong></label></th>
@@ -282,7 +300,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </select>
             <script>
             const mb_lv = document.querySelector('#mb_lv');
-            mb_lv.value = '<?=$mb['mb_level']?>';
+            if (mb_lv) mb_lv.value = <?= json_encode($mb['mb_level'] ?? "") ?>;
             </script>
         </td>
     </tr>
@@ -304,12 +322,12 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         <th scope="row">사원관련파일</th>
         <td>
             <?php echo help("사원관련 파일들을 등록하고 관리해 주시면 됩니다."); ?>
-            <input type="file" id="multi_file_emp" name="emp_datas[]" multiple class="">
+            <input type="file" id="multi_file_mbf" name="mbf_datas[]" multiple class="">
             <?php
-            if(@count($emp['emp_f_arr'])){
+            if(@count($mbf['mbf_f_arr'])){
                 echo '<ul>'.PHP_EOL;
-                for($i=0;$i<count($emp['emp_f_arr']);$i++) {
-                    echo "<li>[".($i+1).']'.$emp['emp_f_arr'][$i]['file']."</li>".PHP_EOL;
+                for($i=0;$i<count($mbf['mbf_f_arr']);$i++) {
+                    echo "<li>[".($i+1).']'.$mbf['mbf_f_arr'][$i]['file']."</li>".PHP_EOL;
                 }
                 echo '</ul>'.PHP_EOL;
             }

@@ -1,6 +1,6 @@
 <script>
 //사원관련 멀티파일
-$('#multi_file_emp').MultiFile();
+$('#multi_file_mbf').MultiFile();
 
 const reg_mb_id = document.querySelector('#reg_mb_id');
 let mb_id_flag = true;
@@ -50,13 +50,14 @@ async function mbIdCheck(){
             },
             body: 'mb_id=' + encodeURIComponent(mb_id),
         });
+        // cosole.log(res);return;
 
         if(!res.ok){
             throw new Error('네트워크 상태가 불안정합니다.');
         }
 
         const rst = await res.text();
-        
+        // console.log(rst);return;
         if(rst == '1'){
             s_id_info.textContent = '사용가능한 아이디입니다.';
             s_id_info.style.color = 'blue';
@@ -98,8 +99,8 @@ async function mbEmailCheck(){
     const w = '<?=$w?>';
     
     // 입력값 유효성 검사
-    if(mb_id.length === 0){
-        s_email_info.textContent = '아이디 입력이 안되어 있습니다.';
+    if(mb_email.length === 0){
+        s_email_info.textContent = '이메일 입력이 안되어 있습니다.';
         s_email_info.style.color = 'red';
         mb_email_flag = false;
         return;
@@ -396,8 +397,11 @@ function allAuthInputUpdate(){
 }
 
 // 전체권한삭제
-const all_auth_del = document.querySelector('#all_auth_del');
-all_auth_del.addEventListener('click', allAuthInputDelete);
+// const all_auth_del = document.getElementById('#all_auth_del');
+// all_auth_del.addEventListener('click', allAuthInputDelete);
+document.addEventListener('click', e => {
+    if (e.target.closest('#all_auth_del')) allAuthInputDelete();
+});
 
 function allAuthInputDelete(){
     const inp = document.querySelector('input[name="auths"]');

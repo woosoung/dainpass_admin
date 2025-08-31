@@ -496,44 +496,68 @@ if(!function_exists('meta_update')){
 function meta_update($meta_array){
     global $conf_com_idx, $g5;
     
-    if(!$meta_array['mta_key'])
+    // 필수 키 보강 및 기본값 설정
+    $meta_array = array_merge([
+        'mta_db_tbl' => '',
+        'mta_db_idx' => '',
+        'mta_key'    => '',
+        'mta_value'  => '',
+        'mta_title'  => '',
+    ], (array)$meta_array);
+
+    if ($meta_array['mta_key'] === '')
         return 0;
 
-    if($meta_array['mta_value']){
-        $meta_array['mta_value'] = pg_escape_string($meta_array['mta_value']);
-    }
+    // 안전 이스케이프 헬퍼
+    $pg = isset($g5['connect_pg']) && (is_object($g5['connect_pg']) || is_resource($g5['connect_pg'])) ? $g5['connect_pg'] : null;
+    $esc = function($v) use ($pg) {
+        $s = (string)$v;
+        return $pg ? pg_escape_string($pg, $s) : $s;
+    };
 
-    $row1 = sql_fetch_pg("	SELECT * FROM {$g5['meta_table']} 
-                            WHERE mta_db_tbl='{$meta_array['mta_db_tbl']}' 
-                                AND mta_db_idx='{$meta_array['mta_db_idx']}' 
-                                AND mta_key='{$meta_array['mta_key']}' ");
-    if($row1['mta_idx']) {
+    // 각 필드 이스케이프
+    $db_tbl = $esc($meta_array['mta_db_tbl']);
+    $db_idx = $esc($meta_array['mta_db_idx']);
+    $m_key  = $esc($meta_array['mta_key']);
+    $m_val  = $esc($meta_array['mta_value']);
+    $m_tit  = $esc($meta_array['mta_title']);
+
+    // 존재 여부 확인
+    $row1 = sql_fetch_pg("\tSELECT * FROM {$g5['meta_table']} 
+                            WHERE mta_db_tbl='".$db_tbl."' 
+                              AND mta_db_idx='".$db_idx."' 
+                              AND mta_key='".$m_key."' ");
+    $row1 = is_array($row1) ? $row1 : [];
+    $mta_idx = isset($row1['mta_idx']) ? $row1['mta_idx'] : null;
+
+    if ($mta_idx) {
+        // 업데이트
         $sql = " UPDATE {$g5['meta_table']} SET 
-                    mta_value='{$meta_array['mta_value']}'
-                    , mta_update_dt='".G5_TIME_YMDHIS."' 
-                WHERE mta_idx='".$row1['mta_idx']."' ";
+                    mta_value='".$m_val."',
+                    mta_update_dt='".G5_TIME_YMDHIS."' 
+                 WHERE mta_idx='".$mta_idx."' ";
         sql_query_pg($sql);
-    }
-    else {
+    } else {
+        // 삽입 (mta_title 기본값 허용)
         $sql = " INSERT INTO {$g5['meta_table']} (
-            mta_db_tbl,
-            mta_db_idx,
-            mta_key,
-            mta_value,
-            mta_title,
-            mta_reg_dt
-        ) VALUES (
-            '{$meta_array['mta_db_tbl']}',
-            '{$meta_array['mta_db_idx']}',
-            '{$meta_array['mta_key']}',
-            '{$meta_array['mta_value']}',
-            '{$meta_array['mta_title']}',
-            '".G5_TIME_YMDHIS."'
-        ) ";
+                    mta_db_tbl,
+                    mta_db_idx,
+                    mta_key,
+                    mta_value,
+                    mta_title,
+                    mta_reg_dt
+                 ) VALUES (
+                    '".$db_tbl."',
+                    '".$db_idx."',
+                    '".$m_key."',
+                    '".$m_val."',
+                    '".$m_tit."',
+                    '".G5_TIME_YMDHIS."'
+                 ) ";
         sql_query_pg($sql);
         $row1['mta_idx'] = sql_insert_id_pg($g5['meta_table']);
     }
-    return $row1['mta_idx'];
+    return $mta_idx ?: 0;
 }
 }
 
@@ -834,22 +858,28 @@ function upload_insert_file($fle_array){
     $fle_array['fle_dest_file'] = preg_replace("/\+/", "", $fle_array['fle_dest_file']);	// 한글변환후 + 기호가 있으면 제거해야 함
     $fle_array['fle_dest_file'] = preg_replace("/\//", "", $fle_array['fle_dest_file']);	// 한글변환후 / 기호가 있으면 제거해야 함
 
-    // 상태값이 있으면 업데이트
-    if($fle_array['fle_status'])
+    // 상태값이 있으면 업데이트 (키 존재 여부 안전 가드)
+    if (isset($fle_array['fle_status']) && $fle_array['fle_status'] !== '') {
         $sql_status = $fle_array['fle_status'];
-    else
+    } else {
         $sql_status = "ok";
+    }
 
     //-- 파일 업로드 처리
     // $upload_file = upload_common_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_path']);
     //-- 파일 업로드 처리 (AWS S3 사용)
     // print_r2($fle_array);
     $upload_file = upload_aws_s3_file($fle_array['fle_name'], $fle_array['fle_dest_file'], $fle_array['fle_dir']);
+    if ($upload_file === false || !is_array($upload_file)) {
+        // 업로드 실패 시 중단
+        return false;
+    }
     // print_r2($upload_file);exit;
 
     // 파일의 mime_type 추출
-    if(!$fle_array['fle_mime_type'])
-        $fle_array['fle_mime_type'] = mime_content_type($fle_array['fle_name']);
+    if (empty($fle_array['fle_mime_type'])) {
+        $fle_array['fle_mime_type'] = @mime_content_type($fle_array['fle_name']);
+    }
 
     $sql = " INSERT INTO {$g5['dain_file_table']} (
             fle_mb_id,
@@ -897,13 +927,15 @@ function upload_insert_file($fle_array){
     //$fle_return[3] = $upload_file[3];
     //$fle_return[4] = $pfl['fle_idx'];
     //return $fle_return;
-    return array("upfile_name"=>$upload_file[0]
-                    ,"upfile_width"=>$upload_file[1]
-                    ,"upfile_height"=>$upload_file[2]
-                    ,"upfile_filesize"=>$upload_file[3]
-                    ,"upfile_fle_idx"=>$fle_idx
-                    ,"upfile_fle_sort"=>$fle_array['fle_sort']
-                    );
+    // S3 업로드 반환 키에 맞춰 리턴 구조 조정
+    return array(
+        "upfile_name"      => $upload_file['filename'],
+        "upfile_width"     => isset($fle_array['fle_width']) ? $fle_array['fle_width'] : 0,
+        "upfile_height"    => isset($fle_array['fle_height']) ? $fle_array['fle_height'] : 0,
+        "upfile_filesize"  => $upload_file['filesize'],
+        "upfile_fle_idx"   => $fle_idx,
+        "upfile_fle_sort"  => isset($fle_array['fle_sort']) ? $fle_array['fle_sort'] : 0,
+    );
 }
 }
 
@@ -1551,6 +1583,7 @@ function tms_radio_checked($field, $name, $val, $disable=0){ //인수('pending=�
     if(!count($bwgf_values)) return false;
     $i = 0;
     $name = ' '.$name;
+    $radio_tag = '';
     $radio_tag .= (count($bwgf_values) >= 2) ? '<div style="display:inline-block;">' : '';
     foreach ($bwgf_values as $bwgf_value) {
         list($key, $value) = explode('=', $bwgf_value);
