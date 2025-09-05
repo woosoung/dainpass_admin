@@ -62,10 +62,10 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     if(count($v)){
                         foreach($v as $i => $s){
                             if($i == 0) {
-                                $auth_list_tag .= '<div class="auth_div"><h3 class="auth_h3'.((in_array($k,$main_arr)?' unact':'')).'" data-code="'.$k.'" style="font-size:0.9rem;">'.$s[1];
+                                $auth_list_tag .= '<div class="auth_div"><h3 class="auth_h3'.((in_array($k,$main_arr)?' unact':'')).'" data-code="'.$k.'" title="'.substr($k,4,3).'000" style="font-size:0.9rem;">'.$s[1];
                                 $auth_list_tag .= '</h3><ul class="auth_ul">'.PHP_EOL;
                             }
-                            if($i >= 1) $auth_list_tag .= '<li data-code="'.$s[0].'" class="auths'.((in_array($s[0],$sub_arr)?' unact':'')).'">'.$s[1].'</li>'.PHP_EOL;
+                            if($i >= 1) $auth_list_tag .= '<li data-code="'.$s[0].'" title="'.$s[0].'" class="auths'.((in_array($s[0],$sub_arr)?' unact':'')).'">'.$s[1].'</li>'.PHP_EOL;
                             if($i == count($v)-1) $auth_list_tag .= '</ul></div>'.PHP_EOL;  
                         }
                     }

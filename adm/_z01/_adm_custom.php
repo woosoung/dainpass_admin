@@ -5,7 +5,7 @@ if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 add_event('admin_common', 'z_adm_common_head',10);
 add_event('tail_sub', 'z_adm_common_tail', 10);
 function z_adm_common_head(){
-	global $g5,$member,$default,$default2,$config,$set_menu,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$menu,$menu2,$sub_menu,$co_id,$w,$pg_anchor,$member_auth_menus,$menu_main_titles,$menu_list_tag;
+	global $g5,$member,$default,$default2,$config,$set_menu,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$menu,$menu2,$sub_menu,$co_id,$w,$pg_anchor,$member_auth_menus,$menu_main_titles,$menu_list_tag,$auth;
 
 	// 관리자 index.php 페이지는 _z01/_adm/index.php로 리다이렉트
 	if($g5['dir_name'] == 'adm' && $g5['file_name'] == 'index'){
@@ -95,7 +95,7 @@ function z_adm_common_head(){
 
 
 function z_adm_common_tail(){
-	global $g5,$member,$default,$default2,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$config,$menu,$sub_menu,$co_id,$w,$pg_anchor;
+	global $g5,$member,$default,$default2,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$config,$menu,$sub_menu,$co_id,$w,$pg_anchor,$auth;
 	
 	//대체한 DOM요소를 일단 표시
 	@include_once(G5_ZREPLACE_PATH.'/admin.head.php');
