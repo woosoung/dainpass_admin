@@ -29,7 +29,7 @@ foreach($_REQUEST as $key => $value ) {
 
 $mb_id = ($w == '') ? '' : $mb_id;
 
-// 관리자사이트 Favicon 이미지
+// 사용관련
 $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'member' AND fle_dir = 'admin/member' AND fle_db_idx = '{$mb_id}' ORDER BY fle_reg_dt DESC ";
 // echo $sql;exit;
 $rs = sql_query_pg($sql);

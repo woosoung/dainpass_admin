@@ -53,7 +53,7 @@ $sql  = " SELECT *
              $sql_common
              $sql_order
              LIMIT $rows OFFSET $from_record ";
-// echo $sql;
+// if($is_ultra) echo $sql;
 $result = sql_query_pg($sql);
 
 $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';

@@ -1,6 +1,7 @@
 <?php
 $sub_menu = "920800";
 include_once('./_common.php');
+include_once(G5_ZSQL_PATH.'/shop_category.php');
 @auth_check($auth[$sub_menu],'w');
 
 // 추가적인 검색조건 (ser_로 시작하는 검색필드)
@@ -19,7 +20,32 @@ foreach($_REQUEST as $key => $value ) {
     }
 }
 
+/*
+$cats
+(
+    [10] => Array
+$com = (isset($com) && is_array($com)) ? $com : [];
+$comf = (isset($comf) && is_array($comf)) ? $comf : ['comf_f_arr'=>[], 'comf_fidxs'=>[], 'comf_lst_idx'=>0, 'fle_db_idx'=>$shop_id??0];
+$comi = (isset($comi) && is_array($comi)) ? $comi : ['comi_f_arr'=>[], 'comi_fidxs'=>[], 'comi_lst_idx'=>0, 'fle_db_idx'=>$shop_id??0];
+        (
+            [name] => 반려동물
+            [mid] => Array
+                (
+                    [1010] => 반려동물 > 미용실
+                    [1020] => 반려동물 > 호텔
+                    [1030] => 반려동물 > 병원
+                    [1040] => 반려동물 > 카페
+                    [1050] => 반려동물 > 유치원
+                    [1060] => 반려동물 > 장례
+                    [1070] => 반려동물 > 훈련센터
+                    [1080] => 반려동물 > 산책서비스
+                    [1090] => 반려동물 > 사진촬영
+                    [10a0] => 반려동물 > 용품대여
+                    [10b0] => 반려동물 > 반려동물스파
+                )
 
+        )
+*/
 //echo $g5['container_sub_title'];
 /*
 $com['shop_id'] => 600
@@ -60,8 +86,24 @@ $com['names'] => 워시존스페셜
 $com['branch'] => 본사
 $com['shop_parent_id'] => 0
 */
+// 안전한 기본값 설정 및 입력 수신
+$w = isset($w) ? (string)$w : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
+$shop_id = isset($shop_id) ? (int)$shop_id : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
+
+// 카테고리 연결 조회 (shop_id가 있을 때만)
+$carr = [];
+if ($shop_id > 0) {
+	$csql = " SELECT * FROM {$g5['shop_category_relation_table']} WHERE shop_id = '".$shop_id."' ORDER BY sort, category_id ";
+	$cres = sql_query_pg($csql);
+	if ($cres && is_object($cres) && isset($cres->result)) {
+		for($i=0;$row=sql_fetch_array_pg($cres->result);$i++) {
+	        $carr[] = $row['category_id'];
+		}
+	}
+}
+
 if ($w == '') {
-    $com_idx = 0;
+    $shop_id = 0;
     $com['status'] = 'ok';
     $html_title = '추가';
 
@@ -89,11 +131,54 @@ else if ($w == 'u') {
 	$com['addr2'] = ($com['addr2'])?get_text($com['addr2']):'';
 	$com['addr3'] = ($com['addr3'])?get_text($com['addr3']):'';
 	
-	// 관련 파일(post_file) 추출
-	// $sql = "SELECT * FROM {$g5['dain_file_table']} 
-	// 		WHERE fle_db_tbl = 'company' AND fle_db_idx = '".$com['com_idx']."' ORDER BY fle_sort, fle_reg_dt DESC ";
-	// $rs = sql_query($sql,1);
-	// exit;
+	
+	// 업체관련 파일(사업자등록증등등...)
+	$sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_dir = 'shop/shop_file' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
+	// echo $sql;exit;
+	$rs = sql_query_pg($sql);
+
+	$comf['comf_f_arr'] = array();
+	$comf['comf_fidxs'] = array();
+	$comf['comf_lst_idx'] = 0;
+	$comf['fle_db_idx'] = $shop_id;
+	for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
+		$is_s3file_yn = is_s3file($row2['fle_path']);
+		$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="mbf_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+		$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
+		'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+		<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+		$comf['fle_db_idx'] = $row2['fle_db_idx'];
+		@array_push($comf['comf_f_arr'], array('file'=>$row2['down_del']));
+		@array_push($comf['comf_fidxs'], $row2['fle_idx']);
+	}
+
+
+	// 업체관련 이미지
+    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'shop_img' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
+    // echo $sql;exit;
+	$rs = sql_query_pg($sql);
+    $comi_wd = 110;
+    $comi_ht = 80;
+    $comi['comi_f_arr'] = array();
+    $comi['comi_fidxs'] = array();
+    $comi['comi_lst_idx'] = 0;
+    $comi['fle_db_idx'] = $shop_id;
+	if ($rs && is_object($rs) && isset($rs->result)) {
+		for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
+			$is_s3file_yn = is_s3file($row2['fle_path']);
+			$row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$comi_wd.':'.$comi_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
+			$row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$comi_wd.'px;height:'.$comi_ht.'px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
+			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$row2['fle_type'].'_'.$row2['fle_db_idx'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+			$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
+			'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+			<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+			<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+			$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
+			$comi['fle_db_idx'] = $row2['fle_db_idx'];
+			@array_push($comi['comi_f_arr'], array('file'=>$row2['down_del']));
+			@array_push($comi['comi_fidxs'], $row2['fle_idx']);
+		}
+	}
 }
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');
@@ -106,7 +191,7 @@ for ($i=0;$i<sizeof($check_array);$i++) {
 }
 
 $html_title = ($w=='')?'추가':'수정'; 
-
+// exit;
 $g5['title'] = '가맹점 '.$html_title;
 //include_once('./_top_menu_company.php');
 include_once(G5_ADMIN_PATH.'/admin.head.php');
@@ -116,7 +201,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js
 add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js"></script>',0);
 ?>
-
+<script>
+let cats = <?=json_encode($cats)?>;
+</script>
 <form name="form01" id="form01" action="./company_form_update.php" onsubmit="return form01_submit(this);" method="post" enctype="multipart/form-data">
 <input type="hidden" name="w" value="<?php echo $w ?>">
 <input type="hidden" name="sfl" value="<?php echo $sfl ?>">
@@ -142,46 +229,67 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 	</colgroup>
 	<tbody>
 	<tr>
-		<th scope="row">업체명<strong class="sound_only">필수</strong>/지점명</th>
+		<th scope="row">업종(분류)</th>
+		<td colspan="3">
+			<?php echo help("대분류와 중분류를 선택해서 '업종추가'를 클릭하면 아래에 항목이 추가됩니다."); ?>
+			<select id="cat1" class="frm_input">
+				<option value="">::대분류선택::</option>
+				<?php foreach($cats as $k1 => $v1){ ?>
+					<option value="<?=$k1?>"><?=$v1['name']?></option>
+				<?php } ?>
+			</select>
+			<select id="cat2" class="frm_input">
+				<option value="">::중분류선택::</option>
+			</select>
+			<a href="javascript:" id="cat_add" class="mm-blue-btn">업종추가</a>			
+			<div id="cat_box" class="mt-2">
+				<?php echo help("업종(분류)항목을 위아래로 이동시켜 순서를 변경할 수 있습니다."); ?>
+				<input type="hidden" name="category_ids" value="<?=implode(',', $carr)?>" class="border border-black w-[400px]">
+				<ul id="cat_ul" class="ca-ul">
+					<?php 
+					$n = 1;
+					foreach($carr as $category_id) { ?>
+					<li class="cat_li" data-id="<?=$category_id?>">
+						<span class="sp_sort"><?=$n?></span>
+						<span class="sp_cat"><?=$cats[substr($category_id, 0, 2)]['mid'][$category_id]?></span>
+						<i class="fa fa-times" aria-hidden="true"></i>
+					</li>
+					<?php 
+					$n++;
+					}
+					?>
+				</ul>
+			</div>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><strong class="sound_only">필수</strong> 업체명</th>
 		<td>
 			<input type="hidden" name="shop_id" value="<?=$shop_id?>">
-			<input type="text" name="name" value="<?=$com['name']?>" placeholder="업체명" id="name" class="frm_input">
-			<input type="text" name="branch" value="<?=$com['branch']?>" placeholder="지점명" id="branch" class="frm_input">
+			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="업체명" id="name" class="frm_input">
 		</td>
-		<th scope="row">업체구분</th>
+		<th scope="row"><strong class="sound_only">필수</strong> 사업자등록번호</th>
 		<td>
-			<select name="com_type" id="com_type" class="frm_input">
-                <?=$set_conf['set_com_type_option']?>
-            </select>
-            <?php if($w == 'u') { ?>
-            <script>$('#com_type').val('<?=$com['com_type']?>');</script>
-            <?php } ?>
+			<input type="text" name="business_no" value="<?=formatBizNumber($com['business_no']??'')?>" class="frm_input" size="20" minlength="2" maxlength="12">
 		</td>
 	</tr>
     <tr>
-        <th scope="row">가맹점명</th>
+        <th scope="row"><strong class="sound_only">필수</strong> 가맹점명/지점명</th>
 		<td>
-			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input">
+			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input">&nbsp;&nbsp;/&nbsp;
+			<input type="text" name="branch" value="<?=$com['branch']??''?>" placeholder="지점명" id="branch" class="frm_input">
 		</td>
         <th scope="row">본사선택</th>
         <td>
 			<?php echo help("본사설정을 해제하려면 '본사설정해제'에 체크를 넣고 확인을 눌러 주세요."); ?>
-            <input type="hidden" name="com_idx_parent" id="com_idx_parent" value="<?=$com['com_idx_parent']?>">
-            <input type="text" name="com_name_parent" id="com_name_parent" value="<?=$com['com_name_parent']?>" readonly class="readonly frm_input">
-            <a href="javascript:" data-url="./_win_company_select.php" class="mm-btn com_select">본사선택</a>
+            <input type="hidden" name="com_idx_parent" id="com_idx_parent" value="<?=$com['com_idx_parent']??''?>">
+            <input type="text" name="com_name_parent" id="com_name_parent" value="<?=$com['com_name_parent']??''?>" readonly class="readonly frm_input">
+            <a href="javascript:" data-url="./_win_company_select.php" class="relative mm-blue-btn !top-[1px] com_select">본사선택</a>
 			<label for="head_clear" class="ml-2">
                 <input type="checkbox" name="head_clear" id="head_clear" value="1" class="border"> 본사설정해제
             </label>
         </td>
     </tr>
-	<tr>
-		<th scope="row">업체명 히스토리</th>
-		<td colspan="3">
-			<?php echo help("업체명이 바뀌면 자동으로 히스토리가 기록됩니다."); ?>
-			<input type="<?=($is_team_manager)?'text':'hidden';?>" name="names" value="<?php echo $com['names'] ?>" id="names" readonly class="readonly frm_input w-[100%]" <?=(!$is_team_manager)?'readonly':''?>>
-            <span style="display:<?=($is_team_manager)?'none':'';?>"><?=$com['names']??''?></span>
-		</td>
-	</tr>
 	<tr> 
 		<th scope="row">대표이메일<strong class="sound_only">필수</strong></th>
 		<td>
@@ -204,12 +312,6 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 		<td>
 			<input type="text" name="contact_phone" value="<?=formatPhoneNumber($com['contact_phone']??'')?>" id="contact_phone" class="frm_input" size="20" minlength="2" maxlength="30">
 		</td>
-	</tr>
-	<tr>
-		<th scope="row">사업자등록번호</th>
-		<td colspan="3">
-			<input type="text" name="business_no" value="<?=formatBizNumber($com['business_no']??'')?>" class="frm_input" size="20" minlength="2" maxlength="12">
-		</td>
 	</tr>	
 	<tr>
 		<th scope="row">사업장 주소 <?=$saler_mark??''?></th>
@@ -229,17 +331,44 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 			<input type="text" name="addr3" value="<?=$com['addr3']??''?>" id="addr3" class="w-[400px] frm_input">
 			<label for="addr3">참고항목</label>
 		</td>
-        <th scope="row">업체관련파일</th>
-        <td>
-            <?php echo help("업체관련 파일들을 등록하고 관리해 주시면 됩니다."); ?>
-            <input type="file" id="multi_file_com" name="com_datas[]" multiple class="">
+		<th scope="row">업체명 히스토리</th>
+		<td colspan="3" class="align-top">
+			<?php echo help("업체명이 바뀌면 자동으로 히스토리가 기록됩니다."); ?>
+			<textarea rows="10" name="names" readonly class="readonly frm_input w-[100%]"><?= $is_team_manager ? ($com['names'] ?? '') : '' ?></textarea>
+		</td>
+	</tr>
+	<tr>
+        <th scope="row">가맹점관련파일</th>
+        <td colspan="3">
+            <?php echo help("가맹점관련 파일들을 등록하고 관리해 주시면 됩니다."); ?>
+            <input type="file" id="multi_file_comf" name="comf_datas[]" multiple class="">
             <?php
-            if(@count($com['com_f_arr'])){
-                echo '<ul>'.PHP_EOL;
-                for($i=0;$i<count($com['com_f_arr']);$i++) {
-                    echo "<li>[".($i+1).']'.$com['com_f_arr'][$i]['file']."</li>".PHP_EOL;
-                }
-                echo '</ul>'.PHP_EOL;
+			$comf_list = (isset($comf['comf_f_arr']) && is_array($comf['comf_f_arr'])) ? $comf['comf_f_arr'] : [];
+			if (!empty($comf_list)){
+				echo '<ul>'.PHP_EOL;
+				foreach ($comf_list as $i => $item) {
+					$fileHtml = is_array($item) && isset($item['file']) ? $item['file'] : '';
+					echo "<li>[".($i+1).']'.$fileHtml."</li>".PHP_EOL;
+				}
+				echo '</ul>'.PHP_EOL;
+			}
+            ?>
+        </td>
+	</tr>
+	<tr>
+        <th scope="row">가맹점관련이미지</th>
+        <td colspan="3">
+            <?php echo help("가맹점관련 이미지들을 등록하고 관리해 주시면 됩니다."); ?>
+            <input type="file" id="multi_file_comf" name="comf_datas[]" multiple class="">
+            <?php
+			$comi_list = (isset($comi['comi_f_arr']) && is_array($comi['comi_f_arr'])) ? $comi['comi_f_arr'] : [];
+			if (!empty($comi_list)){
+				echo '<ul>'.PHP_EOL;
+				foreach ($comi_list as $i => $item) {
+					$fileHtml = is_array($item) && isset($item['file']) ? $item['file'] : '';
+					echo "<li>[".($i+1).']'.$fileHtml."</li>".PHP_EOL;
+				}
+				echo '</ul>'.PHP_EOL;
             }
             ?>
         </td>
@@ -247,8 +376,8 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 	<tr>
 		<th scope="row">위도/경도</th>
 		<td>
-			<input type="text" name="latitude" value="<?=$com['latitude']?>" placeholder="위도" id="latitude" class="frm_input">
-			<input type="text" name="longitude" value="<?=$com['longitude']?>" placeholder="경도" id="longitude" class="frm_input">
+			<input type="text" name="latitude" value="<?=$com['latitude']??''?>" placeholder="위도" id="latitude" class="frm_input">
+			<input type="text" name="longitude" value="<?=$com['longitude']??''?>" placeholder="경도" id="longitude" class="frm_input">
 		</td>
 		<th scope="row"><label for="status">상태</label></th>
 		<td>

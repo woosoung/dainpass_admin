@@ -1,5 +1,5 @@
 <?php
-$sub_menu = "920200";
+$sub_menu = "910200";
 include_once('./_common.php');
 include_once(G5_EDITOR_LIB);
 include_once(G5_LIB_PATH.'/thumbnail.lib.php');
@@ -14,6 +14,7 @@ $set_type = 'conf';
 $pg_anchor = '<ul class="anchor">
     <li><a href="#anc_cf_default">기본환경설정</a></li>
     <li><a href="#anc_cf_amazon">Amazon</a></li>
+    <li><a href="#anc_cf_status">상태값정의</a></li>
 </ul>';
 
 $g5['title'] = '관리환경설정';
@@ -192,6 +193,37 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         </table>
     </div><!-- // .tbl_frm01 -->
 </section><!-- // #anc_cf_amazon -->
+<section id="anc_cf_status">
+    <h2 class="h2_frm">상태설정</h2>
+    <?php echo $pg_anchor ?>
+    <div class="tbl_frm01 tbl_wrap">
+        <table>
+        <caption>상태설정</caption>
+        <colgroup>
+            <col class="grid_4" style="width:15%;">
+            <col style="width:35%;">
+            <col class="grid_4" style="width:15%;">
+            <col style="width:35%;">
+        </colgroup>
+        <tbody>
+        <tr>
+            <th>기타</th>
+            <td colspan="3" class="tms_help">
+                <?php echo tms_help("예)기타내용",1,'#f9fac6','#333333'); ?>
+                <div class="tms_hint flex gap-6">
+                    <input type="text" name="" class="w-[300px]" value="<?=${'set_'.$set_type}['set_etc']??''?>">
+                    <div class="tms_hbox">
+                        <div class="tms_hcon">
+                            <?=${'set_'.$set_type}['set_etc']??''?>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+        </table>
+    </div><!-- // .tbl_frm01 -->
+</section><!-- // #anc_cf_status -->
 <div class="btn_fixed_top btn_confirm">
     <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
 </div>

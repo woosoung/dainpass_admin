@@ -1719,3 +1719,24 @@ function generateVividColors($count = 100, $minDistance = 100, $minSaturation = 
     return $colors;
 }
 }
+
+if(!function_exists('change_com_names')){
+function change_com_names($shop_id,$new_shop_name){
+	global $g5;
+
+	if(!$shop_id||!$new_shop_name)
+		return;
+
+	$com = get_table_meta_pg('shop','shop_id',$shop_id);
+
+	// I intended to change keys info of order_table. cart_table, sales.
+	// But it could break data integrity and have to change all data each time changing.
+	// So trying to join tables.
+
+	// Change all board info if needed.
+	echo 55;
+
+
+	return true;
+}
+}
