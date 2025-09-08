@@ -36,7 +36,7 @@ function z_adm_common_head(){
 					}
 					// echo $menu[$mcd][$i][0].BR;
 					// tmp_menu배열에 저장하는 이유는 $menu[$mcd]에서의 
-					// [$i]가 중간에 누락된 index가 있을 경우가 있으므로 제대로 된 배열로 만들어 다시 $menu에 재대입하기 위함
+					// [$i]가 중간에 누락된 index가 있을 경우가 t있으므로 제대로 된 배열로 만들어 다시 $menu에 재대입하기 위함
 					$tmp_menu[$mcd][] = $menu[$mcd][$i];
 				}
 			}

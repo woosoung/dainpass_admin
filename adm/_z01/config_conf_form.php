@@ -14,7 +14,7 @@ $set_type = 'conf';
 $pg_anchor = '<ul class="anchor">
     <li><a href="#anc_cf_default">기본환경설정</a></li>
     <li><a href="#anc_cf_amazon">Amazon</a></li>
-    <li><a href="#anc_cf_status">상태값정의</a></li>
+    <li><a href="#anc_cf_aboutshop">가맹점관련</a></li>
 </ul>';
 
 $g5['title'] = '관리환경설정';
@@ -34,11 +34,11 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 <input type="hidden" name="set_type" value="<?=$set_type?>">
 <input type="hidden" name="file_name" value="<?=$g5['file_name']?>">
 <section id="anc_cf_default">
-    <h2 class="h2_frm">기본설정</h2>
+    <h2 class="h2_frm">기본환경설정</h2>
     <?php echo $pg_anchor ?>
     <div class="tbl_frm01 tbl_wrap">
         <table>
-        <caption>기본설정</caption>
+        <caption>기본환경설정</caption>
         <colgroup>
             <col class="grid_4" style="width:15%;">
             <col style="width:35%;">
@@ -194,7 +194,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     </div><!-- // .tbl_frm01 -->
 </section><!-- // #anc_cf_amazon -->
 <section id="anc_cf_status">
-    <h2 class="h2_frm">상태설정</h2>
+    <h2 class="h2_frm">가맹점관련설정</h2>
     <?php echo $pg_anchor ?>
     <div class="tbl_frm01 tbl_wrap">
         <table>
@@ -207,14 +207,15 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         </colgroup>
         <tbody>
         <tr>
-            <th>기타</th>
+            <th>가맹점 선택관리메뉴</th>
             <td colspan="3" class="tms_help">
-                <?php echo tms_help("예)기타내용",1,'#f9fac6','#333333'); ?>
+                <?php echo tms_help("예)920400=서비스관리,920450=직원관리,920500=직원별서비스,920550=직원근무시간,920600=운영시간",1,'#f9fac6','#333333');
+                ?>
                 <div class="tms_hint flex gap-6">
-                    <input type="text" name="" class="w-[300px]" value="<?=${'set_'.$set_type}['set_etc']??''?>">
+                    <input type="text" name="set_shop_management_menu" class="w-[700px]" value="<?=${'set_'.$set_type}['set_shop_management_menu']??''?>">
                     <div class="tms_hbox">
                         <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['set_etc']??''?>
+                            <?=${'set_'.$set_type}['set_shop_management_menu_str']??''?>
                         </div>
                     </div>
                 </div>

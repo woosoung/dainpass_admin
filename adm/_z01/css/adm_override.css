@@ -86,6 +86,8 @@
 #gnb .on .btn_op.menu-920{background:url(../img/menu-a.png) 50% 50% no-repeat #fff}
 #gnb .gnb_li .btn_op.menu-930{background:url(../img/menu-b-1.png) 50% 50% no-repeat #444 }
 #gnb .on .btn_op.menu-930{background:url(../img/menu-b.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-940{background:url(../img/menu-c-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-940{background:url(../img/menu-c.png) 50% 50% no-repeat #fff}
 
 /* 각 버튼 스타일 */
 #wr_cont input[type="submit"],
