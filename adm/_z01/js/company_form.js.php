@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
 
-    // 카테고리 항목 추가 버튼 
+    //############## 카테고리 항목 추가 버튼  ##############
     document.getElementById('cat_add').addEventListener('click', function() {
         let cat1Select = document.getElementById('cat1');
         let cat2Select = document.getElementById('cat2');
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
     // console.log(cats);
-    //업체관련 멀티파일
+    //########### 업체관련 멀티파일 ##############
     $('#multi_file_comf').MultiFile();
     
     const com_select = document.querySelector('.com_select');
@@ -81,6 +81,33 @@ document.addEventListener('DOMContentLoaded', function(){
                 cat2Select.appendChild(opt);
             }
         }
+    });
+
+    // ############ 관리메뉴 선택박스 관련 ############
+    const inputBox = document.querySelector('input[name="mng_menus"]');
+    const checkboxes = document.querySelectorAll('.mng_menu');
+
+    // 초기값($com['mng_menus']) 기반 체크 처리
+    const initVal = inputBox.value.trim();
+    if (initVal) {
+        const selectedVals = initVal.split(',');
+        checkboxes.forEach(chk => {
+            if (selectedVals.includes(chk.dataset.val)) {
+                chk.checked = true;
+            }
+        });
+    }
+
+    // 체크박스 변경 시 input 값 업데이트
+    function updateInput() {
+        const checkedVals = Array.from(checkboxes)
+            .filter(chk => chk.checked)
+            .map(chk => chk.dataset.val);
+        inputBox.value = checkedVals.join(',');
+    }
+
+    checkboxes.forEach(chk => {
+        chk.addEventListener('change', updateInput);
     });
 });
 

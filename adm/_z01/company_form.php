@@ -133,7 +133,7 @@ else if ($w == 'u') {
 	
 	
 	// 업체관련 파일(사업자등록증등등...)
-	$sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_dir = 'shop/shop_file' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
+	$sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comf' AND fle_dir = 'shop/shop_file' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
 	// echo $sql;exit;
 	$rs = sql_query_pg($sql);
 
@@ -143,7 +143,7 @@ else if ($w == 'u') {
 	$comf['fle_db_idx'] = $shop_id;
 	for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 		$is_s3file_yn = is_s3file($row2['fle_path']);
-		$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="mbf_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+		$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comf_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 		$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
 		'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
 		<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
@@ -154,7 +154,7 @@ else if ($w == 'u') {
 
 
 	// 업체관련 이미지
-    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'shop_img' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
+    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comi' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
     // echo $sql;exit;
 	$rs = sql_query_pg($sql);
     $comi_wd = 110;
@@ -168,7 +168,7 @@ else if ($w == 'u') {
 			$is_s3file_yn = is_s3file($row2['fle_path']);
 			$row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$comi_wd.':'.$comi_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
 			$row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$comi_wd.'px;height:'.$comi_ht.'px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
-			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$row2['fle_type'].'_'.$row2['fle_db_idx'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
 			'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
 			<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
@@ -390,6 +390,33 @@ let cats = <?=json_encode($cats)?>;
 			</select>
 			<script>$('select[name="status"]').val('<?=$com['status']?>');</script>
 		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="shop_management_menu">관리옵션선택</label></th>
+        <td colspan="3">
+			<?php
+			$mng_menu_strs = (isset($set_conf['set_shop_management_menu']) && $set_conf['set_shop_management_menu']) ? explode(',', $set_conf['set_shop_management_menu']) : [];
+			$mng_menu_opts = '';
+			$mn_cnt = 1;
+			foreach($mng_menu_strs as $mstr) {
+				$mstr = trim($mstr);
+				if ($mstr) {
+					$marr = explode('=', $mstr);
+					if (isset($marr[0]) && $marr[0]) {
+						$mng_menu_opts .= '<label for="mng_menu_'.$mn_cnt.'"><input type="checkbox" data-val="'.$marr[0].'" id="mng_menu_'.$mn_cnt.'" class="mng_menu" value="1"'.(isset($com['mng_menus']) && $com['mng_menus'] && in_array($marr[0], explode(',', $com['mng_menus'])) ? ' checked' : '').'> '.$marr[1].'</label>'.PHP_EOL;
+					}
+				}
+				$mn_cnt++;
+			}
+			?>
+			<div>
+
+			</div>
+			<input type="text" name="mng_menus" id="shop_management_menu" value="<?=$com['mng_menus']??''?>" class="border border-black w-[400px]">
+			<div class="chk_list_box">
+				<?=$mng_menu_opts??''?>
+			</div>
+        </td>
 	</tr>
     <tr>
         <th scope="row"><label for="settlement_memo">메모</label></th>

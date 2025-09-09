@@ -61,6 +61,7 @@ $point_rate = number_format($point_rate,2,'.','');
 $branch = trim($_POST['branch']);
 // shop_parent_id 본사가맹점 id
 // shop_names = 가맹점명 히스토리
+$mng_menus = trim($_POST['mng_menus']);
 
 
 if($shop_id == $shop_parent_id){
@@ -120,7 +121,7 @@ if($com['name'] != $name) {
 else {
 	$names = $_POST['names'];
 }
-// 여기까지 작업 ##########################################################################################################################
+
 
 $sql_common = "	name = '".addslashes($name)."'
                 , shop_name = '".addslashes($shop_name)."'
@@ -144,58 +145,74 @@ $sql_common = "	name = '".addslashes($name)."'
                 , names = '".addslashes($names)."'
                 , tax_type = '{$_POST['tax_type']}'
                 , branch = '".addslashes($branch)."'
+                , mng_menus = '".addslashes($mng_menus)."'
                 , memo = '{$memo}'
 ";
+
+$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,names,tax_type,branch,mng_menus,memo";
+
+$sql_common_i_col = $sql_common_col.",created_at,updated_at";
+
+$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."','".$max_capacity."','".$reservelink_yn."','".$reservelink."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($names)."','".$_POST['tax_type']."','".addslashes($branch)."','".addslashes($mng_menus)."','".$memo."'";
+
+$sql_common_i_val = $sql_common_val.",'".G5_TIME_YMDHIS."','".G5_TIME_YMDHIS."'";
 
 // API key 생성
 // tms_get_random_string('09azAZ',40);
 if($key_renewal){
     $com_api_key = tms_get_random_string('09azAZ',40);
     $sql_common .= " , api_key = '{$com_api_key}' ";
+    $sql_common_i_col .= ",api_key";
+    $sql_common_i_val .= ",'{$com_api_key}' ";
 }
 else if($key_clear){
-    $sql_common .= " , com_api_key = '' ";
+    $sql_common .= " , api_key = '' ";
+    $sql_common_i_col .= ",api_key";
+    $sql_common_i_val .= ",'' ";
 }
 
 $sql_common .= ($head_clear) ? " , shop_parent_id = 0 " : " , shop_parent_id = '".$shop_parent_id."' ";
+$sql_common_i_col .= ",shop_parent_id";
+$sql_common_i_val .= ",".($head_clear ? "0" : "'".$shop_parent_id."'");
 
 // 생성
 if ($w == '') {
     // 업체 정보 생성
-	$sql = " INSERT into {$g5['shop_table']} SET
-				{$sql_common}
-                , created_at = '".G5_TIME_YMDHIS."'
-                , updated_at = '".G5_TIME_YMDHIS."'
-	";
-    sql_query($sql,1);
-	$com_idx = sql_insert_id();
+	// $sql = " INSERT into {$g5['shop_table']} SET
+	// 			{$sql_common}
+    //             , created_at = '".G5_TIME_YMDHIS."'
+    //             , updated_at = '".G5_TIME_YMDHIS."'
+	// ";
+    $sql = " INSERT INTO {$g5['shop_table']} ({$sql_common_i_col}) VALUES ({$sql_common_i_val}) ";
+    sql_query_pg($sql,1);
+	$shop_id = sql_insert_id_pg('shop');
 
 }
 // 수정
 else if ($w == 'u') {
 
-	if (!$com['com_idx'])
+	if (!$com['shop_id'])
 		alert('존재하지 않는 업체자료입니다.');
  
     $sql = "	UPDATE {$g5['shop_table']} SET 
 					{$sql_common}
 					, updated_at = '".G5_TIME_YMDHIS."'
-				WHERE com_idx = '{$com_idx}' 
+				WHERE shop_id = '{$shop_id}' 
 	";
     sql_query($sql,1);
     //echo $sql.'<br>';
 }
 else if ($w=="d") {
 
-	if (!$com['com_idx']) {
+	if (!$com['shop_id']) {
 		alert('존재하지 않는 업체자료입니다.');
 	} else {
 		// 자료 삭제
         if(!$set_conf['set_del_yn']){
-            $sql = " UPDATE {$g5['company_table']} SET com_status = 'trash' WHERE com_idx = $com_idx ";
+            $sql = " UPDATE {$g5['shop_table']} SET status = 'trash' WHERE shop_id = $shop_id ";
         }
         else{
-            $sql = " DELETE FROM {$g5['company_table']} WHERE com_idx = $com_idx ";
+            $sql = " DELETE FROM {$g5['shop_table']} WHERE shop_id = $shop_id ";
         }
 		sql_query($sql,1);
 	}
@@ -206,21 +223,27 @@ if($w == '' || $w == 'u'){
     //파일 삭제처리
     $merge_del = array();
     $del_arr = array();
-    if(@count($com_del)){
-        foreach($com_del as $k=>$v) {
+    if(is_array($comf_del) && @count($comf_del)){
+        foreach($comf_del as $k=>$v) {
+            $merge_del[$k] = $v;
+        }
+    }
+    if(is_array($comi_del) && @count($comi_del)){
+        foreach($comi_del as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
     
-    if(count($merge_del)){
+    if(is_array($merge_del) && @count($merge_del)){
         foreach($merge_del as $k=>$v) {
             array_push($del_arr,$k);
         }
     }
-    if(count($del_arr)) delete_idx_file($del_arr);
+    if(is_array($del_arr) && @count($del_arr)) delete_idx_s3_file($del_arr);
     
     //멀티파일처리
     upload_multi_file($_FILES['comf_datas'],'shop',$shop_id,'shop/shop_file','comf');
+    upload_multi_file($_FILES['comi_datas'],'shop',$shop_id,'shop/shop_img','comi');
 }
 
 

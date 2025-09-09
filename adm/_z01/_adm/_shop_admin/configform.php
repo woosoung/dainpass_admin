@@ -466,6 +466,13 @@ function byte_check(el_cont, el_byte)
             </td>
         </tr>
         <tr>
+            <th scope="row"><label for="de_cart_keep_term">리뷰작성유효기간<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_review_period</span><?php } ?></label></th>
+            <td>
+                 <?php echo help("리뷰작성유효기간은 서비스예약일시를 기준으로 계산됩니다."); ?>
+                <input type="text" name="de_review_period" value="<?php echo get_sanitize_input($default2['de_review_period']??''); ?>" id="de_review_period" class="frm_input" size="5"> 일
+            </td>
+        </tr>
+        <tr>
             <th scope="row"><label for="de_guest_cart_use">비회원 장바구니<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_guest_cart_use [Y/N]</span><?php } ?></label></th>
             <td>
                  <?php echo help("비회원 장바구니 기능을 사용하려면 체크하십시오."); ?>

@@ -48,6 +48,7 @@ tailwind.config = {
 }
 
 @layer components{
+    /* 카테고리 생성리스트 관련 스타일 */
     .ca-ul {
         @apply [&>li]:border [&>li]:border-gray-200 [&>li]:w-[400px] [&>li]:p-2 [&>li]:my-1;
     }
@@ -56,6 +57,13 @@ tailwind.config = {
     }
     .ca-ul > li > .sp_sort{
         @apply flex justify-center items-center inline-block w-[18px] h-[18px] pt-[1px] text-white font-bold border border-mainbg bg-mainbg rounded-full;
+    }
+    /* 가맹점관리메뉴 선택박스 스타일 */
+    .chk_list_box {
+        @apply flex gap-2;
+    }
+    .chk_list_box > label {
+        @apply mr-4 cursor-pointer;
     }
 }
 
