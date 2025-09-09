@@ -37,25 +37,24 @@ $addr3 = trim($_POST['addr3']);
 $latitude = trim($_POST['latitude']);
 $longitude = trim($_POST['longitude']);
 $url = trim($_POST['url']);
-$max_capacity = (int)$_POST['max_capacity'];
+$max_capacity = isset($_POST['max_capacity']) ? (int)$_POST['max_capacity'] : 0;
 $reservelink_yn = (isset($_POST['reservelink_yn']) && $_POST['reservelink_yn'] == '') ? $_POST['reservelink_yn'] : '';
-$reservelink = trim($_POST['reservelink']);
-$reserve_tel = trim($_POST['reserve_tel']);
-$shop_description = conv_unescape_nl(stripslashes($_POST['shop_description']));
-$bank_account = trim($_POST['bank_account']);
+$reservelink = isset($_POST['reservelink']) ? trim($_POST['reservelink']) : '';
+$reserve_tel = isset($_POST['reserve_tel']) ? trim($_POST['reserve_tel']) : '';
+$shop_description = isset($_POST['shop_description']) ? conv_unescape_nl(stripslashes($_POST['shop_description'])) : '';
+$bank_account = isset($_POST['bank_account']) ? trim($_POST['bank_account']) : '';
 $bank_account = preg_replace('/[^0-9]/', '', $bank_account); // 계좌번호 숫자만 추출
-$bank_name = trim($_POST['bank_name']); //은행명
-$bank_holder = trim($_POST['bank_holder']); //예금주
-$settlement_type = trim($_POST['settlement_type']); //정산타입(수동/자동)
-$settlement_cycle = trim($_POST['settlement_cycle']); //정산주기(monthly, weekly, 2monthly)
-$settlement_day = (int)$_POST['settlement_day']; //정산일(25 | 01 ...)
-$tax_type = trim($_POST['tax_type']); //과세유형
-$settlement_memo = conv_unescape_nl(stripslashes($_POST['settlement_memo'])); //정산메모
+$bank_name = isset($_POST['bank_name']) ? trim($_POST['bank_name']) : ''; //은행명
+$bank_holder = isset($_POST['bank_holder']) ? trim($_POST['bank_holder']) : ''; //예금주
+$settlement_type = isset($_POST['settlement_type']) ? trim($_POST['settlement_type']) : ''; //정산타입(수동/자동)
+$settlement_cycle = isset($_POST['settlement_cycle']) ? trim($_POST['settlement_cycle']) : ''; //정산주기(monthly, weekly, 2monthly)
+$settlement_day = isset($_POST['settlement_day']) ? (int)$_POST['settlement_day'] : 0; //정산일(25 | 01 ...)
+$tax_type = isset($_POST['tax_type']) ? trim($_POST['tax_type']) : ''; //과세유형
+$settlement_memo = isset($_POST['settlement_memo']) ? conv_unescape_nl(stripslashes($_POST['settlement_memo'])) : ''; //정산메모
 $is_active = (isset($_POST['is_active']) && $_POST['is_active'] != '') ? $_POST['is_active'] : 'N'; //활성화여부
-$settlement_memo = conv_unescape_nl(stripslashes($_POST['settlement_memo']));
-$cancel_policy = conv_unescape_nl(stripslashes($_POST['cancel_policy']));
-// point_rate는 소수점 2자리까지만 
-$point_rate = (float)$_POST['point_rate'];
+$cancel_policy = isset($_POST['cancel_policy']) ? conv_unescape_nl(stripslashes($_POST['cancel_policy'])) : '';
+// point_rate는 소수점 2자리까지만
+$point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
 $point_rate = number_format($point_rate,2,'.','');
 // names 업체명 히스토리
 $branch = trim($_POST['branch']);
@@ -63,7 +62,7 @@ $branch = trim($_POST['branch']);
 // shop_names = 가맹점명 히스토리
 $mng_menus = trim($_POST['mng_menus']);
 
-
+// exit;
 if($shop_id == $shop_parent_id){
     alert('현재의 가맹점을 본사로 등록할 수 없습니다.');
 }
@@ -136,44 +135,44 @@ $sql_common = "	name = '".addslashes($name)."'
                 , latitude = '{$latitude}'
                 , longitude = '{$longitude}'
                 , url = '{$url}'
-                , max_capacity = '{$max_capacity}'
+                , max_capacity = {$max_capacity}
                 , status = '{$_POST['status']}'
                 , reservelink_yn = '{$reservelink_yn}'
                 , reservelink = '{$reservelink}'
                 , reserve_tel = '{$reserve_tel}'
                 , shop_description = '{$shop_description}'
                 , names = '".addslashes($names)."'
-                , tax_type = '{$_POST['tax_type']}'
+                , tax_type = '{$tax_type}'
                 , branch = '".addslashes($branch)."'
                 , mng_menus = '".addslashes($mng_menus)."'
-                , memo = '{$memo}'
+                , settlement_memo = '{$settlement_memo}'
 ";
 
-$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,names,tax_type,branch,mng_menus,memo";
+$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,names,tax_type,branch,mng_menus,settlement_memo";
 
 $sql_common_i_col = $sql_common_col.",created_at,updated_at";
 
-$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."','".$max_capacity."','".$reservelink_yn."','".$reservelink."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($names)."','".$_POST['tax_type']."','".addslashes($branch)."','".addslashes($mng_menus)."','".$memo."'";
+$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$reservelink_yn."','".$reservelink."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($names)."','".$tax_type."','".addslashes($branch)."','".addslashes($mng_menus)."','".$settlement_memo."'";
 
 $sql_common_i_val = $sql_common_val.",'".G5_TIME_YMDHIS."','".G5_TIME_YMDHIS."'";
 
 // API key 생성
 // tms_get_random_string('09azAZ',40);
-if($key_renewal){
+if(isset($key_renewal)){
     $com_api_key = tms_get_random_string('09azAZ',40);
     $sql_common .= " , api_key = '{$com_api_key}' ";
     $sql_common_i_col .= ",api_key";
     $sql_common_i_val .= ",'{$com_api_key}' ";
 }
-else if($key_clear){
+else if(isset($key_clear)){
     $sql_common .= " , api_key = '' ";
     $sql_common_i_col .= ",api_key";
     $sql_common_i_val .= ",'' ";
 }
 
-$sql_common .= ($head_clear) ? " , shop_parent_id = 0 " : " , shop_parent_id = '".$shop_parent_id."' ";
+$sql_common .= ($head_clear) ? " , shop_parent_id = 0 " : " , shop_parent_id = ".$shop_parent_id." ";
 $sql_common_i_col .= ",shop_parent_id";
-$sql_common_i_val .= ",".($head_clear ? "0" : "'".$shop_parent_id."'");
+$sql_common_i_val .= ",".($head_clear ? 0 : ".$shop_parent_id.");
 
 // 생성
 if ($w == '') {
@@ -199,8 +198,8 @@ else if ($w == 'u') {
 					, updated_at = '".G5_TIME_YMDHIS."'
 				WHERE shop_id = '{$shop_id}' 
 	";
+    // echo $sql.'<br>';exit;
     sql_query($sql,1);
-    //echo $sql.'<br>';
 }
 else if ($w=="d") {
 
