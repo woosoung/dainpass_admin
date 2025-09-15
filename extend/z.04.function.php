@@ -283,14 +283,41 @@ function sql_fetch_array_pg($result)
 if(!function_exists('get_table_pg')){
 function get_table_pg($db_table,$db_field,$db_id,$db_fields='*')
 {
-    global $conf_com_idx, $db;
+    // global $g5;// global $conf_com_idx, $db;
 
 	if(!$db_table||!$db_field||!$db_id)
 		return false;
     
-    $table_name = 'g5_1_'.$db_table;
+    $table_name = $db_table;
     $sql = " SELECT ".$db_fields." FROM ".$table_name." WHERE ".$db_field." = '".$db_id."' LIMIT 1 ";
     $row = sql_fetch_pg($sql);
+    return $row;
+}
+}
+
+// 기본 디비 배열 + 확장 meta 배열
+// get_table('g5_shop_item','it_id',215021535,'it_name')	// 4번째 매개변수는 테이블명과 같으면 생략할 수 있다.
+if(!function_exists('get_table')){
+function get_table($db_table,$db_field,$db_id,$db_fields='*')
+{
+    global $g5;
+
+	if(!$db_table||!$db_field||!$db_id)
+		return false;
+    
+    // 게시판인 경우
+    if($db_field=='wr_id') {
+        $table_name = $g5['write_prefix'].$db_table;
+    }
+    else {
+        $table_name = $g5[$db_table.'_table'];
+    }
+    
+    $sql = " SELECT ".$db_fields." FROM ".$table_name." WHERE ".$db_field." = '".$db_id."' LIMIT 1 ";
+    //print_r3($sql);
+    //echo $sql.'<br>';
+    $row = sql_fetch($sql);
+
     return $row;
 }
 }

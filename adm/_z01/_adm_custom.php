@@ -95,7 +95,7 @@ function z_adm_common_head(){
 
 
 function z_adm_common_tail(){
-	global $g5,$member,$default,$default2,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$config,$menu,$sub_menu,$co_id,$w,$pg_anchor,$auth;
+	global $g5,$member,$default,$default2,$set_conf,$set_mng,$set_mngapp,$set_app,$set_plf,$set_com,$config,$menu,$sub_menu,$co_id,$w,$pg_anchor,$auth,$is_manager,$is_team_manager,$is_dev_manager,$is_super,$is_ultra;
 	
 	//대체한 DOM요소를 일단 표시
 	@include_once(G5_ZREPLACE_PATH.'/admin.head.php');
@@ -107,6 +107,15 @@ function z_adm_common_tail(){
 	echo 'const mb_name = "'.$member['mb_name'].'";'.PHP_EOL;
 	echo 'const mb_level = "'.$member['mb_level'].'";'.PHP_EOL;
 	echo 'const g5_community_use = "'.G5_COMMUNITY_USE.'";'.PHP_EOL;
+	echo 'const is_manager = '.($is_manager ? 'true' : 'false').';'.PHP_EOL;
+	echo 'const is_team_manager = '.($is_team_manager ? 'true' : 'false').';'.PHP_EOL;
+	echo 'const is_dev_manager = '.($is_dev_manager ? 'true' : 'false').';'.PHP_EOL;
+	echo 'const is_super = '.($is_super ? 'true' : 'false').';'.PHP_EOL;
+	echo 'const is_ultra = '.($is_ultra ? 'true' : 'false').';'.PHP_EOL;
+	echo 'const g5_z_url = "'.G5_Z_URL.'";'.PHP_EOL;
+	echo 'const g5_zadm_url = "'.G5_ZADM_URL.'";'.PHP_EOL;
+	echo 'const g5_zshop_admin_url = "'.G5_ZSHOP_ADMIN_URL.'";'.PHP_EOL;
+	echo 'const cf_shop_title = "'.$g5['shop']['shop_title'].'";'.PHP_EOL;
 	echo '</script>'.PHP_EOL;
 	// jquery-ui 스타일시트
 	add_stylesheet('<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">',0);

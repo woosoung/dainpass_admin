@@ -2,6 +2,7 @@
 $sub_menu = "920200";
 include_once('./_common.php');
 include_once(G5_ZSQL_PATH.'/shop_category.php');
+include_once(G5_ZSQL_PATH.'/term_rank.php');
 @auth_check($auth[$sub_menu],'w');
 
 // 추가적인 검색조건 (ser_로 시작하는 검색필드)
@@ -179,11 +180,19 @@ else if ($w == 'u') {
 			@array_push($comi['comi_fidxs'], $row2['fle_idx']);
 		}
 	}
+
+	// 가맹점관리담당자
+	$mng_sql = " SELECT mb_id, mb_name, mb_hp, mb_email, mb_2 FROM {$g5['member_table']} WHERE mb_1 = '{$shop_id}' AND mb_level < 6 AND mb_leave_date IS NULL AND mb_intercept_date IS NULL ORDER BY mb_id,mb_name,mb_datetime ";
+	$mng_res = sql_query($mng_sql,1);
+	$com['shop_managers_text'] = '';
+	for($i=0;$row=sql_fetch_array($mng_res);$i++) {
+		$com['shop_managers_text'] .= ($com['shop_managers_text'] ? ', ' : '').$row['mb_name'].' <span class="sp_rank">'.$rank_arr[$row['mb_2']].'</span> <span class="">'.$row['mb_hp'].'</span> ['.$row['mb_id'].']<br>'.PHP_EOL;
+	}
 }
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');
 
-
+// print_r2($rank_arr);exit;
 // 라디오&체크박스 선택상태 자동 설정 (필드명 배열 선언!)
 $check_array=array();
 for ($i=0;$i<sizeof($check_array);$i++) {
@@ -229,8 +238,8 @@ let cats = <?=json_encode($cats)?>;
 	</colgroup>
 	<tbody>
 	<tr>
-		<th scope="row">업종(분류)</th>
-		<td colspan="3">
+		<th scope="row">업종(분류)<strong class="sound_only">필수</strong></th>
+		<td<?=(($w=='u') ? '':' colspan="3"')?>>
 			<?php echo help("대분류와 중분류를 선택해서 '업종추가'를 클릭하면 아래에 항목이 추가됩니다."); ?>
 			<select id="cat1" class="frm_input">
 				<option value="">::대분류선택::</option>
@@ -261,20 +270,30 @@ let cats = <?=json_encode($cats)?>;
 				</ul>
 			</div>
 		</td>
+		<?php if($w=='u') { ?>
+		<th scope="row">가맹점관리담당자<strong class="sound_only">필수</strong>
+			<a href="javascript:" shop_id="<?=$com['shop_id']?>" id="btn_manager" class="ml-2 !text-blue-500 text-[16px]">
+				<i class="fa fa-edit"></i>
+			</a>
+		</th>
+		<td>
+			<?php echo $com['shop_managers_text']; ?>
+		</td>
+		<?php } ?>
 	</tr>
 	<tr>
-		<th scope="row"><strong class="sound_only">필수</strong> 업체명</th>
+		<th scope="row">업체명<strong class="sound_only">필수</strong></th>
 		<td>
 			<input type="hidden" name="shop_id" value="<?=$shop_id?>">
 			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="업체명" id="name" class="frm_input">
 		</td>
-		<th scope="row"><strong class="sound_only">필수</strong> 사업자등록번호</th>
+		<th scope="row">사업자등록번호<strong class="sound_only">필수</strong></th>
 		<td>
 			<input type="text" name="business_no" value="<?=formatBizNumber($com['business_no']??'')?>" class="frm_input" size="20" minlength="2" maxlength="12">
 		</td>
 	</tr>
     <tr>
-        <th scope="row"><strong class="sound_only">필수</strong> 가맹점명/지점명</th>
+        <th scope="row">가맹점명/지점명<strong class="sound_only">필수</strong></th>
 		<td>
 			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input">&nbsp;&nbsp;/&nbsp;
 			<input type="text" name="branch" value="<?=$com['branch']??''?>" placeholder="지점명" id="branch" class="frm_input">
@@ -295,7 +314,6 @@ let cats = <?=json_encode($cats)?>;
 		<td>
 			<?php echo help("세금계산서, 계약서, 약정서 등 모든 거래 시 소통할 수 있는 이메일 정보를 필수로 등록하세요."); ?>
 			<input type="text" name="contact_email" value="<?=$com['contact_email']??''?>" id="contact_email" class="frm_input" style="width:60%;">
-			<?=$saler_mark??''?>
 		</td>
 		<th scope="row">홈페이지주소</th>
 		<td>
@@ -314,7 +332,7 @@ let cats = <?=json_encode($cats)?>;
 		</td>
 	</tr>	
 	<tr>
-		<th scope="row">사업장 주소 <?=$saler_mark??''?></th>
+		<th scope="row">사업장 주소<strong class="sound_only">필수</strong></th>
 		<td class="td_addr_line" style="line-height:280%;">
 			<?php echo help("사업장 주소가 명확하지 않은 경우 [주소검색]을 통해 정확히 입력해 주세요."); ?>
 			<label for="zipcode" class="sound_only">우편번호</label>
@@ -359,7 +377,7 @@ let cats = <?=json_encode($cats)?>;
         <th scope="row">가맹점관련이미지</th>
         <td colspan="3">
             <?php echo help("가맹점관련 이미지들을 등록하고 관리해 주시면 됩니다."); ?>
-            <input type="file" id="multi_file_comf" name="comf_datas[]" multiple class="">
+            <input type="file" id="multi_file_comi" name="comi_datas[]" multiple class="">
             <?php
 			$comi_list = (isset($comi['comi_f_arr']) && is_array($comi['comi_f_arr'])) ? $comi['comi_f_arr'] : [];
 			if (!empty($comi_list)){
@@ -374,9 +392,9 @@ let cats = <?=json_encode($cats)?>;
         </td>
 	</tr>
 	<tr>
-		<th scope="row">위도/경도</th>
+		<th scope="row">위도/경도<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="text" name="latitude" value="<?=$com['latitude']??''?>" placeholder="위도" id="latitude" class="frm_input">
+			<input type="text" name="latitude" value="<?=$com['latitude']??''?>" placeholder="위도" id="latitude" class="frm_input">&nbsp;&nbsp;/&nbsp;
 			<input type="text" name="longitude" value="<?=$com['longitude']??''?>" placeholder="경도" id="longitude" class="frm_input">
 		</td>
 		<th scope="row"><label for="status">상태</label></th>
@@ -391,6 +409,7 @@ let cats = <?=json_encode($cats)?>;
 			<script>$('select[name="status"]').val('<?=$com['status']?>');</script>
 		</td>
 	</tr>
+	<?php if($w == 'u') { ?>
 	<tr>
 		<th scope="row"><label for="shop_management_menu">관리옵션선택</label></th>
         <td colspan="3">
@@ -418,6 +437,7 @@ let cats = <?=json_encode($cats)?>;
 			</div>
         </td>
 	</tr>
+	<?php } ?>
     <tr>
         <th scope="row"><label for="settlement_memo">메모</label></th>
         <td colspan="3">

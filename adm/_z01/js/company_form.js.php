@@ -57,10 +57,28 @@ document.addEventListener('DOMContentLoaded', function(){
         updateSortNumbers(); // 순서번호 업데이트
     });
 
+    // 업체담당자를 설정하는 이벤트
+    document.getElementById("btn_manager").addEventListener("click", function(e) {
+        e.preventDefault(); // return false와 동일한 효과
+
+        const shop_id = this.getAttribute("shop_id");
+        const href = "./shop_manager_list.php?shop_id=" + shop_id;
+
+        const winShopMember = window.open(
+            href,
+            "winShopMember",
+            "left=100,top=100,width=520,height=600,scrollbars=1"
+        );
+        if (winShopMember) {
+            winShopMember.focus();
+        }
+    });
+
     // console.log(cats);
     //########### 업체관련 멀티파일 ##############
     $('#multi_file_comf').MultiFile();
-    
+    $('#multi_file_comi').MultiFile();
+
     const com_select = document.querySelector('.com_select');
     com_select.addEventListener('click', () => {
         const url = com_select.getAttribute('data-url') + '?file_name=' + file_name;

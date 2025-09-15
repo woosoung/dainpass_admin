@@ -182,8 +182,8 @@ if ($w == '') {
     //             , created_at = '".G5_TIME_YMDHIS."'
     //             , updated_at = '".G5_TIME_YMDHIS."'
 	// ";
-    $sql = " INSERT INTO {$g5['shop_table']} ({$sql_common_i_col}) VALUES ({$sql_common_i_val}) ";
-    sql_query_pg($sql,1);
+    $sql = " INSERT INTO public.{$g5['shop_table']} ({$sql_common_i_col}) VALUES ({$sql_common_i_val}) ";
+    sql_query_pg($sql);
 	$shop_id = sql_insert_id_pg('shop');
 
 }
@@ -199,7 +199,7 @@ else if ($w == 'u') {
 				WHERE shop_id = '{$shop_id}' 
 	";
     // echo $sql.'<br>';exit;
-    sql_query($sql,1);
+    sql_query_pg($sql);
 }
 else if ($w=="d") {
 
@@ -213,21 +213,25 @@ else if ($w=="d") {
         else{
             $sql = " DELETE FROM {$g5['shop_table']} WHERE shop_id = $shop_id ";
         }
-		sql_query($sql,1);
+		sql_query_pg($sql);
 	}
 }
 
 
 if($w == '' || $w == 'u'){
+    // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
+    
+
+
     //파일 삭제처리
     $merge_del = array();
     $del_arr = array();
-    if(is_array($comf_del) && @count($comf_del)){
+    if(isset($comf_del) && @count($comf_del)){
         foreach($comf_del as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
-    if(is_array($comi_del) && @count($comi_del)){
+    if(isset($comi_del) && @count($comi_del)){
         foreach($comi_del as $k=>$v) {
             $merge_del[$k] = $v;
         }

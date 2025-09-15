@@ -136,5 +136,47 @@ document.addEventListener("DOMContentLoaded", function() {
     faviEle.type = 'image/png';
     faviEle.href = afavicon_img_src; // PHP 변수가 적절히 처리되었다고 가정
     if(title) title.insertAdjacentElement('afterend', faviEle);
+
+
+
+    // 관리자페이지에서 필요없는 버튼 없애기
+    // 쇼핑몰 바로가기 없애기
+    const shopEl = document.querySelector('.tnb_shop');
+    if (shopEl) {
+        const parentLi1 = shopEl.closest('.tnb_li');
+        if (parentLi1) {
+            parentLi1.remove();
+        }
+    }
+    // 커뮤니티 바로가기 없애기
+    const commuEl = document.querySelector('.tnb_community');
+    if (commuEl) {
+        const parentLi2 = commuEl.closest('.tnb_li');
+        if (parentLi2) {
+            parentLi2.remove();
+        }
+    }
+    // 부가서비스 바로가기 없애기
+    const servEl = document.querySelector('.tnb_service');
+    if (servEl) {
+        const parentLi3 = servEl.closest('.tnb_li');
+        if (parentLi3) {
+            parentLi3.remove();
+        }
+    }
+    
+    if(is_ultra){
+        // 현재 활성화된 기본업체명을 최상단 왼쪽편에 표시한다.
+        $('<span id="logo_company_name" class="block absolute left-[240px] top-[20px] text-gray-300 text-[16px]">'+cf_shop_title+'</span>').appendTo('#logo');
+        // 기본업체명을 변경하기위한 버튼을 최상단 오른쪽편에 표시한다.
+        if(!$('.tnb_shop_select').length){
+            $('<li class="tnb_li"><a href="javascript:" class="tnb_shop_select border border-gray-300 rounded-sm">디폴트업체</a></li>').prependTo($('#tnb > ul'));
+        }
+        // 기본업체명 변경 버튼을 클릭하면 팝업창이 뜬다.
+        $('.tnb_shop_select').on('click',function(){
+            winDefaultShop = window.open(g5_z_url+'/shop_change.popup.php?file_name='+file_name, "winDefaultShop", "left=10,top=10,width=500,height=600");
+		    winDefaultShop.focus();
+        });
+    }
 });
 </script>
