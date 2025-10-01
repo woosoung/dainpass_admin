@@ -1,7 +1,35 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
-require_once G5_LIB_PATH . '/aws/autoload.php'; // AWS SDK 오토로더 포함
+// AWS SDK autoloader: prefer Composer vendor, fallback to legacy lib/aws
+do {
+    $loaded = false;
+    // 1) Composer 설치 사용: /vendor/autoload.php
+    if (defined('G5_PATH')) {
+        $composer_autoload = G5_VENDOR_PATH . '/autoload.php';
+        if (is_file($composer_autoload)) {
+            require_once $composer_autoload;
+            $loaded = true;
+            break;
+        }
+    }
+
+    // 2) 예전 경로 사용: /lib/aws/autoload.php
+    if (defined('G5_LIB_PATH')) {
+        $legacy_autoload = G5_LIB_PATH . '/aws/autoload.php';
+        if (is_file($legacy_autoload)) {
+            require_once $legacy_autoload;
+            $loaded = true;
+            break;
+        }
+    }
+} while (false);
+
+if (!class_exists('Aws\\S3\\S3Client')) {
+    // 오토로더 로드 실패 시 명확한 메시지
+    die('AWS SDK autoloader not found. Please ensure vendor/autoload.php or lib/aws/autoload.php exists.');
+}
+
 use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
 use Aws\Exception\AwsException;
