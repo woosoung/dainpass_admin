@@ -39,7 +39,11 @@ use Aws\Exception\AwsException;
 if(!function_exists('sql_connect_pg')){
 function sql_connect_pg($host, $user, $pass, $db=G5_PGSQL_DB)
 {
-    $pg_link = @pg_connect(" host = $host dbname = $db user = $user password = $pass ") or die('PgSQL Host, User, Password, DB 정보에 오류가 있습니다.');
+    $port = 5432; // 기본 포트
+    if (strpos($host, ':') !== false) {
+        list($host, $port) = explode(':', $host, 2);
+    }
+    $pg_link = @pg_connect(" host = $host port = $port dbname = $db user = $user password = $pass ") or die('PgSQL Host, User, Password, DB 정보에 오류가 있습니다.');
     $stat = pg_connection_status($pg_link);
     if ($stat) {
         die('Connect Error: '.$pg_link);
