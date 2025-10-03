@@ -32,8 +32,8 @@ date_default_timezone_set("Asia/Seoul");
 
 // 환경에 맞게 도메인 수정
 if($_SERVER['HTTP_HOST'] === 'localhost:1234' || $_SERVER['HTTP_HOST'] === 'localhost') {
-    define('G5_DOMAIN', 'http://localhost:1234');
-    define('G5_HTTPS_DOMAIN', 'http://localhost:1234');
+    define('G5_DOMAIN', 'https://localhost:1234');
+    define('G5_HTTPS_DOMAIN', 'https://localhost:1234');
     
     // 쿠키 도메인 설정 추가
     define('G5_COOKIE_DOMAIN', 'localhost');  // 빈 문자열 또는 localhost
