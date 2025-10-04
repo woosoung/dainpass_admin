@@ -1,38 +1,39 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
-// AWS SDK autoloader: prefer Composer vendor, fallback to legacy lib/aws
+// AWS SDK autoloader: prefer Composer vendor (only if AWS manifest exists), fallback to legacy lib/aws (also requires manifest)
 do {
-    $loaded = false;
-    // 1) Composer 설치 사용: /vendor/autoload.php
-    if (defined('G5_PATH')) {
+    $AWS_SDK_READY = false;
+
+    // 1) Composer 설치 사용: /vendor/autoload.php (단, aws sdk가 온전하게 포함되어 있어야 함)
+    if (defined('G5_VENDOR_PATH')) {
         $composer_autoload = G5_VENDOR_PATH . '/autoload.php';
-        if (is_file($composer_autoload)) {
+        $vendor_manifest   = G5_VENDOR_PATH . '/aws/aws-sdk-php/src/data/manifest.json';
+        if (is_file($composer_autoload) && is_file($vendor_manifest)) {
             require_once $composer_autoload;
-            $loaded = true;
+            $AWS_SDK_READY = class_exists('Aws\\S3\\S3Client');
             break;
         }
     }
 
-    // 2) 예전 경로 사용: /lib/aws/autoload.php
+    // 2) 예전 경로 사용: /lib/aws/autoload.php (프로젝트에 동봉된 레거시 SDK)
     if (defined('G5_LIB_PATH')) {
-        $legacy_autoload = G5_LIB_PATH . '/aws/autoload.php';
-        if (is_file($legacy_autoload)) {
+        $legacy_autoload  = G5_LIB_PATH . '/aws/autoload.php';
+        // 레거시 SDK도 manifest.json이 존재해야 정상 동작함
+        $legacy_manifest  = G5_LIB_PATH . '/aws/aws/aws-sdk-php/src/data/manifest.json';
+        if (is_file($legacy_autoload) && is_file($legacy_manifest)) {
             require_once $legacy_autoload;
-            $loaded = true;
+            $AWS_SDK_READY = class_exists('Aws\\S3\\S3Client');
             break;
         }
     }
 } while (false);
 
-if (!class_exists('Aws\\S3\\S3Client')) {
-    // 오토로더 로드 실패 시 명확한 메시지
-    die('AWS SDK autoloader not found. Please ensure vendor/autoload.php or lib/aws/autoload.php exists.');
+if (!defined('AWS_SDK_READY')) {
+    define('AWS_SDK_READY', !empty($AWS_SDK_READY));
 }
 
-use Aws\S3\S3Client;
-use Aws\S3\Exception\S3Exception;
-use Aws\Exception\AwsException;
+// AWS 클래스는 FQCN으로 직접 참조하여 use 위치 제약을 피함
 
 
 // DB 연결
@@ -799,8 +800,13 @@ if (!function_exists('delete_idx_s3_file')) {
 function delete_idx_s3_file($fle_idx_array = array()) {
     global $set_conf, $conf_com_idx, $g5;
 
+    if (!AWS_SDK_READY) {
+        error_log('AWS SDK not ready: skip delete_idx_s3_file');
+        return false;
+    }
+
     // AWS S3 클라이언트 초기화
-    $s3 = new S3Client([
+    $s3 = new \Aws\S3\S3Client([
         'version' => 'latest',
         'region'  => $set_conf['set_aws_region'],
         'credentials' => [
@@ -822,7 +828,7 @@ function delete_idx_s3_file($fle_idx_array = array()) {
                 'Bucket' => $bucket,
                 'Key'    => $key
             ]);
-        } catch (AwsException $e) {
+        } catch (\Aws\Exception\AwsException $e) {
             error_log("S3 Delete Error (original): " . $e->getMessage());
         }
 
@@ -1015,10 +1021,15 @@ if (!function_exists('upload_aws_s3_file')) {
 function upload_aws_s3_file($srcfile, $destfile, $dir, $options = []) {
     global $set_conf;
 
+    if (!AWS_SDK_READY) {
+        error_log('AWS SDK not ready: skip upload_aws_s3_file');
+        return false;
+    }
+
     if (empty($destfile) || !is_uploaded_file($srcfile)) return false;
 
     // AWS SDK 초기화
-    $s3 = new S3Client([
+    $s3 = new \Aws\S3\S3Client([
         'version' => 'latest',
         'region'  => trim($set_conf['set_aws_region']),
         'credentials' => [
@@ -1070,7 +1081,11 @@ if(!function_exists('is_s3file')){
 function is_s3file($key) {
     global $set_conf;
 
-    $s3 = new S3Client([
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+
+    $s3 = new \Aws\S3\S3Client([
         'version' => 'latest',
         'region'  => $set_conf['set_aws_region'],
         'credentials' => [
@@ -1085,7 +1100,7 @@ function is_s3file($key) {
             'Key'    => $key
         ]);
         return true; // 파일이 존재함
-    } catch (S3Exception $e) {
+    } catch (\Aws\S3\Exception\S3Exception $e) {
         if ($e->getAwsErrorCode() === 'NotFound') {
             return false; // 파일 없음
         } else {
