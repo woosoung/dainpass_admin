@@ -38,8 +38,8 @@ for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 $sql2 = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'set' AND fle_dir = '{$set_type}' AND fle_db_idx = 'plflogo' ORDER BY fle_reg_dt DESC ";
 // echo $sql2;exit;
 $rs2 = sql_query_pg($sql2);
-$plflogo_wd = 172;
-$plflogo_ht = 105;
+$plflogo_wd = 116;
+$plflogo_ht = 30;
 $plflogo['plflogo_f_arr'] = array();
 $plflogo['plflogo_fidxs'] = array();
 $plflogo['plflogo_lst_idx'] = 0;

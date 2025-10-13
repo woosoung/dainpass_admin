@@ -8,23 +8,24 @@ do {
     // 1) Composer 설치 사용: /vendor/autoload.php (단, aws sdk가 온전하게 포함되어 있어야 함)
     if (defined('G5_VENDOR_PATH')) {
         $composer_autoload = G5_VENDOR_PATH . '/autoload.php';
-        $vendor_manifest   = G5_VENDOR_PATH . '/aws/aws-sdk-php/src/data/manifest.json';
-        if (is_file($composer_autoload) && is_file($vendor_manifest)) {
+        if (is_file($composer_autoload)) {
             require_once $composer_autoload;
-            $AWS_SDK_READY = class_exists('Aws\\S3\\S3Client');
-            break;
+            if (class_exists('Aws\\S3\\S3Client')) {
+                $AWS_SDK_READY = true;
+                break;
+            }
         }
     }
 
     // 2) 예전 경로 사용: /lib/aws/autoload.php (프로젝트에 동봉된 레거시 SDK)
     if (defined('G5_LIB_PATH')) {
         $legacy_autoload  = G5_LIB_PATH . '/aws/autoload.php';
-        // 레거시 SDK도 manifest.json이 존재해야 정상 동작함
-        $legacy_manifest  = G5_LIB_PATH . '/aws/aws/aws-sdk-php/src/data/manifest.json';
-        if (is_file($legacy_autoload) && is_file($legacy_manifest)) {
+        if (is_file($legacy_autoload)) {
             require_once $legacy_autoload;
-            $AWS_SDK_READY = class_exists('Aws\\S3\\S3Client');
-            break;
+            if (class_exists('Aws\\S3\\S3Client')) {
+                $AWS_SDK_READY = true;
+                break;
+            }
         }
     }
 } while (false);

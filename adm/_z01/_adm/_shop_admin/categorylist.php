@@ -152,7 +152,7 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
         $rs['thumb'] = ($is_s3file_yn) ? '<span class="inline-block bg_transparent"><img src="'.$rs['thumb_url'].'" alt="'.$rs['fle_name_orig'].'" style="width:'.$i_wd.'px;height:'.$i_ht.'px;border:1px solid #ddd;"></span>' : '<span class="inline-block bg_transparent w-['.$i_wd.'px] h-['.$i_ht.'px]" style="opacity:0.3"></span>';
 
         $isql2 = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop_categories' AND fle_type = 'cat_on' AND fle_dir = 'admin/category' AND fle_db_idx = '{$row['category_id']}' ORDER BY fle_reg_dt DESC LIMIT 1 ";
-        // echo $isql2."<br>";
+        // echo $isql2."<br>";exit;
         $rs2 = sql_fetch_pg($isql2);
         $is_s3file_yn = (isset($rs2['fle_path']) && is_s3file($rs2['fle_path'])) ? 1 : 0;
         @$rs2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$i_wd.':'.$i_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$rs2['fle_path'];
