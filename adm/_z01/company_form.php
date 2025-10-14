@@ -271,10 +271,8 @@ let cats = <?=json_encode($cats)?>;
 			</div>
 		</td>
 		<?php if($w=='u') { ?>
-		<th scope="row">가맹점관리담당자<strong class="sound_only">필수</strong>
-			<a href="javascript:" shop_id="<?=$com['shop_id']?>" id="btn_manager" class="ml-2 !text-blue-500 text-[16px]">
-				<i class="fa fa-edit"></i>
-			</a>
+		<th scope="row">가맹점관리자<strong class="sound_only">필수</strong>
+			<a href="javascript:" shop_id="<?=$com['shop_id']?>" id="btn_manager" class="ml-2 !text-blue-500 text-[14px]"><i class="fa fa-plus-circle"></i></a>
 		</th>
 		<td>
 			<?php echo $com['shop_managers_text']; ?>
@@ -431,7 +429,7 @@ let cats = <?=json_encode($cats)?>;
 			<div>
 
 			</div>
-			<input type="text" name="mng_menus" id="shop_management_menu" value="<?=$com['mng_menus']??''?>" class="border border-black w-[400px]">
+			<input type="hidden" name="mng_menus" id="shop_management_menu" value="<?=$com['mng_menus']??''?>" class="border border-black w-[400px]">
 			<div class="chk_list_box">
 				<?=$mng_menu_opts??''?>
 			</div>

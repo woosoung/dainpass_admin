@@ -76,27 +76,37 @@ include_once(G5_PATH.'/head.sub.php');
 			<tr>
 				<th scope="row">업체명</th>
 				<td>
-                    <div><?php echo $shop['name'];?></div>
+                    <div><?php echo $shop['name'];?><?php if(isset($shop['branch'])) echo ' / '.$shop['branch']; ?></div>
                     <div class="font_size_9">대표: <?php echo $shop['owner_name'];?></div>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row">담당자명</th>
 				<td>
-                    <input type="hidden" name="mb_id" value="<?php echo $mb['mb_id'] ?>" id="mb_id" required class="frm_input required">
-                    <input type="hidden" name="mb_nick" value="<?php echo $mb['mb_nick'] ?>" id="mb_nick" required class="frm_input required">
+                    <input type="hidden" name="mb_id" value="<?=$mb['mb_id']??''?>" id="mb_id" required class="frm_input required">
+                    <input type="hidden" name="mb_nick" value="<?=$mb['mb_nick']??''?>" id="mb_nick" required class="frm_input required">
                     <input type="text" name="mb_name" value="<?=$mb['mb_name']??''?>" required class="frm_input required" style="width:50% !important;">
 					<select name="mb_2">
 						<option value="">직함</option>
                         <?=$rank_opt?>
 					</select>
-					<script>$('select[name=mb_2]').val('<?=$mb['mb_2']?>').attr('selected','selected');</script>
+					<script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        const selectEl = document.querySelector('select[name="mb_2"]');
+                        if (selectEl) {
+                            const valueToSelect = '<?=$mb['mb_2']??''?>';
+                            selectEl.value = valueToSelect; // select의 값 설정
+                        }
+                    });
+                    </script>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row">휴대폰</th>
 				<td>
+                    <input type="text" value="ok" id="mb_hp_flag" class="frm_input">
                     <input type="text" name="mb_hp" value="<?=$mb['mb_hp']??''?>" required class="frm_input required">
+                    <span id="hp_verfiy_msg" class="text-red-500 text-xs"></span>
 				</td>
 			</tr>
 			<tr>
@@ -131,17 +141,61 @@ include_once(G5_PATH.'/head.sub.php');
 $(function() {
 
     // 휴대폰 중복 체크 (중복 회원이 있으면 이메일 주소 자동 입력)
-    $(document).on('click','#btn_member',function(e){
+    // $(document).on('click','#btn_member',function(e){
 
-    });
+    // });
 
     $(".btn_delete").click(function() {
 		if(confirm('정보를 정말 삭제하시겠습니까?')) {
 			var token = get_ajax_token();
-			self.location="./customer_member_form_update.php?token="+token+"&w=d&cst_idx=<?=$ctm['cst_idx']?>&ctm_idx=<?=$ctm['ctm_idx']?>";
+			self.location="./shop_manager_form_update.php?token="+token+"&w=d&shop_id=<?=(isset($shop['shop_id'])?$shop['shop_id']:'')?>&mb_id=<?=$mb['mb_id']??''?>";
 		}
 	});
+
+    
 });
+
+document.addEventListener("DOMContentLoaded", function () {
+    const hpInput = document.querySelector('input[name="mb_hp"]');
+
+    if (hpInput) {
+        hpInput.addEventListener("input", function (e) {
+            let value = e.target.value;
+
+            // 1숫자 이외의 모든 문자 제거
+            value = value.replace(/[^0-9]/g, '');
+
+            // 0으로 시작하는 것은 허용하면서 11자리까지만 입력
+            if (value.length > 11) {
+                value = value.slice(0, 11); // 11자리로 자르기
+            }
+
+
+            // 0으로 시작하는 것은 허용 (따라서 별도 제약 불필요)
+            // 단, 길이 제한을 두고 싶다면 다음 코드 추가 가능:
+            // value = value.slice(0, 11);  // 예: 최대 11자리로 제한
+
+            e.target.value = value;
+        });
+
+        hpInput.addEventListener("blur", function (e) {
+            const value = e.target.value;
+            if (value.length < 10) {
+                document.getElementById('hp_verfiy_msg').textContent = "최소 10자리 이상 입력";
+                e.target.focus();
+                document.getElementById('mb_hp_flag').value = 'no';
+                // e.target.value = ''; // 원하면 자동 초기화도 가능
+            }
+            else {
+                document.getElementById('hp_verfiy_msg').textContent = "";
+                document.getElementById('mb_hp_flag').value = 'ok';
+            }
+        });
+    }
+});
+
+
+
 
 function form01_check(f) {
     
