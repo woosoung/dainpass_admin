@@ -42,12 +42,14 @@ define('G5_WMODAL_URL',                 G5_URL.'/w'.G5_MODAL_DIR);
 
 define('G5_DATA_Z_PERMISSION',  0707); // 디렉토리 생성시 퍼미션
 define('G5_Z_TABLE_PREFIX', G5_TABLE_PREFIX.'1'); //g5_1
-
+// mysql 테이블
+$g5['term_table']                        = G5_Z_TABLE_PREFIX.'_term'; //G5_Z_TABLE_PREFIX.'_term';
+$g5['gmeta_table']                       = G5_Z_TABLE_PREFIX.'_meta'; //G5_Z_TABLE_PREFIX.'_meta';
+// pgsql 테이블
 $g5['dain_default_table']                = 'dain_default';
 $g5['dain_file_table']                   = 'dain_file';
 $g5['meta_table']                        = 'meta';
 $g5['setting_table']                     = 'setting';
-$g5['term_table']                        = G5_Z_TABLE_PREFIX.'_term'; //G5_Z_TABLE_PREFIX.'_term';
 
 $g5['shop_table']                        = 'shop'; //가맹점
 $g5['shop_categories_table']             = 'shop_categories'; //업종(분류)

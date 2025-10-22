@@ -6,10 +6,15 @@ include_once(G5_ZSQL_PATH.'/term_rank.php');
 @auth_check($auth[$sub_menu], 'w');
 
 if ($w == 'u') {
-    $mb = get_table_meta('member','mb_1',$shop_id);
+    $mb = get_table_meta('member','mb_id',$mb_id);
+    $mbt = get_gmeta('member',$mb_id);
+    if(count($mbt)){
+        $mb = array_merge($mb,$mbt);
+    }
+    // print_r2($mb);
+    // exit;
 }
-//print_r2($cmm);
-//exit;
+
 
 $shop = get_table_meta_pg('shop','shop_id',$shop_id);
 
@@ -22,10 +27,6 @@ if(!$shop['shop_id'])
 
 if ($w == '') {
     $html_title = '추가';
-
-    $mb['mb_id'] = time();
-    $mb['mb_nick'] = time();
-    $mb['cri_status'] = 'ok';
 }
 else if ($w == 'u') {
     $html_title = '수정';
@@ -38,7 +39,7 @@ else if ($w == 'u') {
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');
 
-$g5['title'] = '담당자 '.$html_title;
+$g5['title'] = '가맹점관리자 '.$html_title;
 include_once(G5_PATH.'/head.sub.php');
 ?>
 <script src="<?php echo G5_ADMIN_URL ?>/admin.js?ver=<?php echo G5_JS_VER; ?>"></script>
@@ -53,17 +54,15 @@ include_once(G5_PATH.'/head.sub.php');
 <div class="new_win pt-[60px]">
     <h1 class="fixed w-full top-[0px]"><?php echo $g5['title']; ?></h1>
     <div class="local_desc01 local_desc">
-        <p>본 페이지는 담당자를 간단하게 관리하는 페이지입니다.(아이디, 비번 임의생성)</p>
-        <p>휴대폰 번호 중복 불가! (중복인 경우 이전 회원정보에 추가됩니다.)</p>
-        <p>회원가입을 시키시고 관리자 승인 후 사용하게 하는 것이 더 좋습니다.</p>
+        <p>- 본 페이지는 가맹점관리자를 간단하게 관리하는 페이지입니다.</p>
+        <p>- 아이디, 비번은 임의로 생성됩니다.</p>
+        <!-- <p>휴대폰 번호 중복 불가! (중복인 경우 이전 회원정보에 추가됩니다.)</p> -->
+        <!-- <p>회원가입을 시키시고 관리자 승인 후 사용하게 하는 것이 더 좋습니다.</p> -->
     </div>
-
     <form name="form01" id="form01" action="./shop_manager_form_update.php" onsubmit="return form01_check(this);" method="post">
 	<input type="hidden" name="w" value="<?php echo $w ?>">
-	<input type="hidden" name="shop_id" value="<?php echo $shop['shop_id'] ?>">
-	<input type="hidden" name="mb_id" value="<?php echo $mb['mb_id'] ?>">
+	<input type="hidden" name="shop_id" value="<?=$shop_id??''?>">
 	<input type="hidden" name="token" value="">
-	<input type="hidden" name="ex_page" value="<?=$ex_page??''?>">
     <div class=" new_win_con">
         <div class="tbl_frm01 tbl_wrap">
             <table>
@@ -83,29 +82,44 @@ include_once(G5_PATH.'/head.sub.php');
 			<tr>
 				<th scope="row">담당자명</th>
 				<td>
-                    <input type="hidden" name="mb_id" value="<?=$mb['mb_id']??''?>" id="mb_id" required class="frm_input required">
-                    <input type="hidden" name="mb_nick" value="<?=$mb['mb_nick']??''?>" id="mb_nick" required class="frm_input required">
+                    <input type="hidden" name="mb_id" value="<?=$mb['mb_id']??''?>" id="mb_id" class="frm_input">
+                    <input type="hidden" name="mb_nick" value="<?=$mb['mb_nick']??''?>" id="mb_nick" class="frm_input">
+                    <input type="hidden" name="mb_1" value="<?=$mb['mb_1']??''?>" id="mb_1" class="frm_input"><!--//가맹점아이디-->
+                    <input type="hidden" name="mb_2" value="<?=$mb['mb_2']??''?>" id="mb_2" class="frm_input"><!--//가맹점관리자여부(Y/N)-->
                     <input type="text" name="mb_name" value="<?=$mb['mb_name']??''?>" required class="frm_input required" style="width:50% !important;">
-					<select name="mb_2">
+					<select name="mb_rank">
 						<option value="">직함</option>
                         <?=$rank_opt?>
 					</select>
 					<script>
                     document.addEventListener("DOMContentLoaded", function () {
-                        const selectEl = document.querySelector('select[name="mb_2"]');
+                        const selectEl = document.querySelector('select[name="mb_rank"]');
                         if (selectEl) {
-                            const valueToSelect = '<?=$mb['mb_2']??''?>';
+                            const valueToSelect = '<?=$mb['mb_rank']??''?>';
                             selectEl.value = valueToSelect; // select의 값 설정
                         }
                     });
                     </script>
 				</td>
 			</tr>
+            <?php if($w == 'u') { ?>
+            <tr>
+                <th scope="row">회원ID</th>
+                <td><?=$mb['mb_id']??''?></td>
+            </tr>
+            <tr>
+                <th scope="row">비밀번호</th>
+                <td>
+                    <input type="password" name="mb_password" value="" class="frm_input" style="width:50% !important;">
+                </td>
+            </tr>
+            <?php  } ?>
 			<tr>
 				<th scope="row">휴대폰</th>
 				<td>
-                    <input type="text" value="ok" id="mb_hp_flag" class="frm_input">
-                    <input type="text" name="mb_hp" value="<?=$mb['mb_hp']??''?>" required class="frm_input required">
+                    <?php echo help('숫자만 입력하세요.') ?>
+                    <input type="hidden" value="ok" id="mb_hp_flag" class="frm_input">
+                    <input type="text" name="mb_hp" id="mb_hp" value="<?=$mb['mb_hp']??''?>" required class="frm_input required">
                     <span id="hp_verfiy_msg" class="text-red-500 text-xs"></span>
 				</td>
 			</tr>
@@ -124,12 +138,14 @@ include_once(G5_PATH.'/head.sub.php');
         </div>
     </div>
     <div class="btn_fixed_top top-[11px]">
-        <!-- <input type="button" class="btn_close btn btn_02" value="창닫기" onclick="javascript:opener.location.reload();window.close();"> -->
-        <input type="button" class="btn_close btn btn_02" value="창닫기" onclick="javascript:window.close();">
+        <input type="button" class="btn_close btn btn_02" value="창닫기" onclick="javascript:opener.location.reload();window.close();">
+        <!-- <input type="button" class="btn_close btn btn_02" value="창닫기" onclick="javascript:window.close();"> -->
         <input type="button" class="btn btn_01" value="목록" onClick="self.location='./shop_manager_list.php?shop_id=<?=$shop['shop_id']?>'">
     </div>
 	<div class="win_btn ">
+        <?php if($w == 'u') { ?>
         <input type="button" class="btn_delete btn btn_02" value="삭제" style="display:<?=(!$mb['mb_id'])?'none':'';?>;">
+        <?php } ?>
         <input type="submit" value="확인" class="btn_submit btn" accesskey='s'>
     </div>
 
@@ -138,6 +154,8 @@ include_once(G5_PATH.'/head.sub.php');
 </div>
 
 <script>
+var g5_admin_csrf_token_key = "<?php echo (function_exists('admin_csrf_token_key')) ? admin_csrf_token_key() : ''; ?>";
+
 $(function() {
 
     // 휴대폰 중복 체크 (중복 회원이 있으면 이메일 주소 자동 입력)
@@ -148,7 +166,9 @@ $(function() {
     $(".btn_delete").click(function() {
 		if(confirm('정보를 정말 삭제하시겠습니까?')) {
 			var token = get_ajax_token();
-			self.location="./shop_manager_form_update.php?token="+token+"&w=d&shop_id=<?=(isset($shop['shop_id'])?$shop['shop_id']:'')?>&mb_id=<?=$mb['mb_id']??''?>";
+            var del_url = "./shop_manager_form_update.php?token="+token+"&w=d&shop_id=<?=(isset($shop['shop_id'])?$shop['shop_id']:'')?>&mb_id=<?=$mb['mb_id']??''?>";
+            // alert(del_url);
+			self.location = del_url;
 		}
 	});
 
@@ -196,7 +216,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-
 function form01_check(f) {
     
     if (f.mb_name.value=='') {
@@ -210,6 +229,13 @@ function form01_check(f) {
 		f.mb_hp.select();
 		return false;
 	}
+
+    if (f.mb_hp_flag.value=='no') {
+        alert("올바른 휴대폰 번호를 입력하세요.");
+        f.mb_hp.select();
+        return false;
+    }
+
 
     // if (f.mb_email.value=='') {
 	// 	alert("이메일을 입력하세요.");

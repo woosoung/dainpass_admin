@@ -60,7 +60,7 @@ $point_rate = number_format($point_rate,2,'.','');
 $branch = trim($_POST['branch']);
 // shop_parent_id 본사가맹점 id
 // shop_names = 가맹점명 히스토리
-$mng_menus = trim($_POST['mng_menus']);
+$mng_menus = addslashes(trim($_POST['mng_menus']));
 
 // exit;
 if($shop_id == $shop_parent_id){
@@ -106,9 +106,48 @@ if(count($category_ids_arr)){
 
 
 
-// 업체정보 추출
-if ($w=='u')
-	$com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '$shop_id' ");
+if ($w=='u'){
+    // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
+    // 이전 mng_menus 정보가져와서 새로 넘어온 mng_menus와 비교
+    $prev_mng_sql = " SELECT mng_menus FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ";
+    $prev_mng_res = sql_fetch_pg($prev_mng_sql);
+    // 이전의 메뉴구성과, 새로 넘어온 메뉴구성 비교 달라진내용이 있는지 확인이 필요(달라진게 있어야만 수정할 수 있잖아!)
+    if($mng_menus != $prev_mng_res['mng_menus']){
+        // 조건에서 이전의 메뉴구성과, 새로 넘어온 메뉴구성이 달라졌으므로 다시 auth테이블 업데이트해야 한다.
+        // 우선 auth테이블 업데이트를 위해서 해당 shop_id의 관리회원들을 추출
+        $auth_mbs_sql = " SELECT GROUP_CONCAT(mb_id) AS mb_ids FROM {$g5['member_table']}
+                            WHERE mb_level IN (4,5)
+                            AND mb_1 = '{$shop_id}'
+                            AND mb_2 = 'Y' ";
+        $auth_mbs_res = sql_fetch($auth_mbs_sql);
+        // 관리회원이 존재하면 우선 해당 회원들의 이전 메뉴권한을 삭제하고 새로 넘어온 메뉴권한을 다시 모든 관리자에게 부여
+        if(isset($auth_mbs_res['mb_ids']) && $auth_mbs_res['mb_ids']) {
+            $mb_ids_arr = explode(',',$auth_mbs_res['mb_ids']);
+            $mb_ids_str = '';
+            foreach($mb_ids_arr as $mb_id){
+                $mb_ids_str .= "'{$mb_id}',";
+            }
+            $mb_ids_str = rtrim($mb_ids_str,',');
+            // 이전 회원의 권한을 모두 삭제
+            $auth_del_sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id IN ($mb_ids_str) ";
+            sql_query($auth_del_sql,1);
+            // 새로 넘어온 메뉴구성으로 다시 권한부여
+            $menus = explode(',',$mng_menus);
+            foreach($mb_ids_arr as $mb_id){
+                $auth_sql = " INSERT INTO {$g5['auth_table']} (mb_id,au_menu,au_auth) VALUES
+                                    ('{$mb_id}','100000','r') ";
+                foreach($menus as $menu){
+                    $auth_sql .= " ,('{$mb_id}','{$menu}','r,w,d') ";
+                }
+                sql_query($auth_sql,1);
+            }
+        }
+    }
+
+    
+    // 업체정보 추출
+    $com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '$shop_id' ");
+}
 
 
 // 업체명 히스토리
@@ -144,7 +183,7 @@ $sql_common = "	name = '".addslashes($name)."'
                 , names = '".addslashes($names)."'
                 , tax_type = '{$tax_type}'
                 , branch = '".addslashes($branch)."'
-                , mng_menus = '".addslashes($mng_menus)."'
+                , mng_menus = '".$mng_menus."'
                 , settlement_memo = '{$settlement_memo}'
 ";
 
@@ -219,10 +258,7 @@ else if ($w=="d") {
 
 
 if($w == '' || $w == 'u'){
-    // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
     
-
-
     //파일 삭제처리
     $merge_del = array();
     $del_arr = array();

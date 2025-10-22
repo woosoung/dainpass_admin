@@ -26,6 +26,14 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('cat_add').addEventListener('click', function() {
         let cat1Select = document.getElementById('cat1');
         let cat2Select = document.getElementById('cat2');
+        // 기존의 .cat_li 요소의 갯수를 카운팅
+        const oldCatLiCount = document.querySelectorAll('.cat_li').length;
+        if(oldCatLiCount){
+            if(oldCatLiCount >= 1){
+                alert('카테고리는 최대 1개까지만 등록 가능합니다.');
+                return false;
+            }
+        }
         if(cat1Select.value === ''){
             alert('대분류를 선택해 주십시오.');
             cat1Select.focus();
@@ -47,8 +55,7 @@ document.addEventListener('DOMContentLoaded', function(){
         newItem.classList.add('cat_li');
         newItem.setAttribute('data-id', cat2Select.value);
         newItem.textContent = cat2Select.options[cat2Select.selectedIndex].text;
-        // 기존의 .cat_li 요소의 갯수를 카운팅
-        const oldCatLiCount = document.querySelectorAll('.cat_li').length;
+        
         newItem.innerHTML = `<span class="sp_sort">${oldCatLiCount + 1}</span>`;
         newItem.innerHTML += `<span class="sp_cat">${cat2Select.options[cat2Select.selectedIndex].text}</span>`;
         newItem.innerHTML += `<i class="fa fa-times" aria-hidden="true"></i>`;
@@ -67,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function(){
         const winShopMember = window.open(
             href,
             "winShopMember",
-            "left=100,top=100,width=520,height=600,scrollbars=1"
+            "left=100,top=100,width=620,height=760,scrollbars=1"
         );
         if (winShopMember) {
             winShopMember.focus();
@@ -148,44 +155,62 @@ function updateSortNumbers() {
 }
 
 function form01_submit(f) {
-    if (f.com_name.value.trim() === '') {
+    if (f.name.value.trim() === '') {
         alert('업체명을 입력해 주십시오.');
-        f.com_name.focus();
+        f.name.focus();
         return false;
     }
 
-    if (f.com_email.value == '') {
-        alert('이메일을 입력해 주십시오2.');
-        f.com_email.focus();
+    if (f.business_no.value.trim() === '') {
+        alert('사업자등록번호를 입력해 주십시오.');
+        f.business_no.focus();
+        return false;
+    }
+
+    if (f.shop_name.value.trim() === '') {
+        alert('가맹점명을 입력해 주십시오.');
+        f.shop_name.focus();
+        return false;
+    }
+
+    if (f.branch.value.trim() === '') {
+        alert('지점명을 입력해 주십시오.');
+        f.branch.focus();
+        return false;
+    }
+
+    if (f.contact_email.value == '') {
+        alert('대표이메일을 입력해 주십시오.');
+        f.contact_email.focus();
         return false;
     }
     // 이메일 검증에 사용할 정규식 (이메일정규식)
     var emailRegExp = /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$/i;
-    if (f.com_email.value.match(emailRegExp) == null) {
+    if (f.contact_email.value.match(emailRegExp) == null) {
         alert("올바른 이메일 주소가 아닙니다.");
-        f.com_email.focus();
+        f.contact_email.focus();
         return false; 
     }
 
 
-    if (f.com_president.value == '') {
+    if (f.owner_name.value == '') {
         alert('대표자명을 입력해 주십시오.');
         f.com_president.focus();
         return false;
     }
 
-    if (f.com_tel.value == '') {
+    if (f.contact_phone.value == '') {
         alert('업체전화번호를 입력해 주십시오.');
-        f.com_tel.focus();
+        f.contact_phone.focus();
         return false;
     }
 
     // 사업자번호에 해당하는 정보가 있으면 사업자번호 검증을 함(사업자번호정규식)
-    if(f.com_biz_no.value.trim() !== ''){
+    if(f.business_no.value.trim() !== ''){
         var bizNoRegExp = /^(\d{3}-\d{2}-\d{5}|\d{10})$/;
-        if(f.com_biz_no.value.match(bizNoRegExp) == null){
+        if(f.business_no.value.match(bizNoRegExp) == null){
             alert("올바른 사업자번호가 아닙니다.");
-            f.com_biz_no.focus();
+            f.business_no.focus();
             return false;
         }
     }

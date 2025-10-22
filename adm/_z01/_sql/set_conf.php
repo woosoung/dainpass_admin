@@ -2,9 +2,10 @@
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 $set_key = 'dain';
 $set_type = 'conf';
+
 $set_sql = " SELECT * FROM {$g5['setting_table']} 
                     WHERE set_key = '{$set_key}'
-                        AND set_shop_id = '{$conf_com_idx}'
+                        AND set_shop_id IN (0,{$conf_com_idx})
                         AND set_type = '{$set_type}' ";
 // echo $set_sql;exit;
 $set_res = sql_query_pg($set_sql);

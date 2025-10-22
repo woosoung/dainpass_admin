@@ -45,7 +45,12 @@ function sql_connect_pg($host, $user, $pass, $db=G5_PGSQL_DB)
     if (strpos($host, ':') !== false) {
         list($host, $port) = explode(':', $host, 2);
     }
-    $pg_link = @pg_connect(" host = $host port = $port dbname = $db user = $user password = $pass ") or die('PgSQL Host, User, Password, DB 정보에 오류가 있습니다.');
+    $pg_link = pg_connect(" host = $host port = $port dbname = $db user = $user password = $pass ");
+    if (!$pg_link) {
+        $last_error = error_get_last();
+        $details = isset($last_error['message']) ? $last_error['message'] : 'pg_connect failed without message';
+        die('PgSQL Host, User, Password, DB 정보에 오류가 있습니다. | '.$details);
+    }
     $stat = pg_connection_status($pg_link);
     if ($stat) {
         die('Connect Error: '.$pg_link);
@@ -56,6 +61,15 @@ function sql_connect_pg($host, $user, $pass, $db=G5_PGSQL_DB)
 
 $connect_pg = sql_connect_pg(G5_PGSQL_HOST, G5_PGSQL_USER, G5_PGSQL_PASSWORD) or die('PgSQL Connect Error!!!');
 $g5['connect_pg'] = $connect_pg;
+
+// Make sure the PostgreSQL handle is closed once the request finishes to avoid lingering idle connections.
+if ($connect_pg) {
+    register_shutdown_function(static function () use ($connect_pg) {
+        if (is_resource($connect_pg) || $connect_pg instanceof \PgSql\Connection) {
+            @pg_close($connect_pg);
+        }
+    });
+}
 // postgreSQL DB : end
 
 
@@ -552,7 +566,46 @@ function get_table_meta_pg($db_table,$db_field,$db_id,$db_table2=''){
 }
 }
 
-//--- 메타 테이블 저장 ---//
+//--- mysql메타 테이블 저장 ---//
+if(!function_exists('gmeta_update')){
+function gmeta_update($meta_array)
+{
+	global $g5;
+	
+	if(!$meta_array['mta_key'])
+		return 0;
+
+	$mta_country = (isset($meta_array['mta_country'])&&$meta_array['mta_country'])? $meta_array['mta_country']:'ko_KR';
+
+	$row1 = sql_fetch("	SELECT * FROM {$g5['gmeta_table']} 
+							WHERE mta_country = '$mta_country' 
+								AND mta_db_table='{$meta_array['mta_db_table']}' 
+								AND mta_db_id='{$meta_array['mta_db_id']}' 
+								AND mta_key='{$meta_array['mta_key']}' ");
+	if($row1['mta_idx']) {
+		$sql = " UPDATE {$g5['gmeta_table']} SET 
+					mta_value='{$meta_array['mta_value']}', 
+                    mta_update_dt='".G5_TIME_YMDHIS."'
+				WHERE mta_idx='".$row1['mta_idx']."' ";
+		sql_query($sql);
+	}
+	else {
+		$sql = " INSERT INTO {$g5['gmeta_table']} SET 
+					mta_country = '{$mta_country}', 
+					mta_db_table='{$meta_array['mta_db_table']}', 
+					mta_db_id='{$meta_array['mta_db_id']}', 
+					mta_key='{$meta_array['mta_key']}', 
+					mta_value='{$meta_array['mta_value']}', 
+					mta_title='{$meta_array['mta_title']}', 
+					mta_reg_dt='".G5_TIME_YMDHIS."' ";
+		sql_query($sql);
+		$row1['mta_idx'] = sql_insert_id();
+	}
+	return $row1['mta_idx'];
+}
+}
+
+//--- pgsql메타 테이블 저장 ---//
 if(!function_exists('meta_update')){
 function meta_update($meta_array){
     global $conf_com_idx, $g5;
@@ -622,7 +675,43 @@ function meta_update($meta_array){
 }
 }
 
-// 확장 메타값 배열로 반환하는 함수
+
+// mysql 확장 메타값 배열로 반환하는 함수
+// serialized 되었다면 각 항목별로 분리해서 배열로 만듦
+if(!function_exists('get_gmeta')){
+function get_gmeta($db_table,$db_id,$code64=1)
+{
+    global $g5;
+	
+	if(!$db_table||!$db_id)
+		return false;
+	//db_table: table name, mta_db_id = xxx_idx or board name
+    $sql = " SELECT mta_key, mta_value FROM {$g5['gmeta_table']} WHERE mta_db_table = '".$db_table."' AND mta_db_id = '".$db_id."' ";
+    //echo $sql.'<br>';
+	$rs = sql_query($sql,1);
+    $mta2 = []; // 빈 배열로 초기화
+    for($i=0;$row=sql_fetch_array($rs);$i++) {
+        $mta2[$row['mta_key']] = $row['mta_value'];
+        //echo $row['mta_key'].'='.$row['mta_value'].'<br>';
+        if(is_serialized($row['mta_value'])) {
+            //unset($mta2[$row['mta_key']]); // serialized된 변수는 제거
+            $unser = unserialize($row['mta_value']);
+            if( is_array($unser) ) {
+                foreach ($unser as $k1=>$v1) {
+                    //echo $k1.'='.$v1.' -------- <br>';
+                    if($code64)
+                        $mta2[$k1] = stripslashes64($v1);
+                    else
+                        $mta2[$k1] = stripslashes($v1);
+                }    
+            }
+        }
+    }
+    return $mta2;
+}
+}
+
+// pgsql확장 메타값 배열로 반환하는 함수
 // serialized 되었다면 각 항목별로 분리해서 배열로 만듦
 if(!function_exists('get_meta')){
 function get_meta($db_table,$db_id,$code64=1)
@@ -637,7 +726,7 @@ function get_meta($db_table,$db_id,$code64=1)
     $sql = " SELECT mta_key, mta_value FROM {$g5['meta_table']} WHERE mta_db_tbl = '".$db_table."' AND mta_db_idx = '".$db_id."' ";
     // echo $sql.'<br>';exit;
     $rs = sql_query_pg($sql);
-    
+    $mta2 = []; // 빈 배열로 초기화
     for($i=0;$row=sql_fetch_array_pg($rs->result);$i++) {
         $mta2[$row['mta_key']] = $row['mta_value'];
         //echo $row['mta_key'].'='.$row['mta_value'].'<br>';
@@ -1813,5 +1902,86 @@ function change_com_names($shop_id,$new_shop_name){
 
 
 	return true;
+}
+}
+
+if(!function_exists('generateUserId')){
+function generateUserId(string $name): string {
+    if (preg_match('/[가-힣]+/u', $name)) {
+        $customMap = [
+            '이' => 'l',
+            '어' => 'e',
+            '오' => 'o',
+            '임' => 'l',
+            '림' => 'l',
+            '유' => 'r',
+            '류' => 'r',
+            '안' => 'a',
+            '홍' => 'h',
+            '김' => 'k',
+            '고' => 'k',
+            '곽' => 'k',
+            '강' => 'k',
+            '구' => 'k',
+            '규' => 'k',
+            '박' => 'p',
+            '최' => 'c',
+            '정' => 'j',
+            '완' => 'w',
+            '와' => 'w',
+            '왕' => 'w',
+            '우' => 'w',
+            '배' => 'b',
+            '변' => 'b',
+            '백' => 'b',
+            '현' => 'h',
+            '연' => 'y',
+            '여' => 'y',
+            '염' => 'y',
+            '양' => 'y',
+            '예' => 'y',
+            '용' => 'y',
+            '윤' => 'y',
+            '원' => 'w',
+            '녀' => 'n',
+            '옹' => 'o',
+        ];
+
+        $cho = [
+            'ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'
+        ];
+        $romanMap = ['g','kk','n','d','tt','r','m','b','pp','s','ss','ng','j','jj','ch','k','t','p','h'];
+
+        $nameArr = preg_split('//u', $name, -1, PREG_SPLIT_NO_EMPTY);
+        $initials = '';
+
+        foreach ($nameArr as $char) {
+            if (array_key_exists($char, $customMap)) {
+                $initials .= $customMap[$char];
+                continue;
+            }
+
+            $bytes = iconv('UTF-8', 'UCS-4BE', $char);
+            $code = (ord($bytes[2]) << 8) + ord($bytes[3]);
+            $code -= 0xAC00;
+
+            if ($code >= 0 && $code < 11172) {
+                $choIndex = intval($code / 588);
+                $roman = $romanMap[$choIndex];
+                $initials .= strtolower(substr($roman, 0, 1));
+            } else {
+                $initials .= 'x';
+            }
+        }
+    } else {
+        $parts = preg_split('/\s+/', trim($name));
+        $initials = '';
+        foreach ($parts as $p) {
+            $initials .= substr($p, 0, 1);
+        }
+        $initials = strtolower($initials);
+    }
+
+    return $initials . '_' . time();
 }
 }

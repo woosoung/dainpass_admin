@@ -19,17 +19,6 @@ if($auth_res->num_rows && !$member['mb_leave_date'] && !$member['mb_intercept_da
 unset($auth_sql);
 unset($auth_res);
 
-// memeber일 경우 meta_table에 회원정보가 있으면 $member배열에 추가
-if($is_member){
-    $conf_com_idx = (int) $member['mb_1']; // 0: 플랫폼, 그 외 : 가맹점
-    // echo $conf_com_idx;exit;
-    $mta_mb_arr = get_meta('member',$member['mb_id']);
-    if(count($mta_mb_arr)){
-        $member = array_merge($member,$mta_mb_arr);
-    }
-}
-unset($mta_mb_arr);
-
 // 울트라수퍼관리자 여부
 $is_ultra = ($member['mb_level'] == 10) ? true : false;
 // 수퍼관리자 여부
@@ -40,3 +29,20 @@ $is_dev_manager = ($member['mb_level'] >= 8) ? true : false;
 $is_team_manager = ($member['mb_level'] >= 7) ? true : false;
 // 일반관리자 여부
 $is_manager = ($member['mb_level'] >= 6) ? true : false;
+// memeber일 경우 meta_table에 회원정보가 있으면 $member배열에 추가
+if($is_member){
+    $conf_com_idx = (int) $member['mb_1']; // 0: 플랫폼, 그 외 : 가맹점
+    // echo $conf_com_idx;exit;
+    $mta_mb_arr = get_meta('member',$member['mb_id']);
+    $gmta_mb_arr = get_meta('member',$member['mb_id']);
+
+    if(count($mta_mb_arr) && $is_manager){
+        $member = array_merge($member,$mta_mb_arr);
+    } 
+
+    if(count($gmta_mb_arr) && !$is_manager) {
+        $member = array_merge($member,$gmta_mb_arr);
+    }
+}
+unset($mta_mb_arr);
+

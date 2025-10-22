@@ -5,6 +5,7 @@ include_once(G5_ZSQL_PATH.'/shop_category.php');
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 @auth_check($auth[$sub_menu],'w');
 
+$form_input = '';
 // 추가적인 검색조건 (ser_로 시작하는 검색필드)
 foreach($_REQUEST as $key => $value ) {
     if(substr($key,0,4)=='ser_') {
@@ -252,7 +253,7 @@ let cats = <?=json_encode($cats)?>;
 			</select>
 			<a href="javascript:" id="cat_add" class="mm-blue-btn">업종추가</a>			
 			<div id="cat_box" class="mt-2">
-				<?php echo help("업종(분류)항목을 위아래로 이동시켜 순서를 변경할 수 있습니다."); ?>
+				<?php ;//echo help("업종(분류)항목을 위아래로 이동시켜 순서를 변경할 수 있습니다."); ?>
 				<input type="hidden" name="category_ids" value="<?=implode(',', $carr)?>" class="border border-black w-[400px]">
 				<ul id="cat_ul" class="ca-ul">
 					<?php 
@@ -270,9 +271,23 @@ let cats = <?=json_encode($cats)?>;
 				</ul>
 			</div>
 		</td>
-		<?php if($w=='u') { ?>
+		<?php if($w=='u') { 
+			$m_sql = " SELECT mb_name, mb_id, mb_hp FROM {$g5['member_table']} WHERE mb_level IN (3,4,5) AND mb_1 = '{$shop_id}' AND mb_2 = 'Y' ";
+			$m_res = sql_query($m_sql,1);
+			$com['shop_managers_text'] = '';
+			for($j=0; $m_row=sql_fetch_array($m_res); $j++){
+				// print_r2($m_row);
+				$mbt = get_gmeta('member',$m_row['mb_id']);
+                // print_r2($mbt);
+                if(count($mbt)){
+                    $m_row = array_merge($m_row,$mbt);
+                }
+				// print_r2($m_row);
+				$com['shop_managers_text'] .= $m_row['mb_name'].'<span>'.($rank_arr[$m_row['mb_rank']]??'').'</span> <span class="font_size_8">('.$m_row['mb_id'].')</span> ['.formatPhoneNumber($m_row['mb_hp']).']<br>';
+			}
+		?>
 		<th scope="row">가맹점관리자<strong class="sound_only">필수</strong>
-			<a href="javascript:" shop_id="<?=$com['shop_id']?>" id="btn_manager" class="ml-2 !text-blue-500 text-[14px]"><i class="fa fa-plus-circle"></i></a>
+			<a href="javascript:" shop_id="<?=$com['shop_id']?>" id="btn_manager" class="ml-2 !text-blue-500 text-[16px]"><i class="fa fa-pencil-square-o"></i></a>
 		</th>
 		<td>
 			<?php echo $com['shop_managers_text']; ?>
@@ -291,20 +306,13 @@ let cats = <?=json_encode($cats)?>;
 		</td>
 	</tr>
     <tr>
-        <th scope="row">가맹점명/지점명<strong class="sound_only">필수</strong></th>
+        <th scope="row">가맹점명<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input">&nbsp;&nbsp;/&nbsp;
-			<input type="text" name="branch" value="<?=$com['branch']??''?>" placeholder="지점명" id="branch" class="frm_input">
+			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input">
 		</td>
-        <th scope="row">본사선택</th>
+        <th scope="row">지점명<strong class="sound_only">필수</strong></th>
         <td>
-			<?php echo help("본사설정을 해제하려면 '본사설정해제'에 체크를 넣고 확인을 눌러 주세요."); ?>
-            <input type="hidden" name="com_idx_parent" id="com_idx_parent" value="<?=$com['com_idx_parent']??''?>">
-            <input type="text" name="com_name_parent" id="com_name_parent" value="<?=$com['com_name_parent']??''?>" readonly class="readonly frm_input">
-            <a href="javascript:" data-url="./_win_company_select.php" class="relative mm-blue-btn !top-[1px] com_select">본사선택</a>
-			<label for="head_clear" class="ml-2">
-                <input type="checkbox" name="head_clear" id="head_clear" value="1" class="border"> 본사설정해제
-            </label>
+			<input type="text" name="branch" value="<?=$com['branch']??''?>" placeholder="지점명" id="branch" class="frm_input"></td>
         </td>
     </tr>
 	<tr> 
@@ -320,11 +328,11 @@ let cats = <?=json_encode($cats)?>;
 		</td>
 	</tr>
 	<tr>
-		<th scope="row"><label for="owner_name">대표자<strong class="sound_only">필수</strong></label></th>
+		<th scope="row"><label for="owner_name">대표자명<strong class="sound_only">필수</strong></label></th>
 		<td>
 			<input type="text" name="owner_name" value="<?=$com['owner_name']??''?>" id="owner_name" class="frm_input" size="20" minlength="2" maxlength="30">
 		</td>
-		<th scope="row"><label for="contact_phone">업체전화<strong class="sound_only">필수</strong></label></th>
+		<th scope="row"><label for="contact_phone">업체전화번호<strong class="sound_only">필수</strong></label></th>
 		<td>
 			<input type="text" name="contact_phone" value="<?=formatPhoneNumber($com['contact_phone']??'')?>" id="contact_phone" class="frm_input" size="20" minlength="2" maxlength="30">
 		</td>
@@ -356,7 +364,7 @@ let cats = <?=json_encode($cats)?>;
 	<tr>
         <th scope="row">가맹점관련파일</th>
         <td colspan="3">
-            <?php echo help("가맹점관련 파일들을 등록하고 관리해 주시면 됩니다."); ?>
+            <?php echo help("가맹점관련 파일들(사업장등록증)을 등록하고 관리해 주시면 됩니다."); ?>
             <input type="file" id="multi_file_comf" name="comf_datas[]" multiple class="">
             <?php
 			$comf_list = (isset($comf['comf_f_arr']) && is_array($comf['comf_f_arr'])) ? $comf['comf_f_arr'] : [];
@@ -375,7 +383,7 @@ let cats = <?=json_encode($cats)?>;
         <th scope="row">가맹점관련이미지</th>
         <td colspan="3">
             <?php echo help("가맹점관련 이미지들을 등록하고 관리해 주시면 됩니다."); ?>
-            <input type="file" id="multi_file_comi" name="comi_datas[]" multiple class="">
+            <input type="file" id="multi_file_comi" name="comi_datas[]" multiple class="" data-maxsize="1024">
             <?php
 			$comi_list = (isset($comi['comi_f_arr']) && is_array($comi['comi_f_arr'])) ? $comi['comi_f_arr'] : [];
 			if (!empty($comi_list)){
