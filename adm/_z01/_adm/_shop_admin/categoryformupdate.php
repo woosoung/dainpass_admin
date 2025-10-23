@@ -182,26 +182,29 @@ if($w == '' || $w == 'u'){
     //파일 삭제처리
     $merge_del = array();
     $del_arr = array();
-    
-    if(@count(${'cat_off_'.$ca_id.'_del'})){
-        foreach(${'cat_off_'.$ca_id.'_del'} as $k=>$v) {
+
+    $cat_off_del = isset($_POST['cat_off_'.$ca_id.'_del']) && is_array($_POST['cat_off_'.$ca_id.'_del']) ? $_POST['cat_off_'.$ca_id.'_del'] : array();
+    $cat_on_del  = isset($_POST['cat_on_'.$ca_id.'_del']) && is_array($_POST['cat_on_'.$ca_id.'_del'])  ? $_POST['cat_on_'.$ca_id.'_del']  : array();
+
+    if(!empty($cat_off_del)){
+        foreach($cat_off_del as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
 
-    if(@count(${'cat_on_'.$ca_id.'_del'})){
-        foreach(${'cat_on_'.$ca_id.'_del'} as $k=>$v) {
+    if(!empty($cat_on_del)){
+        foreach($cat_on_del as $k=>$v) {
             $merge_del[$k] = $v;
         }
     }
-    
-    if(count($merge_del)){
+
+    if(!empty($merge_del)){
         foreach($merge_del as $k=>$v) {
             array_push($del_arr,$k);
         }
     }
     // print_r2($del_arr);exit;
-    if(count($del_arr)) delete_idx_s3_file($del_arr);
+    if(!empty($del_arr)) delete_idx_s3_file($del_arr);
     
     //file의 name, fle_db_idx, fle_idx, fle_dir, fle_type
     upload_multi_file($_FILES['caticon_off'],'shop_categories',$ca_id,'admin/category','cat_off');
