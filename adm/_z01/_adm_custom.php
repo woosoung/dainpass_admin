@@ -144,6 +144,7 @@ function z_adm_common_tail(){
 	if(is_file(G5_Z_PATH.'/js/tms_timepicker.js')) add_javascript('<script src="'.G5_Z_URL.'/js/tms_timepicker.js"></script>',0);
 	// tailwindcss
 	if(is_file(G5_Z_PATH.'/js/tailwind.min.js')) add_javascript('<script src="'.G5_Z_URL.'/js/tailwind.min.js"></script>',0);
+	
 	// _z01안에 DOM객체의 편집이 필요할때 사용하느 js파일
 	if(is_file(G5_Z_PATH.'/js/adm_dom_control.js.php')) include_once(G5_Z_PATH.'/js/adm_dom_control.js.php');
 	// _z01개별페이지에 필요한 js파일

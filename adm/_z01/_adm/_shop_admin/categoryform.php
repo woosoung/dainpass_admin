@@ -273,9 +273,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             <tr>
                 <th scope="row"><label for="caticon_off">비활성화상태 아이콘</label></th>
                 <td colspan="3">
-                    <?php echo help("해당 업종관련 비활성화 상태 아이콘을 관리합니다. (3KB 이하의 사이즈로 업로드 해 주세요.)"); ?>
+                    <?php echo help("해당 업종관련 비활성화 상태 아이콘을 관리합니다. (최소 가로/세로 32px 이상, 용량은 10KB 이하의 사이즈로 업로드 해 주세요.)"); ?>
                     <div>
-                        <input type="file" id="caticon_off" name="caticon_off[]" multiple class="multifile maxsize-3">
+                        <input type="file" id="caticon_off" name="caticon_off[]" multiple class="multifile maxsize-10">
                         <?php
                         if(@count($cof['cof_f_arr'])){
                             echo '<ul>'.PHP_EOL;
@@ -291,9 +291,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             <tr>
                 <th scope="row"><label for="caticon_on">활성화상태 아이콘</label></th>
                 <td colspan="3">
-                    <?php echo help("해당 업종관련 활성화 상태 아이콘을 관리합니다. (3KB 이하의 사이즈로 업로드 해 주세요.)"); ?>
+                    <?php echo help("해당 업종관련 활성화 상태 아이콘을 관리합니다. (최소 가로/세로 32px 이상, 용량은 10KB 이하의 사이즈로 업로드 해 주세요.)"); ?>
                     <div>
-                        <input type="file" id="caticon_on" name="caticon_on[]" multiple class="multifile maxsize-3">
+                        <input type="file" id="caticon_on" name="caticon_on[]" multiple class="multifile maxsize-10">
                         <?php
                         if(@count($con['con_f_arr'])){
                             echo '<ul>'.PHP_EOL;

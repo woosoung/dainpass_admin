@@ -358,9 +358,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     <tr>
         <th scope="row">
             관리페이지(권한설정)<br>
-            <span id="all_auth_del" class="<?=$all_auth_del_btn?>">전체권한삭제</span>
+            <span id="all_auth_del" class="epf_all_auth_del_btn">전체권한삭제</span>
         </th>
-        <td colspan="3" class="<?=$menu_h3_class?> <?=$mneu_hs_class?> <?=$menu_ul_class?> <?=$menu_li_class?> <?=$menu_sp_class?>">
+        <td colspan="3" class="epf_menu_h3_class epf_menu_hs_class epf_menu_ul_class epf_menu_li_class epf_menu_sp_class">
             <?php
             // print_r2($member_auth_menus);
             // print_r2($menu);
@@ -369,7 +369,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             // print_r2($auth_list);//[0] = 100300_r_w
             $auths_str = (count($auth_list)) ? implode(',',$auth_list) : '';
             ?>
-            <label for="auth_renewal" class="<?=$auth_renewal_label?>">
+            <label for="auth_renewal" class="epf_auth_renewal_label">
                 <input type="checkbox" name="auth_renewal" id="auth_renewal" value="1" class="border"> 메뉴권한재설정
             </label>
             <input type="hidden" name="auths" value="<?=$auths_str?>" class="border w-full">

@@ -1,6 +1,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     const sortableEl = document.getElementById('cat_ul');
+    const bsortableEl = document.getElementById('branch_imgs');
     // 리프레시 $('#cat_ul').sortable('refresh');
     $(sortableEl).sortable({
         update: function() {
@@ -85,14 +86,6 @@ document.addEventListener('DOMContentLoaded', function(){
     //########### 업체관련 멀티파일 ##############
     $('#multi_file_comf').MultiFile();
     $('#multi_file_comi').MultiFile();
-
-    const com_select = document.querySelector('.com_select');
-    com_select.addEventListener('click', () => {
-        const url = com_select.getAttribute('data-url') + '?file_name=' + file_name;
-        const win_com_select = window.open(url, "win_com_select", "width=500,height=540,scrollbars=yes");
-        win_com_select.focus();
-        return false;
-    });
     
     document.getElementById('cat1').addEventListener('change', function(e) {
         let selectedValue = e.target.value;

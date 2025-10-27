@@ -155,7 +155,7 @@ else if ($w == 'u') {
 	}
 
 
-	// 업체관련 이미지
+	// 가맹점관련 이미지
     $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comi' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
     // echo $sql;exit;
 	$rs = sql_query_pg($sql);
@@ -169,12 +169,12 @@ else if ($w == 'u') {
 		for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 			$is_s3file_yn = is_s3file($row2['fle_path']);
 			$row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$comi_wd.':'.$comi_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
-			$row2['thumb'] = '<span class="inline-block bg_transparent ml-[20px]"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$comi_wd.'px;height:'.$comi_ht.'px;border:1px solid #ddd;"></span><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
-			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+			$row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$comi_wd.'px;height:'.$comi_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
+			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-			'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-			<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
-			<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+			'<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+			<br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+			<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
 			$comi['fle_db_idx'] = $row2['fle_db_idx'];
 			@array_push($comi['comi_f_arr'], array('file'=>$row2['down_del']));
@@ -383,14 +383,15 @@ let cats = <?=json_encode($cats)?>;
         <th scope="row">가맹점관련이미지</th>
         <td colspan="3">
             <?php echo help("가맹점관련 이미지들을 등록하고 관리해 주시면 됩니다."); ?>
-            <input type="file" id="multi_file_comi" name="comi_datas[]" multiple class="" data-maxsize="1024">
+			<input type="file" id="multi_file_comi" name="comi_datas[]" multiple class="" maxlength="10" data-maxfile="700" data-maxsize="7000">
             <?php
 			$comi_list = (isset($comi['comi_f_arr']) && is_array($comi['comi_f_arr'])) ? $comi['comi_f_arr'] : [];
 			if (!empty($comi_list)){
-				echo '<ul>'.PHP_EOL;
+				echo '<ul class="branch_imgs">'.PHP_EOL;
 				foreach ($comi_list as $i => $item) {
 					$fileHtml = is_array($item) && isset($item['file']) ? $item['file'] : '';
-					echo "<li>[".($i+1).']'.$fileHtml."</li>".PHP_EOL;
+					// echo "<li class='".$branch_li_class."'>[".($i+1).']'.$fileHtml."</li>".PHP_EOL;
+					echo "<li class='branch_li'>[".($i+1).']'.$fileHtml."</li>".PHP_EOL;
 				}
 				echo '</ul>'.PHP_EOL;
             }

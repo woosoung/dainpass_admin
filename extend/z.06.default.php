@@ -97,29 +97,29 @@ if(defined('G5_IS_ADMIN') && is_file(G5_Z_PATH.'/_adm_custom.php')){
     include_once(G5_ZSQL_PATH.'/set_menu.php');//솔루션 환경설정에서 menu에 해당하는 데이터를 가져온다.
     include_once(G5_Z_PATH.'/_adm_custom.php');
     // 관리자단 공통적으로 사용되는 tailwind스타일시트
-    if(is_file(G5_Z_PATH.'/css/_common.css.php')) 
-        include_once(G5_Z_PATH.'/css/_common.css.php');
+    // if(is_file(G5_Z_PATH.'/css/_common.css.php')) 
+    //     include_once(G5_Z_PATH.'/css/_common.css.php');
     // _z01개별페이지에 필요한 taiwind스타일시트
-    if(is_file(G5_ADMIN_PATH.'/'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php')) 
-        include_once(G5_ADMIN_PATH.'/'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php');
+    // if(is_file(G5_ADMIN_PATH.'/'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php')) 
+    //     include_once(G5_ADMIN_PATH.'/'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php');
     // adm후킹개별페이지에 필요한 tailwind스타일시트
-	if(is_file(G5_Z_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php'))
-        include_once(G5_Z_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php'); 
+	// if(is_file(G5_Z_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php'))
+    //     include_once(G5_Z_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php'); 
     // shop_admin후킹개별페이지에 필요한 tailwind스타일시트
-	if(is_file(G5_ZADM_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php'))
-        include_once(G5_ZADM_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php');
+	// if(is_file(G5_ZADM_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php'))
+    //     include_once(G5_ZADM_PATH.'/_'.$g5['dir_name'].'/css/'.$g5['file_name'].'.css.php');
 }
 if(!defined('G5_IS_ADMIN') && defined('G5_THEME_PATH') && is_file(G5_NA_PATH.'/_theme_custom.php')){
     include_once(G5_NA_PATH.'/_theme_custom.php');
     // 사용자단 공통적으로 사용되는 tailwind스타일시트
-    if(is_file(G5_NA_PATH.'/css/_common.css.php')) 
-        include_once(G5_NA_PATH.'/css/_common.css.php');
+    // if(is_file(G5_NA_PATH.'/css/_common.css.php')) 
+    //     include_once(G5_NA_PATH.'/css/_common.css.php');
     // _a 후킹개별페이지에 필요한 tailwind스타일시트
-	if(is_file(G5_NA_PATH.'/css/'.$g5['file_name'].'.css.php'))
-        include_once(G5_Z_PATH.'/css/'.$g5['file_name'].'.css.php'); 
+	// if(is_file(G5_NA_PATH.'/css/'.$g5['file_name'].'.css.php'))
+    //     include_once(G5_Z_PATH.'/css/'.$g5['file_name'].'.css.php'); 
     // _a/bbs 또는 _a/shop 후킹개별페이지에 필요한 tailwind스타일시트
-	if(is_file(G5_NA_PATH.'/css/'.$g5['dir_name'].'/'.$g5['file_name'].'.css.php'))
-        include_once(G5_Z_PATH.'/css/'.$g5['dir_name'].'/'.$g5['file_name'].'.css.php'); 
+	// if(is_file(G5_NA_PATH.'/css/'.$g5['dir_name'].'/'.$g5['file_name'].'.css.php'))
+    //     include_once(G5_Z_PATH.'/css/'.$g5['dir_name'].'/'.$g5['file_name'].'.css.php'); 
 }
 
 

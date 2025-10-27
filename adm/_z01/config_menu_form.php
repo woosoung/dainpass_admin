@@ -40,9 +40,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <tr>
             <th scope="row">
                 기본메뉴<br>
-                <span id="all_hide_clear" class="<?=$all_hide_clear_btn?>">전체비활성해제</span>
+                <span id="all_hide_clear" class="cmf_all_hide_clear_btn">전체비활성해제</span>
             </th>
-            <td colspan="3" class="<?=$menu_h3_class?> <?=$menu_ul_class?> <?=$menu_li_class?>">
+            <td colspan="3" class="cmf_menu_h3_class cmf_menu_ul_class cmf_menu_li_class">
                 <?php
                 // print_r2($set_menu);
                 // 비활성 메뉴 가져오기

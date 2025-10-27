@@ -209,6 +209,51 @@ if($w == '' || $w == 'u'){
     //file의 name, fle_db_idx, fle_idx, fle_dir, fle_type
     upload_multi_file($_FILES['caticon_off'],'shop_categories',$ca_id,'admin/category','cat_off');
     upload_multi_file($_FILES['caticon_on'],'shop_categories',$ca_id,'admin/category','cat_on');
+
+    $has_off_upload = isset($_FILES['caticon_off']['name']) && is_array($_FILES['caticon_off']['name']) && array_filter($_FILES['caticon_off']['name']);
+    $has_on_upload  = isset($_FILES['caticon_on']['name'])  && is_array($_FILES['caticon_on']['name'])  && array_filter($_FILES['caticon_on']['name']);
+
+    if ($has_off_upload || $has_on_upload) {
+        $latest_paths = array();
+
+        if ($has_off_upload) {
+            $off_row = sql_fetch_pg(" SELECT fle_path FROM {$g5['dain_file_table']} 
+                                        WHERE fle_db_tbl = 'shop_categories'
+                                            AND fle_db_idx = '{$ca_id}'
+                                            AND fle_type = 'cat_off'
+                                            AND fle_dir = 'admin/category'
+                                        ORDER BY fle_reg_dt DESC LIMIT 1 ");
+            if (!empty($off_row['fle_path'])) {
+                $latest_paths['img_url'] = $off_row['fle_path'];
+            }
+        }
+
+        if ($has_on_upload) {
+            $on_row = sql_fetch_pg(" SELECT fle_path FROM {$g5['dain_file_table']}
+                                        WHERE fle_db_tbl = 'shop_categories'
+                                            AND fle_db_idx = '{$ca_id}'
+                                            AND fle_type = 'cat_on'
+                                            AND fle_dir = 'admin/category'
+                                        ORDER BY fle_reg_dt DESC LIMIT 1 ");
+            if (!empty($on_row['fle_path'])) {
+                $latest_paths['img2_url'] = $on_row['fle_path'];
+            }
+        }
+
+        if (!empty($latest_paths)) {
+            $set_clauses = array();
+            foreach ($latest_paths as $column => $path) {
+                $escaped_path = pg_escape_string($g5['connect_pg'], $path);
+                $set_clauses[] = "{$column} = '{$escaped_path}'";
+            }
+
+            if (!empty($set_clauses)) {
+                $set_sql = implode(', ', $set_clauses);
+                $update_sql = " UPDATE {$g5['shop_categories_table']} SET {$set_sql} WHERE category_id = '{$ca_id}' ";
+                sql_query_pg($update_sql);
+            }
+        }
+    }
 }
 
 

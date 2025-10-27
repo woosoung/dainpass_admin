@@ -1036,6 +1036,11 @@ function upload_insert_file($fle_array){
         $fle_array['fle_mime_type'] = @mime_content_type($fle_array['fle_name']);
     }
 
+    $fle_array['fle_width'] = isset($fle_array['fle_width']) ? (int)$fle_array['fle_width'] : 0;
+    $fle_array['fle_height'] = isset($fle_array['fle_height']) ? (int)$fle_array['fle_height'] : 0;
+    $fle_array['fle_sort'] = isset($fle_array['fle_sort']) ? (int)$fle_array['fle_sort'] : 0;
+
+
     $sql = " INSERT INTO {$g5['dain_file_table']} (
             fle_mb_id,
             fle_db_tbl,
@@ -1062,13 +1067,13 @@ function upload_insert_file($fle_array){
             '{$upload_file['key']}',
             '{$upload_file['filename']}',
             '{$fle_array['fle_name_orig']}',
-            '{$fle_array['fle_width']}',
-            '{$fle_array['fle_height']}',
+            {$fle_array['fle_width']},
+            {$fle_array['fle_height']},
             '{$fle_array['fle_desc']}',
-            '{$fle_array['fle_sort']}',
+            {$fle_array['fle_sort']},
             '{$fle_array['fle_mime_type']}',
-            '{$upload_file['filesize']}',
-            '".G5_TIME_YMDHIS."',
+            {$upload_file['filesize']},
+            TIMESTAMP '".G5_TIME_YMDHIS."',
             '{$sql_status}'
         )";
     // echo $sql.'<br>';
