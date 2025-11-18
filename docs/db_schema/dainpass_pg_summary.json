@@ -1,0 +1,4007 @@
+[
+  {
+    "table": "public.amenities",
+    "column_count": 7,
+    "columns": [
+      {
+        "name": "amenity_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "amenity_name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "icon_url_enabled",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "icon_url_disabled",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "primary_key": [
+      "amenity_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 8
+  },
+  {
+    "table": "public.app_version",
+    "column_count": 7,
+    "columns": [
+      {
+        "name": "av_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "av_platform",
+        "type": "character varying(10) NOT NULL"
+      },
+      {
+        "name": "av_version",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "av_code",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "av_force_update",
+        "type": "boolean DEFAULT false NOT NULL"
+      },
+      {
+        "name": "av_release_note",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "av_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "primary_key": [
+      "av_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 6
+  },
+  {
+    "table": "public.appointment_shop_detail",
+    "column_count": 18,
+    "columns": [
+      {
+        "name": "shopdetail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "appointment_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "appointment_datetime",
+        "type": "timestamp without time zone NOT NULL"
+      },
+      {
+        "name": "count",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20) DEFAULT 'BOOKED'::character varying NOT NULL"
+      },
+      {
+        "name": "visitor",
+        "type": "character varying(100)"
+      },
+      {
+        "name": "requirement",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "balance_amount",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "is_settlement_target",
+        "type": "boolean DEFAULT true NOT NULL"
+      },
+      {
+        "name": "review_hidden",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "review_hidden_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "coupon_amount",
+        "type": "bigint"
+      },
+      {
+        "name": "coupon_status",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "customer_coupon_id",
+        "type": "bigint"
+      },
+      {
+        "name": "org_balance_amount",
+        "type": "bigint"
+      },
+      {
+        "name": "org_coupon_amount",
+        "type": "bigint"
+      },
+      {
+        "name": "request_cancel_datetime",
+        "type": "timestamp without time zone"
+      }
+    ],
+    "primary_key": [
+      "shopdetail_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "appointment_id"
+        ],
+        "ref_table": "public.shop_appointments",
+        "ref_columns": [
+          "appointment_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 3990
+  },
+  {
+    "table": "public.appointment_staff_detail",
+    "column_count": 3,
+    "columns": [
+      {
+        "name": "staff_detail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "appointment_id",
+        "type": "bigint NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "staff_detail_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 0
+  },
+  {
+    "table": "public.auth",
+    "column_count": 3,
+    "columns": [
+      {
+        "name": "auth_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "email",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "auth_code",
+        "type": "character varying(10) NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "auth_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 2
+  },
+  {
+    "table": "public.batch_job_execution",
+    "column_count": 10,
+    "columns": [
+      {
+        "name": "job_execution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "version",
+        "type": "bigint"
+      },
+      {
+        "name": "job_instance_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "create_time",
+        "type": "timestamp without time zone NOT NULL"
+      },
+      {
+        "name": "start_time",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "end_time",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "status",
+        "type": "character varying(10)"
+      },
+      {
+        "name": "exit_code",
+        "type": "character varying(2500)"
+      },
+      {
+        "name": "exit_message",
+        "type": "character varying(2500)"
+      },
+      {
+        "name": "last_updated",
+        "type": "timestamp without time zone"
+      }
+    ],
+    "primary_key": [
+      "job_execution_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "job_instance_id"
+        ],
+        "ref_table": "public.batch_job_instance",
+        "ref_columns": [
+          "job_instance_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 2
+  },
+  {
+    "table": "public.batch_job_execution_context",
+    "column_count": 3,
+    "columns": [
+      {
+        "name": "job_execution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "short_context",
+        "type": "character varying(2500) NOT NULL"
+      },
+      {
+        "name": "serialized_context",
+        "type": "text"
+      }
+    ],
+    "primary_key": [
+      "job_execution_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "job_execution_id"
+        ],
+        "ref_table": "public.batch_job_execution",
+        "ref_columns": [
+          "job_execution_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 2
+  },
+  {
+    "table": "public.batch_job_execution_params",
+    "column_count": 5,
+    "columns": [
+      {
+        "name": "job_execution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "parameter_name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "parameter_type",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "parameter_value",
+        "type": "character varying(2500)"
+      },
+      {
+        "name": "identifying",
+        "type": "character(1) NOT NULL"
+      }
+    ],
+    "primary_key": null,
+    "foreign_keys": [
+      {
+        "columns": [
+          "job_execution_id"
+        ],
+        "ref_table": "public.batch_job_execution",
+        "ref_columns": [
+          "job_execution_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 1
+  },
+  {
+    "table": "public.batch_job_instance",
+    "column_count": 4,
+    "columns": [
+      {
+        "name": "job_instance_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "version",
+        "type": "bigint"
+      },
+      {
+        "name": "job_name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "job_key",
+        "type": "character varying(32) NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "job_instance_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [
+      [
+        "job_name",
+        "job_key"
+      ]
+    ],
+    "row_count": 2
+  },
+  {
+    "table": "public.batch_step_execution",
+    "column_count": 19,
+    "columns": [
+      {
+        "name": "step_execution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "version",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "step_name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "job_execution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "create_time",
+        "type": "timestamp without time zone NOT NULL"
+      },
+      {
+        "name": "start_time",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "end_time",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "status",
+        "type": "character varying(10)"
+      },
+      {
+        "name": "commit_count",
+        "type": "bigint"
+      },
+      {
+        "name": "read_count",
+        "type": "bigint"
+      },
+      {
+        "name": "filter_count",
+        "type": "bigint"
+      },
+      {
+        "name": "write_count",
+        "type": "bigint"
+      },
+      {
+        "name": "read_skip_count",
+        "type": "bigint"
+      },
+      {
+        "name": "write_skip_count",
+        "type": "bigint"
+      },
+      {
+        "name": "process_skip_count",
+        "type": "bigint"
+      },
+      {
+        "name": "rollback_count",
+        "type": "bigint"
+      },
+      {
+        "name": "exit_code",
+        "type": "character varying(2500)"
+      },
+      {
+        "name": "exit_message",
+        "type": "character varying(2500)"
+      },
+      {
+        "name": "last_updated",
+        "type": "timestamp without time zone"
+      }
+    ],
+    "primary_key": [
+      "step_execution_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "job_execution_id"
+        ],
+        "ref_table": "public.batch_job_execution",
+        "ref_columns": [
+          "job_execution_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 2
+  },
+  {
+    "table": "public.batch_step_execution_context",
+    "column_count": 3,
+    "columns": [
+      {
+        "name": "step_execution_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "short_context",
+        "type": "character varying(2500) NOT NULL"
+      },
+      {
+        "name": "serialized_context",
+        "type": "text"
+      }
+    ],
+    "primary_key": [
+      "step_execution_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "step_execution_id"
+        ],
+        "ref_table": "public.batch_step_execution",
+        "ref_columns": [
+          "step_execution_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 2
+  },
+  {
+    "table": "public.business_exceptions",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "date",
+        "type": "date NOT NULL"
+      },
+      {
+        "name": "is_open",
+        "type": "boolean NOT NULL"
+      },
+      {
+        "name": "open_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "close_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "reason",
+        "type": "text"
+      }
+    ],
+    "primary_key": [
+      "shop_id",
+      "date"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 2
+  },
+  {
+    "table": "public.business_hour_slots",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "weekday",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "slot_seq",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "open_time",
+        "type": "time without time zone NOT NULL"
+      },
+      {
+        "name": "close_time",
+        "type": "time without time zone NOT NULL"
+      },
+      {
+        "name": "is_open",
+        "type": "boolean DEFAULT true"
+      }
+    ],
+    "primary_key": [
+      "shop_id",
+      "weekday",
+      "slot_seq"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 19
+  },
+  {
+    "table": "public.cart_appointment_details",
+    "column_count": 9,
+    "columns": [
+      {
+        "name": "cartdetail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "service_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "cartshopdetail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "quantity",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "price",
+        "type": "bigint"
+      },
+      {
+        "name": "memo",
+        "type": "character varying(1000)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "field",
+        "type": "character varying(255)"
+      }
+    ],
+    "primary_key": [
+      "cartdetail_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 91
+  },
+  {
+    "table": "public.cart_appointment_shop_detail",
+    "column_count": 11,
+    "columns": [
+      {
+        "name": "cartshopdetail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "appointment_datetime",
+        "type": "timestamp without time zone NOT NULL"
+      },
+      {
+        "name": "count",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "visitor",
+        "type": "character varying(100)"
+      },
+      {
+        "name": "requirement",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint"
+      },
+      {
+        "name": "guest_id",
+        "type": "character varying(36)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "cartshopdetail_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 91
+  },
+  {
+    "table": "public.connection_log",
+    "column_count": 5,
+    "columns": [
+      {
+        "name": "connect_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint"
+      },
+      {
+        "name": "connect_status",
+        "type": "character varying(10) NOT NULL"
+      },
+      {
+        "name": "connect_time",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "connect_ip",
+        "type": "character varying(25) NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "connect_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 959
+  },
+  {
+    "table": "public.customer_coupons",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "customer_coupon_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "coupon_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20) DEFAULT 'ISSUED'::character varying"
+      },
+      {
+        "name": "issued_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "used_at",
+        "type": "timestamp without time zone"
+      }
+    ],
+    "primary_key": [
+      "customer_coupon_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "coupon_id"
+        ],
+        "ref_table": "public.shop_coupons",
+        "ref_columns": [
+          "coupon_id"
+        ]
+      },
+      {
+        "columns": [
+          "customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 53
+  },
+  {
+    "table": "public.customer_fcm_tokens",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "token_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "fcm_token",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "device_info",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "token_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 1
+  },
+  {
+    "table": "public.customer_reservations",
+    "column_count": 8,
+    "columns": [
+      {
+        "name": "customer_reservation_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "reservation_date",
+        "type": "date NOT NULL"
+      },
+      {
+        "name": "reservation_time",
+        "type": "time without time zone NOT NULL"
+      },
+      {
+        "name": "appointment_id",
+        "type": "bigint"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "customer_reservation_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "appointment_id"
+        ],
+        "ref_table": "public.shop_appointments",
+        "ref_columns": [
+          "appointment_id"
+        ]
+      },
+      {
+        "columns": [
+          "customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      },
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [
+      [
+        "customer_id",
+        "reservation_date",
+        "reservation_time"
+      ]
+    ],
+    "row_count": 0
+  },
+  {
+    "table": "public.customers",
+    "column_count": 36,
+    "columns": [
+      {
+        "name": "customer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "phone",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "email",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "encrypted_pwd",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "birth_date",
+        "type": "date"
+      },
+      {
+        "name": "gender",
+        "type": "character varying(10)"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "nickname",
+        "type": "character varying(50)"
+      },
+      {
+        "name": "zipcode",
+        "type": "character varying(10)"
+      },
+      {
+        "name": "addr1",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "addr2",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "addr3",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "agreed_marketing_email",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "is_real_name_verified",
+        "type": "character(1)"
+      },
+      {
+        "name": "withdraw",
+        "type": "character(1) DEFAULT 'N'::bpchar NOT NULL"
+      },
+      {
+        "name": "agreed_push",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "apple_id",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "google_id",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "naver_id",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "kakao_id",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "identify_key",
+        "type": "character varying(100)"
+      },
+      {
+        "name": "profile_img",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "agreed_age",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "agreed_service",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "agreed_privacy",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "agreed_marketing",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "agreed_ads",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "customer_key",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "withdraw_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "agreed_consent",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "agreed_location",
+        "type": "character(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "join_survey_yn",
+        "type": "character varying(1) DEFAULT 'N'::bpchar NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "customer_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [
+      [
+        "identify_key"
+      ],
+      [
+        "nickname"
+      ],
+      [
+        "user_id"
+      ]
+    ],
+    "row_count": 186
+  },
+  {
+    "table": "public.dain_default",
+    "column_count": 60,
+    "columns": [
+      {
+        "name": "de_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "de_admin_company_owner",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_company_name",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_company_saupja_no",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_company_tel",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_company_fax",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_tongsin_no",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_company_zip",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_company_addr",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_info_name",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_info_email",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_settle_point_unit",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "de_sms_cont1",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "de_sms_cont2",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "de_sms_cont3",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "de_sms_cont4",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "de_sms_cont5",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "de_sms_use1",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use2",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use3",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use4",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use5",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_hp",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_pg_service",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_item_use_use",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_item_use_write",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_cart_keep_term",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "de_guest_cart_use",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_admin_buga_no",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "de_guest_privacy",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "de_escrow_use",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_tax_flag_use",
+        "type": "character varying(1) DEFAULT 'Y'::character varying NOT NULL"
+      },
+      {
+        "name": "de_lg_mid",
+        "type": "character varying(255) DEFAULT ''::character varying"
+      },
+      {
+        "name": "de_lg_mert_key",
+        "type": "character varying(255) DEFAULT ''::character varying"
+      },
+      {
+        "name": "de_sms_use",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "de_aligo_user_id",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "de_aligo_key",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "de_card_point",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_card_test",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use6",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use7",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use8",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use9",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_use10",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "de_sms_cont6",
+        "type": "text"
+      },
+      {
+        "name": "de_sms_cont7",
+        "type": "text"
+      },
+      {
+        "name": "de_sms_cont8",
+        "type": "text"
+      },
+      {
+        "name": "de_sms_cont9",
+        "type": "text"
+      },
+      {
+        "name": "de_sms_cont10",
+        "type": "text"
+      },
+      {
+        "name": "de_settle_min_point",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "de_settle_max_point",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "de_point_unit",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "de_point_days",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "de_sms_max_bytes",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "de_schedule_max_days",
+        "type": "integer DEFAULT 0"
+      },
+      {
+        "name": "de_schedule_days_colors",
+        "type": "text DEFAULT '#0000ff'::text"
+      },
+      {
+        "name": "de_schedule_com_counts",
+        "type": "integer DEFAULT 0"
+      },
+      {
+        "name": "de_schedule_com_colors",
+        "type": "text DEFAULT '#0000ff'::text"
+      },
+      {
+        "name": "de_review_period",
+        "type": "integer DEFAULT 7"
+      },
+      {
+        "name": "de_review_modify_period",
+        "type": "integer DEFAULT 30"
+      }
+    ],
+    "primary_key": null,
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 1
+  },
+  {
+    "table": "public.dain_file",
+    "column_count": 19,
+    "columns": [
+      {
+        "name": "fle_idx",
+        "type": "bigint DEFAULT nextval('public.dain_file_fle_idx_seq'::regclass) NOT NULL"
+      },
+      {
+        "name": "fle_mb_id",
+        "type": "character varying(20) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "fle_db_tbl",
+        "type": "character varying(20) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "fle_db_idx",
+        "type": "character varying(20) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "fle_width",
+        "type": "integer DEFAULT 0"
+      },
+      {
+        "name": "fle_height",
+        "type": "integer DEFAULT 0"
+      },
+      {
+        "name": "fle_desc",
+        "type": "text DEFAULT ''::text"
+      },
+      {
+        "name": "fle_mime_type",
+        "type": "character varying(100) DEFAULT ''::character varying"
+      },
+      {
+        "name": "fle_type",
+        "type": "character varying(50) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "fle_size",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "fle_path",
+        "type": "character varying(255) DEFAULT ''::character varying"
+      },
+      {
+        "name": "fle_name",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "fle_name_orig",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "fle_sort",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "fle_status",
+        "type": "character varying(20) DEFAULT 'ok'::character varying NOT NULL"
+      },
+      {
+        "name": "fle_reg_dt",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "fle_update_dt",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "fle_dir",
+        "type": "character varying(255) DEFAULT ''::character varying"
+      },
+      {
+        "name": "fle_main_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying"
+      }
+    ],
+    "primary_key": [
+      "fle_idx"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 110
+  },
+  {
+    "table": "public.faq",
+    "column_count": 5,
+    "columns": [
+      {
+        "name": "fa_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "fm_id",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "fa_subject",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "fa_content",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "fa_order",
+        "type": "integer DEFAULT 0 NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "fa_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 36
+  },
+  {
+    "table": "public.faq_master",
+    "column_count": 3,
+    "columns": [
+      {
+        "name": "fm_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "fm_subject",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "fm_order",
+        "type": "integer DEFAULT 0 NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "fm_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 6
+  },
+  {
+    "table": "public.financial_institution_codes",
+    "column_count": 10,
+    "columns": [
+      {
+        "name": "fin_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "category",
+        "type": "character varying(50) NOT NULL"
+      },
+      {
+        "name": "institution_name",
+        "type": "character varying(150) NOT NULL"
+      },
+      {
+        "name": "fss_code",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "code",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "code_kor",
+        "type": "character varying(100)"
+      },
+      {
+        "name": "code_eng",
+        "type": "character varying(150)"
+      },
+      {
+        "name": "is_active",
+        "type": "boolean DEFAULT true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone DEFAULT now() NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "fin_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 96
+  },
+  {
+    "table": "public.holiday_rules",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "holiday_rule_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "holiday_type",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "weekday",
+        "type": "integer"
+      },
+      {
+        "name": "week_of_month",
+        "type": "integer"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      }
+    ],
+    "primary_key": [
+      "holiday_rule_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [
+      [
+        "shop_id",
+        "holiday_type",
+        "weekday",
+        "week_of_month"
+      ]
+    ],
+    "row_count": 1
+  },
+  {
+    "table": "public.meta",
+    "column_count": 11,
+    "columns": [
+      {
+        "name": "mta_idx",
+        "type": "bigint DEFAULT nextval('public.meta_mta_idx_seq'::regclass) NOT NULL"
+      },
+      {
+        "name": "mta_com_idx",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "mta_db_tbl",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "mta_db_idx",
+        "type": "character varying(20) DEFAULT ''::character varying"
+      },
+      {
+        "name": "mta_key",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "mta_value",
+        "type": "text"
+      },
+      {
+        "name": "mta_title",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "mta_num",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "mta_status",
+        "type": "character varying(20) DEFAULT 'ok'::character varying NOT NULL"
+      },
+      {
+        "name": "mta_reg_dt",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "mta_update_dt",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "mta_idx"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 12
+  },
+  {
+    "table": "public.notification",
+    "column_count": 8,
+    "columns": [
+      {
+        "name": "notification_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "notification_type_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "content",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "is_read",
+        "type": "boolean DEFAULT false NOT NULL"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "read_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "target_url",
+        "type": "text"
+      }
+    ],
+    "primary_key": [
+      "notification_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "notification_type_id"
+        ],
+        "ref_table": "public.notification_type",
+        "ref_columns": [
+          "notification_type_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 0
+  },
+  {
+    "table": "public.notification_setting",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "notification_setting_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "notification_type_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "enabled",
+        "type": "boolean DEFAULT true NOT NULL"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "primary_key": [
+      "notification_setting_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "notification_type_id"
+        ],
+        "ref_table": "public.notification_type",
+        "ref_columns": [
+          "notification_type_id"
+        ]
+      }
+    ],
+    "unique_constraints": [
+      [
+        "user_id",
+        "notification_type_id"
+      ]
+    ],
+    "row_count": 0
+  },
+  {
+    "table": "public.notification_type",
+    "column_count": 7,
+    "columns": [
+      {
+        "name": "notification_type_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "description",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "active",
+        "type": "boolean DEFAULT true NOT NULL"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "type_code",
+        "type": "character varying(50) NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "notification_type_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [
+      [
+        "type_code"
+      ]
+    ],
+    "row_count": 5
+  },
+  {
+    "table": "public.payments",
+    "column_count": 13,
+    "columns": [
+      {
+        "name": "payment_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "appointment_id",
+        "type": "bigint"
+      },
+      {
+        "name": "amount",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "payment_method",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "paid_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "order_id",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "payment_key",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20) DEFAULT 'DONE'::character varying NOT NULL"
+      },
+      {
+        "name": "response",
+        "type": "jsonb NOT NULL"
+      },
+      {
+        "name": "transaction_key",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "personal_id",
+        "type": "bigint"
+      },
+      {
+        "name": "pay_flag",
+        "type": "character varying(20)"
+      }
+    ],
+    "primary_key": [
+      "payment_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "appointment_id"
+        ],
+        "ref_table": "public.shop_appointments",
+        "ref_columns": [
+          "appointment_id"
+        ]
+      },
+      {
+        "columns": [
+          "personal_id"
+        ],
+        "ref_table": "public.personal_payment",
+        "ref_columns": [
+          "personal_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 174
+  },
+  {
+    "table": "public.payments_cancel_detail",
+    "column_count": 4,
+    "columns": [
+      {
+        "name": "cancel_detail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_cancel_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "cancel_amount",
+        "type": "bigint NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "cancel_detail_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "shop_cancel_id"
+        ],
+        "ref_table": "public.payments_shop_cancel",
+        "ref_columns": [
+          "shop_cancel_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 0
+  },
+  {
+    "table": "public.payments_shop_cancel",
+    "column_count": 12,
+    "columns": [
+      {
+        "name": "shop_cancel_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "appointment_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "cancel_amount",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "cancel_reason",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "approval_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "approval_date",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "response",
+        "type": "jsonb"
+      },
+      {
+        "name": "transaction_key",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "request",
+        "type": "jsonb"
+      },
+      {
+        "name": "cancel_flag",
+        "type": "character varying(20)"
+      }
+    ],
+    "primary_key": [
+      "shop_cancel_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "appointment_id"
+        ],
+        "ref_table": "public.shop_appointments",
+        "ref_columns": [
+          "appointment_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 162
+  },
+  {
+    "table": "public.personal_payment",
+    "column_count": 14,
+    "columns": [
+      {
+        "name": "personal_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "name",
+        "type": "character varying(100)"
+      },
+      {
+        "name": "reason",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "shopdetail_id",
+        "type": "bigint"
+      },
+      {
+        "name": "amount",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20) DEFAULT 'CHARGE'::character varying NOT NULL"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "phone",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "email",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "is_settlement_target",
+        "type": "boolean DEFAULT true NOT NULL"
+      },
+      {
+        "name": "order_id",
+        "type": "character varying(255) DEFAULT (gen_random_uuid())::text NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "personal_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "shopdetail_id"
+        ],
+        "ref_table": "public.appointment_shop_detail",
+        "ref_columns": [
+          "shopdetail_id"
+        ]
+      }
+    ],
+    "unique_constraints": [
+      [
+        "order_id"
+      ]
+    ],
+    "row_count": 59
+  },
+  {
+    "table": "public.point_transactions",
+    "column_count": 13,
+    "columns": [
+      {
+        "name": "point_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "type",
+        "type": "character varying(10) NOT NULL"
+      },
+      {
+        "name": "amount",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "earned_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "expired_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "used_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "related_id",
+        "type": "bigint"
+      },
+      {
+        "name": "payment_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "memo",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint"
+      }
+    ],
+    "primary_key": [
+      "point_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "payment_id"
+        ],
+        "ref_table": "public.payments",
+        "ref_columns": [
+          "payment_id"
+        ]
+      },
+      {
+        "columns": [
+          "customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      },
+      {
+        "columns": [
+          "related_id"
+        ],
+        "ref_table": "public.point_transactions",
+        "ref_columns": [
+          "point_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 277
+  },
+  {
+    "table": "public.privacy_policy",
+    "column_count": 4,
+    "columns": [
+      {
+        "name": "pp_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "pp_version",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "pp_content",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "pp_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "primary_key": [
+      "pp_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 1
+  },
+  {
+    "table": "public.refresh_tokens",
+    "column_count": 4,
+    "columns": [
+      {
+        "name": "token_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "user_id",
+        "type": "character varying(512) NOT NULL"
+      },
+      {
+        "name": "refresh_token",
+        "type": "character varying(512) NOT NULL"
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp without time zone NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "token_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "user_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "user_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 20
+  },
+  {
+    "table": "public.reservation_slots",
+    "column_count": 7,
+    "columns": [
+      {
+        "name": "slot_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "slot_date",
+        "type": "date NOT NULL"
+      },
+      {
+        "name": "slot_time",
+        "type": "time without time zone NOT NULL"
+      },
+      {
+        "name": "max_capacity",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "reserved_count",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "slot_datetime",
+        "type": "timestamp without time zone GENERATED ALWAYS AS ((slot_date + slot_time)) STORED"
+      }
+    ],
+    "primary_key": [
+      "slot_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [
+      [
+        "shop_id",
+        "slot_date",
+        "slot_time"
+      ]
+    ],
+    "row_count": 6378042
+  },
+  {
+    "table": "public.service_terms",
+    "column_count": 9,
+    "columns": [
+      {
+        "name": "st_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "st_code",
+        "type": "character varying(50) NOT NULL"
+      },
+      {
+        "name": "st_title",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "st_version",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "st_content",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "st_required",
+        "type": "character(1) DEFAULT 'Y'::bpchar NOT NULL"
+      },
+      {
+        "name": "st_order",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "st_summary",
+        "type": "character varying(500)"
+      },
+      {
+        "name": "st_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "primary_key": [
+      "st_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 6
+  },
+  {
+    "table": "public.service_terms_nonmember",
+    "column_count": 4,
+    "columns": [
+      {
+        "name": "stn_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "stn_version",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "stn_content",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "stn_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "primary_key": [
+      "stn_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 1
+  },
+  {
+    "table": "public.setting",
+    "column_count": 8,
+    "columns": [
+      {
+        "name": "set_idx",
+        "type": "bigint DEFAULT nextval('public.setting_set_idx_seq'::regclass) NOT NULL"
+      },
+      {
+        "name": "set_shop_id",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "set_trm_idx",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "set_key",
+        "type": "character varying(50) DEFAULT 'tms'::character varying NOT NULL"
+      },
+      {
+        "name": "set_type",
+        "type": "character varying(50) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "set_name",
+        "type": "character varying(50)"
+      },
+      {
+        "name": "set_value",
+        "type": "text"
+      },
+      {
+        "name": "set_auto_yn",
+        "type": "character varying(1) DEFAULT 'Y'::character varying"
+      }
+    ],
+    "primary_key": [
+      "set_idx"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 22
+  },
+  {
+    "table": "public.shop",
+    "column_count": 41,
+    "columns": [
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "business_no",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "owner_name",
+        "type": "character varying(100)"
+      },
+      {
+        "name": "contact_email",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "contact_phone",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "zipcode",
+        "type": "character(6)"
+      },
+      {
+        "name": "addr1",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "addr2",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "addr3",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "url",
+        "type": "character varying(500)"
+      },
+      {
+        "name": "max_capacity",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "reservelink_yn",
+        "type": "character(1) DEFAULT 'N'::bpchar NOT NULL"
+      },
+      {
+        "name": "reservelink",
+        "type": "character varying(1000)"
+      },
+      {
+        "name": "reserve_tel",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "shop_description",
+        "type": "text"
+      },
+      {
+        "name": "bank_account",
+        "type": "character varying(255) DEFAULT ''::character varying NOT NULL"
+      },
+      {
+        "name": "bank_name",
+        "type": "character varying(50) DEFAULT ''::character varying"
+      },
+      {
+        "name": "bank_holder",
+        "type": "character varying(100) DEFAULT ''::character varying"
+      },
+      {
+        "name": "settlement_type",
+        "type": "character varying(20) DEFAULT 'manual'::character varying"
+      },
+      {
+        "name": "settlement_cycle",
+        "type": "character varying(20) DEFAULT 'monthly'::character varying"
+      },
+      {
+        "name": "settlement_day",
+        "type": "integer DEFAULT 25"
+      },
+      {
+        "name": "tax_type",
+        "type": "character varying(20) DEFAULT 'with_vat'::character varying"
+      },
+      {
+        "name": "settlement_memo",
+        "type": "text"
+      },
+      {
+        "name": "is_active",
+        "type": "character varying(1) DEFAULT 'Y'::character varying"
+      },
+      {
+        "name": "shop_name",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "cancel_policy",
+        "type": "text"
+      },
+      {
+        "name": "names",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "branch",
+        "type": "character varying(50) DEFAULT '본사'::character varying NOT NULL"
+      },
+      {
+        "name": "shop_parent_id",
+        "type": "bigint DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "shop_names",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "notice",
+        "type": "text"
+      },
+      {
+        "name": "mng_menus",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "cancellation_period",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "blog_url",
+        "type": "character varying(500)"
+      },
+      {
+        "name": "instagram_url",
+        "type": "character varying(500)"
+      },
+      {
+        "name": "kakaotalk_url",
+        "type": "character varying(500)"
+      },
+      {
+        "name": "amenities_id_list",
+        "type": "character varying(255)"
+      }
+    ],
+    "primary_key": [
+      "shop_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 602
+  },
+  {
+    "table": "public.shop_amenities",
+    "column_count": 3,
+    "columns": [
+      {
+        "name": "shop_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "amenity_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "available_yn",
+        "type": "character(1) DEFAULT 'N'::bpchar NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "shop_id",
+      "amenity_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 4800
+  },
+  {
+    "table": "public.shop_appointment_details",
+    "column_count": 17,
+    "columns": [
+      {
+        "name": "detail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "service_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shopdetail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "quantity",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "price",
+        "type": "bigint"
+      },
+      {
+        "name": "memo",
+        "type": "character varying(1000)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "is_discount_active",
+        "type": "boolean DEFAULT false NOT NULL"
+      },
+      {
+        "name": "discount_type",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "discount_value",
+        "type": "integer"
+      },
+      {
+        "name": "org_quantity",
+        "type": "integer"
+      },
+      {
+        "name": "org_net_amount",
+        "type": "bigint"
+      },
+      {
+        "name": "net_amount",
+        "type": "bigint"
+      },
+      {
+        "name": "discount_price",
+        "type": "bigint"
+      },
+      {
+        "name": "discount_title",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "discount_id",
+        "type": "bigint"
+      }
+    ],
+    "primary_key": [
+      "detail_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "service_id"
+        ],
+        "ref_table": "public.shop_services",
+        "ref_columns": [
+          "service_id"
+        ]
+      },
+      {
+        "columns": [
+          "shopdetail_id"
+        ],
+        "ref_table": "public.appointment_shop_detail",
+        "ref_columns": [
+          "shopdetail_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 4006
+  },
+  {
+    "table": "public.shop_appointments",
+    "column_count": 11,
+    "columns": [
+      {
+        "name": "appointment_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "guest_id",
+        "type": "character varying(36)"
+      },
+      {
+        "name": "appointment_no",
+        "type": "bigint"
+      },
+      {
+        "name": "is_deleted",
+        "type": "character(1) DEFAULT 'N'::bpchar NOT NULL"
+      },
+      {
+        "name": "deleted_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "order_id",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "origin",
+        "type": "character varying(20)"
+      }
+    ],
+    "primary_key": [
+      "appointment_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 295
+  },
+  {
+    "table": "public.shop_categories",
+    "column_count": 11,
+    "columns": [
+      {
+        "name": "category_id",
+        "type": "character varying(10) NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "img_url",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "use_yn",
+        "type": "character varying(1) DEFAULT 'Y'::character varying NOT NULL"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer DEFAULT 0"
+      },
+      {
+        "name": "img2_url",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "cert_use_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "adult_use_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "category_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 111
+  },
+  {
+    "table": "public.shop_category_relation",
+    "column_count": 3,
+    "columns": [
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "category_id",
+        "type": "character varying(10) NOT NULL"
+      },
+      {
+        "name": "sort",
+        "type": "integer DEFAULT 0"
+      }
+    ],
+    "primary_key": [
+      "shop_id",
+      "category_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "category_id"
+        ],
+        "ref_table": "public.shop_categories",
+        "ref_columns": [
+          "category_id"
+        ]
+      },
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 602
+  },
+  {
+    "table": "public.shop_coupons",
+    "column_count": 17,
+    "columns": [
+      {
+        "name": "coupon_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "coupon_code",
+        "type": "character varying(50) NOT NULL"
+      },
+      {
+        "name": "coupon_name",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "discount_type",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "discount_value",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "valid_from",
+        "type": "timestamp without time zone NOT NULL"
+      },
+      {
+        "name": "valid_until",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "issued_limit",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "total_limit",
+        "type": "integer"
+      },
+      {
+        "name": "total_issued",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "is_active",
+        "type": "boolean DEFAULT true NOT NULL"
+      },
+      {
+        "name": "description",
+        "type": "character varying(1000)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "min_purchase_amt",
+        "type": "integer"
+      },
+      {
+        "name": "max_discount_amt",
+        "type": "integer"
+      }
+    ],
+    "primary_key": [
+      "coupon_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [
+      [
+        "coupon_code"
+      ]
+    ],
+    "row_count": 45
+  },
+  {
+    "table": "public.shop_discounts",
+    "column_count": 12,
+    "columns": [
+      {
+        "name": "discount_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "service_id",
+        "type": "bigint"
+      },
+      {
+        "name": "discount_scope",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "discount_type",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "discount_value",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "start_datetime",
+        "type": "timestamp without time zone NOT NULL"
+      },
+      {
+        "name": "end_datetime",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "is_active",
+        "type": "boolean DEFAULT true"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "discount_title",
+        "type": "character varying(255) NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "discount_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "service_id"
+        ],
+        "ref_table": "public.shop_services",
+        "ref_columns": [
+          "service_id"
+        ]
+      },
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 39
+  },
+  {
+    "table": "public.shop_image",
+    "column_count": 7,
+    "columns": [
+      {
+        "name": "image_id",
+        "type": "bigint DEFAULT nextval('public.shop_image_id_seq'::regclass) NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "image_url",
+        "type": "character varying(1000) NOT NULL"
+      },
+      {
+        "name": "sort_order",
+        "type": "integer DEFAULT 0"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "main_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "image_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 85
+  },
+  {
+    "table": "public.shop_qna",
+    "column_count": 12,
+    "columns": [
+      {
+        "name": "qna_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint"
+      },
+      {
+        "name": "qna_subject",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "qna_content",
+        "type": "text"
+      },
+      {
+        "name": "qna_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "qna_ip",
+        "type": "character varying(25)"
+      },
+      {
+        "name": "qna_secret_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "qna_updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "qna_parent_id",
+        "type": "bigint"
+      },
+      {
+        "name": "reply_mb_id",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "qna_status",
+        "type": "character varying(20) DEFAULT 'pending'::character varying NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "qna_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      },
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 112
+  },
+  {
+    "table": "public.shop_review",
+    "column_count": 11,
+    "columns": [
+      {
+        "name": "review_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint"
+      },
+      {
+        "name": "sr_score",
+        "type": "smallint NOT NULL"
+      },
+      {
+        "name": "sr_content",
+        "type": "text"
+      },
+      {
+        "name": "sr_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "sr_ip",
+        "type": "character varying(25)"
+      },
+      {
+        "name": "shopdetail_id",
+        "type": "bigint"
+      },
+      {
+        "name": "sr_updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "sr_deleted",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "sr_deleted_at",
+        "type": "timestamp without time zone"
+      }
+    ],
+    "primary_key": [
+      "review_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      },
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 18
+  },
+  {
+    "table": "public.shop_services",
+    "column_count": 15,
+    "columns": [
+      {
+        "name": "service_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "service_name",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "price",
+        "type": "bigint"
+      },
+      {
+        "name": "point",
+        "type": "integer"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "image_url",
+        "type": "character varying(500)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "link_yn",
+        "type": "character varying(1) DEFAULT 'N'::bpchar"
+      },
+      {
+        "name": "option_yn",
+        "type": "character varying(1)"
+      },
+      {
+        "name": "main_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "signature_yn",
+        "type": "character varying(1) DEFAULT 'N'::character varying NOT NULL"
+      },
+      {
+        "name": "service_time",
+        "type": "integer DEFAULT 0 NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "service_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 3273
+  },
+  {
+    "table": "public.shop_settlement_log",
+    "column_count": 7,
+    "columns": [
+      {
+        "name": "ssl_id",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "integer"
+      },
+      {
+        "name": "settlement_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20) DEFAULT 'done'::character varying"
+      },
+      {
+        "name": "memo",
+        "type": "text"
+      },
+      {
+        "name": "settlement_start_at",
+        "type": "timestamp without time zone NOT NULL"
+      },
+      {
+        "name": "settlement_end_at",
+        "type": "timestamp without time zone NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "ssl_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 0
+  },
+  {
+    "table": "public.shop_settlements",
+    "column_count": 14,
+    "columns": [
+      {
+        "name": "settlement_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shopdetail_id",
+        "type": "bigint"
+      },
+      {
+        "name": "payment_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "total_payment_amount",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "total_point_used",
+        "type": "bigint"
+      },
+      {
+        "name": "cancel_amount",
+        "type": "bigint DEFAULT 0"
+      },
+      {
+        "name": "net_settlement_amount",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "settlement_status",
+        "type": "character varying(20) DEFAULT 'PENDING'::character varying"
+      },
+      {
+        "name": "settled_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT now() NOT NULL"
+      },
+      {
+        "name": "pay_flag",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "personal_id",
+        "type": "bigint"
+      }
+    ],
+    "primary_key": [
+      "settlement_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "shopdetail_id"
+        ],
+        "ref_table": "public.appointment_shop_detail",
+        "ref_columns": [
+          "shopdetail_id"
+        ]
+      },
+      {
+        "columns": [
+          "payment_id"
+        ],
+        "ref_table": "public.payments",
+        "ref_columns": [
+          "payment_id"
+        ]
+      },
+      {
+        "columns": [
+          "shop_id"
+        ],
+        "ref_table": "public.shop",
+        "ref_columns": [
+          "shop_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 127
+  },
+  {
+    "table": "public.staff",
+    "column_count": 9,
+    "columns": [
+      {
+        "name": "steps_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "store_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "name",
+        "type": "character varying(100) NOT NULL"
+      },
+      {
+        "name": "phone",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "specialty",
+        "type": "character varying(100)"
+      },
+      {
+        "name": "max_customers_per_slot",
+        "type": "integer DEFAULT 1 NOT NULL"
+      },
+      {
+        "name": "title",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "steps_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 500
+  },
+  {
+    "table": "public.staff_payments",
+    "column_count": 5,
+    "columns": [
+      {
+        "name": "payment_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "staff_detail_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "payment_method",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "paid_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "payment_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 0
+  },
+  {
+    "table": "public.staff_schedules",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "schedule_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "staff_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "work_date",
+        "type": "date NOT NULL"
+      },
+      {
+        "name": "start_time",
+        "type": "time without time zone NOT NULL"
+      },
+      {
+        "name": "end_time",
+        "type": "time without time zone NOT NULL"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "schedule_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 7620
+  },
+  {
+    "table": "public.staff_services",
+    "column_count": 12,
+    "columns": [
+      {
+        "name": "staff_service_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "staff_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "staff_service_name",
+        "type": "character varying(255)"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "point",
+        "type": "integer"
+      },
+      {
+        "name": "status",
+        "type": "character varying(20)"
+      },
+      {
+        "name": "image_url",
+        "type": "character varying(500)"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "link_yn",
+        "type": "character(1)"
+      },
+      {
+        "name": "option_yn",
+        "type": "character(1)"
+      }
+    ],
+    "primary_key": [
+      "staff_service_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 0
+  },
+  {
+    "table": "public.staff_slots",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "slot_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "store_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "slot_date",
+        "type": "date NOT NULL"
+      },
+      {
+        "name": "slot_time",
+        "type": "time without time zone NOT NULL"
+      },
+      {
+        "name": "max_capacity",
+        "type": "integer NOT NULL"
+      },
+      {
+        "name": "reserved_count",
+        "type": "integer DEFAULT 1 NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "slot_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 0
+  },
+  {
+    "table": "public.survey_answers",
+    "column_count": 7,
+    "columns": [
+      {
+        "name": "sa_answer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sa_participant_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sa_question_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sa_answer_text",
+        "type": "text"
+      },
+      {
+        "name": "sa_selected_option_id",
+        "type": "bigint"
+      },
+      {
+        "name": "sa_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "sa_updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "sa_answer_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "sa_participant_id"
+        ],
+        "ref_table": "public.survey_participants",
+        "ref_columns": [
+          "sp_participant_id"
+        ]
+      },
+      {
+        "columns": [
+          "sa_question_id"
+        ],
+        "ref_table": "public.survey_questions",
+        "ref_columns": [
+          "sq_question_id"
+        ]
+      },
+      {
+        "columns": [
+          "sa_selected_option_id"
+        ],
+        "ref_table": "public.survey_question_options",
+        "ref_columns": [
+          "sqo_option_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 10
+  },
+  {
+    "table": "public.survey_participants",
+    "column_count": 10,
+    "columns": [
+      {
+        "name": "sp_participant_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sp_survey_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sp_customer_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sp_is_mandatory",
+        "type": "boolean DEFAULT false NOT NULL"
+      },
+      {
+        "name": "sp_status",
+        "type": "character varying(20) DEFAULT 'pending'::character varying NOT NULL"
+      },
+      {
+        "name": "sp_is_point_awarded",
+        "type": "boolean DEFAULT false NOT NULL"
+      },
+      {
+        "name": "sp_point_awarded_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "sp_completed_at",
+        "type": "timestamp without time zone"
+      },
+      {
+        "name": "sp_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "sp_updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "sp_participant_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "sp_customer_id"
+        ],
+        "ref_table": "public.customers",
+        "ref_columns": [
+          "customer_id"
+        ]
+      },
+      {
+        "columns": [
+          "sp_survey_id"
+        ],
+        "ref_table": "public.survey_surveys",
+        "ref_columns": [
+          "ss_survey_id"
+        ]
+      }
+    ],
+    "unique_constraints": [
+      [
+        "sp_survey_id",
+        "sp_customer_id"
+      ]
+    ],
+    "row_count": 1
+  },
+  {
+    "table": "public.survey_question_options",
+    "column_count": 6,
+    "columns": [
+      {
+        "name": "sqo_option_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sqo_question_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sqo_option_text",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "sqo_display_order",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "sqo_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "sqo_updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "sqo_option_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "sqo_question_id"
+        ],
+        "ref_table": "public.survey_questions",
+        "ref_columns": [
+          "sq_question_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 22
+  },
+  {
+    "table": "public.survey_questions",
+    "column_count": 8,
+    "columns": [
+      {
+        "name": "sq_question_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sq_survey_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "sq_question_text",
+        "type": "text NOT NULL"
+      },
+      {
+        "name": "sq_question_type",
+        "type": "character varying(20) NOT NULL"
+      },
+      {
+        "name": "sq_is_required",
+        "type": "boolean DEFAULT false NOT NULL"
+      },
+      {
+        "name": "sq_question_order",
+        "type": "integer DEFAULT 0 NOT NULL"
+      },
+      {
+        "name": "sq_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "sq_updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "sq_question_id"
+    ],
+    "foreign_keys": [
+      {
+        "columns": [
+          "sq_survey_id"
+        ],
+        "ref_table": "public.survey_surveys",
+        "ref_columns": [
+          "ss_survey_id"
+        ]
+      }
+    ],
+    "unique_constraints": [],
+    "row_count": 7
+  },
+  {
+    "table": "public.survey_surveys",
+    "column_count": 9,
+    "columns": [
+      {
+        "name": "ss_survey_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "ss_title",
+        "type": "character varying(255) NOT NULL"
+      },
+      {
+        "name": "ss_description",
+        "type": "text"
+      },
+      {
+        "name": "ss_type",
+        "type": "character varying(50) NOT NULL"
+      },
+      {
+        "name": "ss_start_date",
+        "type": "date"
+      },
+      {
+        "name": "ss_end_date",
+        "type": "date"
+      },
+      {
+        "name": "ss_status",
+        "type": "character varying(20) DEFAULT 'active'::character varying NOT NULL"
+      },
+      {
+        "name": "ss_created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      },
+      {
+        "name": "ss_updated_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL"
+      }
+    ],
+    "primary_key": [
+      "ss_survey_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 2
+  },
+  {
+    "table": "public.test_item",
+    "column_count": 4,
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "item_name",
+        "type": "character varying(10)"
+      },
+      {
+        "name": "price",
+        "type": "integer"
+      },
+      {
+        "name": "quantity",
+        "type": "integer"
+      }
+    ],
+    "primary_key": [
+      "id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 6
+  },
+  {
+    "table": "public.wish_list",
+    "column_count": 5,
+    "columns": [
+      {
+        "name": "wish_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "customer_id",
+        "type": "bigint"
+      },
+      {
+        "name": "shop_id",
+        "type": "bigint NOT NULL"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp without time zone DEFAULT CURRENT_TIMESTAMP"
+      }
+    ],
+    "primary_key": [
+      "wish_id"
+    ],
+    "foreign_keys": [],
+    "unique_constraints": [],
+    "row_count": 33
+  }
+]

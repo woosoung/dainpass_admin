@@ -15,7 +15,7 @@ $pg_anchor = '<ul class="anchor">
     <li><a href="#anc_cf_default">기본환경설정</a></li>
     <li><a href="#anc_cf_amazon">Amazon</a></li>
     <li><a href="#anc_cf_exapikeys">외부 API Keys</a></li>
-    <li><a href="#anc_cf_aboutshop">가맹점관련</a></li>
+    <li><a href="#anc_cf_branchshop">가맹점관련</a></li>
 </ul>';
 
 $g5['title'] = '관리환경설정';
@@ -239,7 +239,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         </table>
     </div><!-- // .tbl_frm01 -->
 </section><!-- // #anc_cf_exapikeys -->
-<section id="anc_cf_status">
+<section id="anc_cf_branchshop">
     <h2 class="h2_frm">가맹점관련설정</h2>
     <?php echo $pg_anchor ?>
     <div class="tbl_frm01 tbl_wrap">
@@ -255,13 +255,27 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         <tr>
             <th>가맹점 선택관리메뉴</th>
             <td colspan="3" class="tms_help">
-                <?php echo tms_help("예)920400=서비스관리,920450=직원관리,920500=직원별서비스,920550=직원근무시간,920600=운영시간",1,'#f9fac6','#333333');
+                <?php echo tms_help("예)930200=서비스/메뉴관리,930300=직원관리,930400=직원별서비스,930500=직원별근무시간,930600=룸/테이블/좌석관리,930700=운영시간",1,'#f9fac6','#333333');
                 ?>
                 <div class="tms_hint flex gap-6">
                     <input type="text" name="set_shop_management_menu" class="w-[700px]" value="<?=${'set_'.$set_type}['set_shop_management_menu']??''?>">
                     <div class="tms_hbox">
                         <div class="tms_hcon">
                             <?=${'set_'.$set_type}['set_shop_management_menu_str']??''?>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">가맹점관리자필수메뉴권한</th>
+            <td colspan="3" class="tms_help">
+                <?php echo tms_help('가맹점관리자의 필수메뉴 접근권한입니다.',1,'#f9fac6','#333333') ?>
+                <div class="tms_hint flex gap-6">
+                    <textarea name="set_shopmanager_basic_menu" id="set_shopmanager_basic_menu" class="w-[300px] min-h-[400px]"><?php echo get_text(${'set_'.$set_type}['set_shopmanager_basic_menu']??''); ?></textarea>
+                    <div class="tms_hbox">
+                        <div class="tms_hcon">
+                            <?=${'set_'.$set_type}['set_shopmanager_basic_menu_str']??''?>
                         </div>
                     </div>
                 </div>

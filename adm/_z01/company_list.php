@@ -3,6 +3,7 @@ $sub_menu = "920200";
 include_once('./_common.php');
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 include_once(G5_ZSQL_PATH.'/term_role.php');
+include_once(G5_ZSQL_PATH.'/shop_category.php');
 
 @auth_check($auth[$sub_menu],"r");
 
@@ -76,11 +77,9 @@ $result = sql_query_pg($sql);
 // 부하율 고려한 전체갯수 쿼리에서는 조건문 불가
 // $sql = " SELECT n_live_tup AS total
 //         FROM pg_stat_user_tables
-//         WHERE relname = '{$g5['shop_table']}' 
+//         WHERE relname = '{$g5['shop_table']}'
 // ";
-$sql = " SELECT COUNT(*) AS total {$sql_common}
-            {$sql_search}
-            LIMIT {$rows} OFFSET {$from_record} ";
+$sql = " SELECT COUNT(*) AS total {$sql_common} {$sql_search} ";
 // echo $sql;exit;
 $count = sql_fetch_pg($sql);
 $total_count = isset($count['total']) ? $count['total'] : 0;
@@ -91,7 +90,18 @@ $row = sql_fetch_pg($sql);
 $pending_count = $row['cnt'];
 
 $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
-$colspan = 11;
+$colspan = 12;
+
+// 가맹점이미지 썸네일 크기
+$comi_wd = 110;
+$comi_ht = 80;
+
+$status_arr = array(
+    'active' => '정상',
+    'pending' => '대기',
+    'closed' => '폐업',
+    'shutdown' => '금지'
+);
 
 $g5['title'] = '가맹점관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
@@ -106,9 +116,8 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 <label for="sfl" class="sound_only">검색대상</label>
 <select name="ser_com_type" class="cp_field" title="업종선택">
 	<option value="">전체업종</option>
-	<?=$g5['set_com_type_options_value']?>
 </select>
-<script>$('select[name=ser_com_type]').val('<?=$_GET['ser_com_type']?>').attr('selected','selected');</script>
+
 <select name="sfl" id="sfl">
 	<option value="name"<?php echo get_selected($_GET['sfl'], "name"); ?>>업체명</option>
     <option value="mb_name"<?php echo get_selected($_GET['sfl'], "mb_name"); ?>>담당자</option>
@@ -122,9 +131,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 <input type="submit" class="btn_submit" value="검색">
 </form>
 
-<div class="local_desc01 local_desc">
+<!-- <div class="local_desc01 local_desc">
     <p>업체측 담당자를 관리하시려면 업체담당자 항목의 <i class="fa fa-edit"></i> 편집아이콘을 클릭하세요. 담당자는 여러명일 수 있고 이직을 하는 경우 다른 업체에 소속될 수도 있습니다. </p>
-</div>
+</div> -->
 <form name="form01" id="form01" action="./company_list_update.php" onsubmit="return form01_submit(this);" method="post">
     <input type="hidden" name="sst" value="<?php echo $sst ?>">
     <input type="hidden" name="sod" value="<?php echo $sod ?>">
@@ -143,13 +152,14 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
                     <th scope="col" class="td_left">번호</th>
+                    <th scope="col" class="td_center !w-[<?=$comi_wd?>px]">이미지</th>
                     <th scope="col" class="td_left">업종</th>
                     <th scope="col" class="td_left">업체명</th>
                     <th scope="col" class="td_left">가맹점명</th>
                     <th scope="col">대표자명</th>
-                    <th scope="col">이메일</th>
-                    <th scope="col">업체담당자</th>
-                    <th scope="col" style="width:120px;">연락처</th>
+                    <th scope="col" class="w-[320px]">이메일</th>
+                    <th scope="col" class="w-[320px]">업체담당자</th>
+                    <th scope="col" class="w-[130px]">연락처</th>
                     <th scope="col">상태</th>
                     <th scope="col" id="mb_list_mng">수정</th>
                 </tr>
@@ -158,6 +168,50 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                 <?php
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $s_mod = '<a href="./company_form.php?'.$qstr.'&amp;w=u&amp;shop_id='.$row['shop_id'].'">수정</a>';
+
+                    // 해당 가맹점의 이미지중에 fle_sort순으로 1개만 가져오는 쿼리
+                    $fsql = " SELECT fle_path FROM {$g5['dain_file_table']}
+                                WHERE fle_db_tbl = 'shop'
+                                    AND fle_type = 'comi'
+                                    AND fle_dir = 'shop/shop_img'
+                                    AND fle_db_idx = '{$row['shop_id']}'
+                                ORDER BY fle_sort ASC, fle_reg_dt DESC LIMIT 1 ";
+                    $fres = sql_fetch_pg($fsql);
+                    // 이미지파일이 존재하면 썸네일 경로 생성
+                    $row['thumb_tag'] = '';
+                    if(!empty($fres['fle_path'])){
+                        $row['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$comi_wd.':'.$comi_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$fres['fle_path'];
+                        $row['thumb_tag'] = '<img src="'.$row['thumb_url'].'" alt="'.get_text($row['name']).'" width="'.$comi_wd.'" class="inline-block" height="'.$comi_ht.'" style="border:1px solid #ddd;width:'.$comi_wd.'px;height:'.$comi_ht.'px;">';
+                    }
+                    else {
+                        $row['thumb_tag'] = '<img src="'.G5_Z_URL.'/img/no_thumb.png" alt="no image" width="'.$comi_wd.'" class="inline-block" height="'.$comi_ht.'" style="border:1px solid #ddd;width:'.$comi_wd.'px;height:'.$comi_ht.'px;">';
+                    }
+
+                    // 해당 가맹점의 업종정보
+                    $csql = " SELECT * FROM {$g5['shop_category_relation_table']} WHERE shop_id = '".$row['shop_id']."' ORDER BY sort, category_id ";
+                    $cres = sql_query_pg($csql);
+                    $castrs = array();
+                    if ($cres && is_object($cres) && isset($cres->result)) {
+                        for($j=0;$row2=sql_fetch_array_pg($cres->result);$j++) {
+                            array_push($castrs, $cats[substr($row2['category_id'], 0, 2)]['mid'][$row2['category_id']]);
+                        }
+                    }
+                    
+
+                    // 가맹점관리자관련
+                    $m_sql = " SELECT mb_name, mb_id, mb_hp FROM {$g5['member_table']} WHERE mb_level IN (4,5) AND mb_1 = '".$row['shop_id']."' AND mb_2 = 'Y' ";
+                    $m_res = sql_query($m_sql,1);
+                    $shop_managers_text = '';
+                    for($k=0; $m_row=sql_fetch_array($m_res); $k++){
+                        // print_r2($m_row);
+                        $mbt = get_gmeta('member',$m_row['mb_id']);
+                        // print_r2($mbt);
+                        if(count($mbt)){
+                            $m_row = array_merge($m_row,$mbt);
+                        }
+                        // print_r2($m_row);
+                        $shop_managers_text .= '<p>'.$m_row['mb_name'].($rank_arr[$m_row['mb_rank']]??'').' ('.$m_row['mb_id'].') ['.formatPhoneNumber($m_row['mb_hp']).']</p>';
+                    }
 
 
                     // default company class name
@@ -175,17 +229,28 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                         <input type="checkbox" name="chk[]" value="<?=$i?>" id="chk_<?=$i?>">
                     </td>
                     <td class="td_com_idx td_left font_size_8"><?=$row['shop_id']?></td><!-- 번호 -->
-                    <td class="td_shop_categories td_left font_size_8"></td><!-- 업종 -->
+                    <td class="td_thumb font_size_8"><?=$row['thumb_tag']?></td><!-- 가맹점이미지 -->
+                    <td class="td_shop_categories td_left font_size_8">
+                        <?php if(!empty($castrs)){
+                            foreach($castrs as $k3 => $v3){ 
+                        ?>
+                        <span class="block"><?=get_text($v3)?></span>
+                        <?php 
+                            } 
+                        } ?>
+                    </td><!-- 업종 -->
                     <td class="td_com_name td_left"><!-- 업체명 -->
                         <b class="<?=$row['default_com_class']?>"><?=get_text($row['name'])?></b>
                         <a style="display:none;" href="javascript:company_popup('./company_order_list.popup.php?shop_id=<?=$row['shop_id']?>','<?=$row['shop_id']?>')" style="float:right;"><i class="fa fa-window-restore"></i></a>
                     </td>
                     <td class="td_shop_name td_left"><?=get_text($row['shop_name'])?></td>
                     <td class="td_owner_name"><?=get_text($row['owner_name'])?></td><!-- 대표자명 -->
-                    <td class="td_contact_email font_size_8"><?=cut_str($row['contact_email'],30,'...')?></td><!-- 이메일 -->
-                    <td class="td_shop_manager td_left"></td><!-- 업체담당자 -->
-                    <td class="td_contact_phone"><span class="font_size_8"><?=formatPhoneNumber($row['contact_phone'])?></span></td><!-- 대표전화 -->
-                    <td headers="list_com_status" class="td_status"><?=$row['status']?></td><!-- 상태 -->
+                    <td class="td_contact_email"><?=cut_str($row['contact_email'],30,'...')?></td><!-- 이메일 -->
+                    <td class="td_shop_manager td_left">
+                        <?=$shop_managers_text?>
+                    </td><!-- 업체담당자 -->
+                    <td class="td_contact_phone"><span class=""><?=formatPhoneNumber($row['contact_phone'])?></span></td><!-- 대표전화 -->
+                    <td headers="list_com_status" class="td_status"><?=$status_arr[$row['status']]?></td><!-- 상태 -->
                     <td class="td_mngsmall"><?=$s_mod?></td>
                 </tr>
                 <?php

@@ -1,0 +1,61 @@
+# ===============================
+# Tomas-specific Cursor ASK mode rules
+# ===============================
+
+# 1) Base instructions directory (local)
+# Even in a Remote-SSH environment, always refer to the documents in the path below first.
+- The primary guideline directory is located at ./docs.
+- Always load and use the content of this directory as baseline context.
+- Before generating any code or documentation, ensure you fully comprehend and apply all instructions specified in ./docs/platform_development.md.
+- Most important subdirectories:
+    - /boot_spring_api
+    - /boot_spring_sourcecode
+    - /cms_structure
+    - /db_schema
+    - /firebase_web
+    - /naver_sens
+
+# 2) Maintain coding style
+- Always match the existing coding style of the project: PHP, HTML, JS, TailwindCSS, CSS.
+- For Gnuboard/Youngcart CMS-based work:
+    - Maintain existing include patterns.
+    - Follow the existing skin/theme structure.
+    - Use the same class naming, markup structure, and JS event binding patterns.
+- Do not rewrite the overall structure unless specifically instructed.
+
+# 3) Feature Development Rules
+- For all new features:
+    - ./docs/boot_spring_api: The internal related files contain API rules and specifications, along with URL paths.
+    - ./docs/boot_spring_sourcecode: Based on the internal related files, you can reference the API source code logic for admin development.
+    - ./docs/cms_structure: Based on internal related files, you can understand and utilize the Youngcart/Gnuboard-based CMS structure. If additional customization is required, you can refer to this. By thoroughly analyzing Youngcart/Gnuboard's basic hooking structure, most additional development files are placed within the adm/_z01/ directory at the remote server project location. Detailed hooking information can be found by examining the extension files located within the extend/ directory of the remote server project you are working on. Reviewing the source code of these files will reveal hooking locations, various additional environment variables and constants, as well as additional function definitions.
+    - ./docs/db_schema: Based on the internal related files, you can reflect database rules.
+    - ./docs/firebase_web: All source code files located in the path ./docs/firebase_web are used as reference for implementing push notifications within the admin site based on Youngcart/Gnuboard. 
+    - ./docs/naver_sens: Check the Naver SENS (text and notification talk) API rules and specifications, as well as the URL path, in the related files within.
+
+# 4) Remote-SSH Development Rules
+- When modifying server-side code:
+    - Do not modify unrelated files.
+    - Follow original indentation and formatting rules.
+    - Preserve all Gnuboard/Youngcart core functions unless explicitly altering.
+
+# 5) Database-Related Development Rules
+- For SQL-based logic:
+    - Always reference the files in ./docs/db_schema to reflect the analyzed database schema.
+    - Consider the PostgreSQL 14 database version when generating queries.
+    - Use prepared statements if the project pattern supports this.
+    - Ensure that insert/update logic includes validation procedures.
+
+# 6) Output Code Rules
+- When generating code:
+  - Output full working code blocks, not fragments.
+  - Include necessary imports, includes, and paths.
+  - Maintain mobile/PC compatibility if applicable.
+
+# 7) Security/Safety Rules
+- Validate all user input.
+- Escape and sanitize output according to Gnuboard conventions.
+- Do not expose sensitive information.
+
+# 8) Other
+- If requirements are ambiguous, ask for clarification before coding.
+- Prioritize maintainability and consistent structure.

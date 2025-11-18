@@ -103,10 +103,10 @@ tailwind.config = {
         @apply inline-block border py-1 px-2 rounded-md bg-gray-500 text-white cursor-pointer hover:bg-gray-600;
     }
     /* 가맹점관리 가맹점이미지리스트 */
-    .branch_imgs {
-        @apply [&>li]:border [&>li]:border-gray-200 [&>li]:p-2 [&>li]:relative [&>li]:pl-[140px];
+    #branch_imgs {
+        @apply [&>li]:border [&>li]:border-gray-200 [&>li]:p-2 [&>li]:relative [&>li]:pl-[140px] [&>li]:bg-white;
     }
-    .branch_imgs > li > .sp_thumb {
+    #branch_imgs > li > .sp_thumb {
         @apply absolute left-2 top-2 border border-gray-300;
     }
 }

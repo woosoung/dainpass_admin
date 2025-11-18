@@ -88,6 +88,14 @@
 #gnb .on .btn_op.menu-930{background:url(../img/menu-b.png) 50% 50% no-repeat #fff}
 #gnb .gnb_li .btn_op.menu-940{background:url(../img/menu-c-1.png) 50% 50% no-repeat #444 }
 #gnb .on .btn_op.menu-940{background:url(../img/menu-c.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-950{background:url(../img/menu-d-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-950{background:url(../img/menu-d.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-960{background:url(../img/menu-e-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-960{background:url(../img/menu-e.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-970{background:url(../img/menu-f-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-970{background:url(../img/menu-f.png) 50% 50% no-repeat #fff}
+#gnb .gnb_li .btn_op.menu-980{background:url(../img/menu-g-1.png) 50% 50% no-repeat #444 }
+#gnb .on .btn_op.menu-980{background:url(../img/menu-g.png) 50% 50% no-repeat #fff}
 
 /* 각 버튼 스타일 */
 #wr_cont input[type="submit"],

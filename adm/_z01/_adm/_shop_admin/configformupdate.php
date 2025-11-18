@@ -139,8 +139,13 @@ $de_sms_max_bytes = trim($de_sms_max_bytes) === '' ? 0 : (int)$de_sms_max_bytes;
 $de_settle_min_point = trim($de_settle_min_point) === '' ? 0 : (int)$de_settle_min_point;
 $de_settle_max_point = trim($de_settle_max_point) === '' ? 0  : (int)$de_settle_max_point;
 $de_settle_point_unit = trim($de_settle_point_unit) === '' ? 0 : (int)$de_settle_point_unit;
+$de_point_unit = trim($de_point_unit) === '' ? 1 : (int)$de_point_unit;
+$de_settle_max_point_ratio = trim($de_settle_max_point_ratio) === '' ? 0 : (float)$de_settle_max_point_ratio;
+$de_point_getting_rate = trim($de_point_getting_rate) === '' ? 0 : (float)$de_point_getting_rate;
 $de_point_days = trim($de_point_days) === '' ? 0 : (int)$de_point_days;
 $de_cart_keep_term = trim($de_cart_keep_term) === '' ? 0 : (int)$de_cart_keep_term;
+$de_review_period = trim($de_review_period) === '' ? 0 : (int)$de_review_period;
+$de_review_modify_period = trim($de_review_modify_period) === '' ? 0 : (int)$de_review_modify_period;
 // 복합과세 결제 사용여부
 $de_tax_flag_use = isset($_POST['de_tax_flag_use']) ? 'Y' : 'N';
 // 비회원 장바구니 체크박스
@@ -165,8 +170,11 @@ $sql = " UPDATE {$g5['dain_default_table']}
        de_lg_mert_key                = '{$de_lg_mert_key}',
        de_card_point                 = '{$de_card_point}',
        de_settle_min_point           = {$de_settle_min_point},
-       de_settle_max_point           = {$de_settle_max_point},
+       de_settle_max_point             = {$de_settle_max_point},
        de_settle_point_unit          = {$de_settle_point_unit},
+       de_point_unit                 = {$de_point_unit},
+       de_settle_max_point_ratio     = {$de_settle_max_point_ratio},
+       de_point_getting_rate         = {$de_point_getting_rate},
        de_point_days                 = {$de_point_days},
        de_pg_service                 = '{$de_pg_service}',
        de_sms_max_bytes              = '{$de_sms_max_bytes}',
@@ -185,7 +193,7 @@ $sql = " UPDATE {$g5['dain_default_table']}
        de_sms_use3                   = '{$de_sms_use3}',
        de_sms_use4                   = '{$de_sms_use4}',
        de_sms_use5                   = '{$de_sms_use5}',
-       de_sms_use6                   = '{$de_sms_use5}',
+       de_sms_use6                   = '{$de_sms_use6}',
        de_sms_use7                   = '{$de_sms_use7}',
        de_sms_use8                   = '{$de_sms_use8}',
        de_sms_use9                   = '{$de_sms_use9}',
@@ -195,6 +203,8 @@ $sql = " UPDATE {$g5['dain_default_table']}
        de_aligo_user_id              = '{$de_aligo_user_id}',
        de_aligo_key                  = '{$de_aligo_key}',
        de_cart_keep_term             =  {$de_cart_keep_term},
+       de_review_period              =  {$de_review_period},
+       de_review_modify_period       =  {$de_review_modify_period},
        de_guest_cart_use             = '{$de_guest_cart_use}',
        de_admin_buga_no              = '{$de_admin_buga_no}',
        de_escrow_use                 = '{$de_escrow_use}',

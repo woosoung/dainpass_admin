@@ -21,14 +21,13 @@ foreach($_REQUEST as $key => $value ) {
         }
     }
 }
-
+$com = (isset($com) && is_array($com)) ? $com : [];
+$comf = (isset($comf) && is_array($comf)) ? $comf : ['comf_f_arr'=>[], 'comf_fidxs'=>[], 'comf_lst_idx'=>0, 'fle_db_idx'=>$shop_id??0];
+$comi = (isset($comi) && is_array($comi)) ? $comi : ['comi_f_arr'=>[], 'comi_fidxs'=>[], 'comi_lst_idx'=>0, 'fle_db_idx'=>$shop_id??0];
 /*
 $cats
 (
     [10] => Array
-$com = (isset($com) && is_array($com)) ? $com : [];
-$comf = (isset($comf) && is_array($comf)) ? $comf : ['comf_f_arr'=>[], 'comf_fidxs'=>[], 'comf_lst_idx'=>0, 'fle_db_idx'=>$shop_id??0];
-$comi = (isset($comi) && is_array($comi)) ? $comi : ['comi_f_arr'=>[], 'comi_fidxs'=>[], 'comi_lst_idx'=>0, 'fle_db_idx'=>$shop_id??0];
         (
             [name] => 반려동물
             [mid] => Array
@@ -90,11 +89,13 @@ $com['shop_parent_id'] => 0
 */
 // 안전한 기본값 설정 및 입력 수신
 $w = isset($w) ? (string)$w : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
+
 $shop_id = isset($shop_id) ? (int)$shop_id : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
 
 // 카테고리 연결 조회 (shop_id가 있을 때만)
 $carr = [];
-if ($shop_id > 0) {
+
+if (isset($shop_id) && $shop_id) {
 	$csql = " SELECT * FROM {$g5['shop_category_relation_table']} WHERE shop_id = '".$shop_id."' ORDER BY sort, category_id ";
 	$cres = sql_query_pg($csql);
 	if ($cres && is_object($cres) && isset($cres->result)) {
@@ -156,7 +157,7 @@ else if ($w == 'u') {
 
 
 	// 가맹점관련 이미지
-    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comi' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
+    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comi' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_sort, fle_reg_dt DESC ";
     // echo $sql;exit;
 	$rs = sql_query_pg($sql);
     $comi_wd = 110;
@@ -177,7 +178,7 @@ else if ($w == 'u') {
 			<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
 			$comi['fle_db_idx'] = $row2['fle_db_idx'];
-			@array_push($comi['comi_f_arr'], array('file'=>$row2['down_del']));
+			@array_push($comi['comi_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
 			@array_push($comi['comi_fidxs'], $row2['fle_idx']);
 		}
 	}
@@ -189,24 +190,38 @@ else if ($w == 'u') {
 	for($i=0;$row=sql_fetch_array($mng_res);$i++) {
 		$com['shop_managers_text'] .= ($com['shop_managers_text'] ? ', ' : '').$row['mb_name'].' <span class="sp_rank">'.$rank_arr[$row['mb_2']].'</span> <span class="">'.$row['mb_hp'].'</span> ['.$row['mb_id'].']<br>'.PHP_EOL;
 	}
+
+	// Fetch keywords for the shop
+	$ksql = " SELECT k.term AS keyword 
+			FROM {$g5['shop_keyword_table']} sk
+			JOIN {$g5['keywords_table']} k ON sk.keyword_id = k.keyword_id
+			WHERE sk.shop_id = '" . $shop_id . "' 
+			ORDER BY sk.weight DESC ";
+	// echo $ksql;exit;
+	$kresult = sql_query_pg($ksql);
+	$keywords = [];
+	while ($row = sql_fetch_array_pg($kresult->result)) {
+		$keywords[] = $row['keyword'];
+	}
+	$com['shop_keywords'] = implode(',', $keywords);
 }
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');
 
 // print_r2($rank_arr);exit;
 // 라디오&체크박스 선택상태 자동 설정 (필드명 배열 선언!)
-$check_array=array();
-for ($i=0;$i<sizeof($check_array);$i++) {
-	${$check_array[$i].'_'.$com[$check_array[$i]]} = ' checked';
-}
+// $check_array=array();
+// for ($i=0;$i<sizeof($check_array);$i++) {
+// 	${$check_array[$i].'_'.$com[$check_array[$i]]} = ' checked';
+// }
 
 $html_title = ($w=='')?'추가':'수정'; 
 // exit;
 $g5['title'] = '가맹점 '.$html_title;
 //include_once('./_top_menu_company.php');
+
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
 // add_javascript('js 구문', 출력순서); 숫자가 작을 수록 먼저 출력됨
 add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js
 add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js"></script>',0);
@@ -272,7 +287,7 @@ let cats = <?=json_encode($cats)?>;
 			</div>
 		</td>
 		<?php if($w=='u') { 
-			$m_sql = " SELECT mb_name, mb_id, mb_hp FROM {$g5['member_table']} WHERE mb_level IN (3,4,5) AND mb_1 = '{$shop_id}' AND mb_2 = 'Y' ";
+			$m_sql = " SELECT mb_name, mb_id, mb_hp FROM {$g5['member_table']} WHERE mb_level IN (4,5) AND mb_1 = '{$shop_id}' AND mb_2 = 'Y' ";
 			$m_res = sql_query($m_sql,1);
 			$com['shop_managers_text'] = '';
 			for($j=0; $m_row=sql_fetch_array($m_res); $j++){
@@ -362,6 +377,76 @@ let cats = <?=json_encode($cats)?>;
 		</td>
 	</tr>
 	<tr>
+		<th scope="row">최대수용인원</th>
+		<td>
+			<input type="number" name="max_capacity" value="<?=$com['max_capacity']??''?>" id="max_capacity" class="frm_input text-center w-[80px]" size="10" maxlength="5">
+		</td>
+		<th scope="row">예약링크</th>
+		<td>
+			<?php echo help("예약할 링크주소를 입력해 주세요."); ?>
+			<input type="text" name="reservelink" value="<?=$com['reservelink']??''?>" id="reservelink" class="frm_input" style="width:60%;">
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">예약전화번호</th>
+		<td>
+			<input type="text" name="reserve_tel" value="<?=formatPhoneNumber($com['reserve_tel']??'')?>" id="reserve_tel" class="frm_input" size="20" minlength="2" maxlength="30">
+		</td>
+		<th scope="row">정산 은행계좌번호</th>
+		<td>
+			<input type="text" name="bank_account" value="<?=$com['bank_account']??''?>" id="bank_account" class="frm_input w-[200px]" size="20" minlength="2" maxlength="30">
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">정산 은행명</th>
+		<td>
+			<input type="text" name="bank_name" value="<?=$com['bank_name']??''?>" id="bank_name" class="frm_input w-[200px]" size="20" minlength="2" maxlength="30">
+		</td>
+		<th scope="row">정산 예금주명</th>
+		<td>
+			<input type="text" name="bank_holder" value="<?=$com['bank_holder']??''?>" id="bank_holder" class="frm_input w-[200px]" size="20" minlength="2" maxlength="30">
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">정산유형</th>
+		<td>
+			<select name="settlement_type" id="settlement_type">
+				<option value="manual">수동정산</option>
+				<option value="auto">자동정산</option>
+			</select>
+			<script>$('select[name="settlement_type"]').val('<?=($w == '' ? 'manual' : $com['settlement_type'])?>');</script>
+		</td>
+		<th scope="row">정산주기</th>
+		<td>
+			<select name="settlement_cycle" id="settlement_cycle">
+				<option value="monthly">월별</option>
+				<option value="weekly">주별</option>
+				<option value="daily">일별</option>
+			</select>
+			<script>$('select[name="settlement_cycle"]').val('<?=($w == '' ? 'monthly' : $com['settlement_cycle'])?>');</script>
+			&nbsp;&nbsp;
+			<input type="number" name="settlement_day" value="<?=($w == '' ? 25 : $com['settlement_day'])?>" id="settlement_day" class="frm_input text-center w-[60px]" size="10" maxlength="2">
+			<?php echo help("정산주기가 '월별'일 경우 매월 정산일을, '주별'일 경우 매주 정산요일(1:월요일~7:일요일)을, '일별'일 경우 매일 정산을 의미합니다."); ?>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">과세유형</th>
+		<td>
+			<select name="tax_type" id="tax_type">
+				<option value="normal">일반과세자</option>
+				<option value="simple">간이과세자</option>
+				<option value="exempt">면세사업자</option>
+				<option value="freelancer">프리랜서</option>
+			</select>
+			<script>$('select[name="tax_type"]').val('<?=(($w == '' || $com['tax_type']=='') ? 'normal' : $com['tax_type'])?>');</script>
+		</td>
+		<th scope="row">정산대상여부</th>
+		<td>
+			<label for="is_active_yes"><input type="radio" name="is_active" id="is_active_yes" value="Y" <?=($w == '' || $com['is_active']=='Y')?'checked':'';?>> 정산대상</label>&nbsp;&nbsp;
+			<label for="is_active_no"><input type="radio" name="is_active" id="is_active_no" value="N" <?=($com['is_active']=='N')?'checked':'';?>> 정산제외</label>
+		</td>
+	</tr>
+	<tr>
         <th scope="row">가맹점관련파일</th>
         <td colspan="3">
             <?php echo help("가맹점관련 파일들(사업장등록증)을 등록하고 관리해 주시면 됩니다."); ?>
@@ -382,16 +467,19 @@ let cats = <?=json_encode($cats)?>;
 	<tr>
         <th scope="row">가맹점관련이미지</th>
         <td colspan="3">
-            <?php echo help("가맹점관련 이미지들을 등록하고 관리해 주시면 됩니다."); ?>
+            <?php echo help("가맹점관련 이미지들을 등록하고 관리해 주시면 됩니다. 최대10개까지 등록 가능합니다."); ?>
+            <?php echo help("각 이미지 요소를 드래그&드롭으로 이미지간의 순서를 변경할 수 있습니다. 첫번째 이미지가 메인이미지입니다."); ?>
 			<input type="file" id="multi_file_comi" name="comi_datas[]" multiple class="" maxlength="10" data-maxfile="700" data-maxsize="7000">
+			<input type="hidden" name="branch_ids" value="<?=implode(',', $comi['comi_fidxs'])?>" class="border border-black w-[400px]">
             <?php
 			$comi_list = (isset($comi['comi_f_arr']) && is_array($comi['comi_f_arr'])) ? $comi['comi_f_arr'] : [];
+			// print_r2($comi_list);
 			if (!empty($comi_list)){
-				echo '<ul class="branch_imgs">'.PHP_EOL;
+				echo '<ul id="branch_imgs">'.PHP_EOL;
 				foreach ($comi_list as $i => $item) {
 					$fileHtml = is_array($item) && isset($item['file']) ? $item['file'] : '';
 					// echo "<li class='".$branch_li_class."'>[".($i+1).']'.$fileHtml."</li>".PHP_EOL;
-					echo "<li class='branch_li'>[".($i+1).']'.$fileHtml."</li>".PHP_EOL;
+					echo "<li class='branch_li' data-id='".$item['id']."'>[<span class='sp_sort'>".($i+1).'</span>]'.$fileHtml."</li>".PHP_EOL;
 				}
 				echo '</ul>'.PHP_EOL;
             }
@@ -413,7 +501,7 @@ let cats = <?=json_encode($cats)?>;
 				<option value="closed">폐업<?=(($is_dev_manager)?'(closed)':'')?></option>
 				<option value="shutdown">금지<?=(($is_dev_manager)?'(shutdown)':'')?></option>
 			</select>
-			<script>$('select[name="status"]').val('<?=$com['status']?>');</script>
+			<script>$('select[name="status"]').val('<?=($w == '' ? 'active' : $com['status'])?>');</script>
 		</td>
 	</tr>
 	<?php if($w == 'u') { ?>
@@ -445,12 +533,116 @@ let cats = <?=json_encode($cats)?>;
         </td>
 	</tr>
 	<?php } ?>
+	<tr>
+		<th scope="row"><label for="">가맹점의 검색키워드</label></th>
+		<td colspan="3">
+			<?php
+			if($w == 'u'){
+				$kwds = (isset($com['shop_keywords']) && $com['shop_keywords']) ? explode(',', $com['shop_keywords']) : [];
+			}
+			?>
+			<?php 
+			echo help("등록을 원하시는 키워드를 한 개씩 입력한 후 '키워드추가'버튼을 클릭해 주세요.(최대 10개까지 가능)"); 
+			echo help("드래그&드롭으로 키워드의 순서를 변경할 수 있습니다.(중요한 키워드일수록 앞쪽에 배치해 주세요.)"); 
+			?>
+			<input type="text" id="input_keyword" placeholder="" class="frm_input w-[200px]">
+			<a href="javascript:" id="add_keyword" class="mm-blue-btn">키워드추가</a>
+			<input type="hidden" name="shop_keywords" id="shop_keywords" value="<?=$com['shop_keywords']??''?>" class="border w-full">
+			<div id="keyword_box" class="border border-4 border-gray-200 pl-2 pt-2 mt-2 min-h-[40px]">
+				<?php 
+				if(!empty($kwds)){
+					$kn = 0;
+					foreach($kwds as $kwd){ 
+				?>
+					<span class="keyword-chip inline-flex items-center bg-gray-200 rounded px-2 py-1 mr-2 mb-2" data-index="<?=$kn?>">
+						<span class="sp_cont"><?=$kwd?></span>	
+						<button type="button" class="ml-2 text-red-500" aria-label="키워드 삭제">x</button>
+					</span>
+				<?php 
+					}
+				}
+				?>
+			</div>
+		</td>
+	</tr>
     <tr>
         <th scope="row"><label for="settlement_memo">메모</label></th>
         <td colspan="3">
             <textarea name="settlement_memo" id="settlement_memo"><?=$com['settlement_memo']??''?></textarea>
         </td>
     </tr>
+	<tr>
+		<th scope="row"><label for="cancel_policy">예약취소규정</label></th>
+		<td colspan="3">
+			<textarea name="cancel_policy" id="cancel_policy" class="w-[100%]" rows="5"><?=$com['cancel_policy']??''?></textarea>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="shop_description">업체설명</label></th>
+		<td colspan="3">
+			<?php echo help("업체에 대한 상세 설명을 입력해 주세요."); ?>
+			<textarea name="shop_description" id="shop_description" class="w-[100%]" rows="5"><?=$com['shop_description']??''?></textarea>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="point_rate">포인트 적립율</label></th>
+		<td>
+			<?php echo help("결제 시 포인트 적립율을 설정합니다. (이 필드는 사용하지 않습니다. 포인트는 플랫폼에서 제공합니다.)"); ?>
+			<input type="number" name="point_rate" value="<?=$com['point_rate']??0?>" id="point_rate" class="frm_input text-center w-[100px]" step="0.01" min="0" max="100">
+			<span>%</span>
+		</td>
+		<th scope="row"><label for="cancellation_period">결제취소가능시간</label></th>
+		<td>
+			<?php echo help("예약일시를 기준으로 취소 및 환불처리가 가능한 유효시간(시간 단위)을 설정합니다."); ?>
+			<input type="number" name="cancellation_period" value="<?=$com['cancellation_period']??1?>" id="cancellation_period" class="frm_input text-center w-[100px]" min="1">
+			<span>시간</span>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="notice">공지 및 알림</label></th>
+		<td colspan="3">
+			<?php echo help("가맹점 관련 공지사항 및 알림 내용을 입력해 주세요."); ?>
+			<textarea name="notice" id="notice" class="w-[100%]" rows="5"><?=$com['notice']??''?></textarea>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row">소셜미디어 URL</th>
+		<td colspan="3">
+			<div class="grid grid-cols-3 gap-4">
+				<div>
+					<label for="blog_url">블로그 URL</label>
+					<?php echo help("대표 블로그 URL을 입력해 주세요."); ?>
+					<input type="text" name="blog_url" value="<?=$com['blog_url']??''?>" id="blog_url" class="frm_input w-full" placeholder="https://blog.example.com">
+				</div>
+				<div>
+					<label for="instagram_url">인스타그램 URL</label>
+					<?php echo help("인스타그램 URL을 입력해 주세요."); ?>
+					<input type="text" name="instagram_url" value="<?=$com['instagram_url']??''?>" id="instagram_url" class="frm_input w-full" placeholder="https://instagram.com/example">
+				</div>
+				<div>
+					<label for="kakaotalk_url">카카오톡 채널 URL</label>
+					<?php echo help("카카오톡 채널 URL을 입력해 주세요. (자사홈피가 없으면 KEY값 발급을 받을 수 없습니다.)"); ?>
+					<input type="text" name="kakaotalk_url" value="<?=$com['kakaotalk_url']??''?>" id="kakaotalk_url" class="frm_input w-full" placeholder="https://pf.kakao.com/example">
+				</div>
+			</div>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="amenities_id_list">편의시설 ID 목록</label></th>
+		<td colspan="3">
+			<?php echo help("편의시설 ID를 쉼표로 구분하여 입력해 주세요. 예: 23,34,543"); ?>
+			<input type="text" name="amenities_id_list" value="<?=$com['amenities_id_list']??''?>" id="amenities_id_list" class="frm_input w-full" placeholder="23,34,543">
+		</td>
+	</tr>
+	<?php if($w == 'u') { ?>
+	<tr>
+		<th scope="row">가맹점명 히스토리</th>
+		<td colspan="3">
+			<?php echo help("가맹점명이 변경되면 자동으로 히스토리가 기록됩니다."); ?>
+			<textarea rows="10" name="shop_names" readonly class="readonly frm_input w-[100%]"><?= $is_team_manager ? ($com['shop_names'] ?? '') : '' ?></textarea>
+		</td>
+	</tr>
+	<?php } ?>
 	</tbody>
 	</table>
 </div>

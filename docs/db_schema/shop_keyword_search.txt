@@ -1,0 +1,530 @@
+1. unaccent 확장설치 (postgres 슈퍼권한으로 설치해라)
+-- postgresql 데이터베이스 컨테이너에 접속
+-- docker exec -it wsd_pgsql14 /bin/bash
+-- 데이터베이스에 접속 : psql -U postgres -d dainpass_pg
+-- unaccent확장 생성 명령어 실행
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+2. 불변(immutable)레퍼 함수 만들기 (postgres 슈퍼권한으로 설치해라)
+-- IMMUTABLE 래퍼: 사전 이름을 'public.unaccent'로 고정
+-- 입력 텍스트에서 악센트/특수 문자를 제거한 문자열을 반환합니다
+-- 동일 입력에 대해 항상 같은 결과를 돌려서 생성 컬럼이나 인덱스 표현식에서 안전하게 사용할 수 있고, 병렬 쿼리에도 참여
+CREATE OR REPLACE FUNCTION immutable_unaccent(text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+  SELECT public.unaccent('public.unaccent', $1)
+$$;
+
+
+3. 정규화 테이블 생성
+CREATE TABLE keywords(
+  keyword_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  term       TEXT NOT NULL,
+  term_norm  TEXT GENERATED ALWAYS AS (
+    regexp_replace(lower(immutable_unaccent(term)), '\s+', ' ', 'g')
+  ) STORED,
+  UNIQUE(term_norm)
+);
+CREATE TABLE shop_keyword(
+  shop_id BIGINT REFERENCES shop(shop_id) ON DELETE CASCADE,
+  keyword_id BIGINT REFERENCES keywords(keyword_id) ON DELETE CASCADE,
+  weight INT DEFAULT 1,
+  PRIMARY KEY(shop_id, keyword_id)
+);
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+4. shop테이블에 검색 캐시 컬럼 추가 및 (+인덱스 생성)
+ALTER TABLE shop
+  ADD COLUMN search_text TEXT,
+  ADD COLUMN search_doc tsvector;
+
+CREATE INDEX idx_shop_search_trgm ON shop USING gin (search_text gin_trgm_ops);
+
+5. 캐시 갱신(트리거/함수 핵심 아이디어)
+다인패스 규모(읽기 위주 트래픽, 다수 동시 변경 가능)를 감안하면, 
+“비동기 큐 기반 캐시 갱신(트리거는 큐 적재만, 실갱신은 배치/워커에서)”
+장점
+트랜잭션 지연 없음(대규모 동시 입력에도 안정).
+재시도/에러 누적/모니터링이 쉬움.
+처리량에 따라 워커 수나 batch size만 조절하면 수평 확장.
+
+5-1) 큐 테이블 생성
+CREATE TABLE IF NOT EXISTS shop_search_refresh_queue (
+  shop_id       BIGINT PRIMARY KEY,
+  enqueued_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  attempts      INT NOT NULL DEFAULT 0,
+  last_error    TEXT
+);
+-- PRIMARY KEY(shop_id): 같은 샵이 여러 번 들어오는 중복을 자동 억제(멱등).
+-- enquenued_at: 큐에 들어온 시간 기록.
+-- attempts: 재시도 횟수 기록.
+-- last_error: 에러 메시지 기록.
+
+5-2) 캐시 재계산 함수(단일 진실) 등록
+-- 한 매장의 검색 캐시를 재계산하는 핵심 루틴입니다.
+-- 매장별 관련 데이터를 모아 텍스트/tsvector 캐시를 다시 생성합니다:
+-- shop_keyword와 keywords에서 키워드 목록을 가중치 순으로 이어붙여 v_kw를 만듭니다.
+-- shop 본문에서 shop_name, name, addr1, addr2, shop_description을 정리해 v_name, v_addr, v_desc를 채웁니다.
+-- shop_category_relation·shop_categories에서 카테고리 이름을 모아 v_cat 생성.
+-- shop_services에서 서비스명 및 설명을 정리하고, 공백·특수문자 제거 버전(v_services_norm)도 만듭니다.
+-- 위 텍스트들을 하나로 합쳐 search_text에 저장합니다.
+-- 동시에 tsvector 가중치를 사용해 search_doc을 구성합니다. (이름 A, 설명/주소/카테고리 B, 서비스/키워드 C, 노멀라이즈된 서비스명 D 등)
+-- 최종적으로 해당 shop_id 레코드를 업데이트하며, 값이 비어 있으면 NULL로 저장해 불필요한 tsvector를 줄입니다.
+-- 결과적으로 refresh_shop_search는 모든 검색 대상 문자열을 한곳에 모아 인덱싱 가능한 형태로 유지하는 “단일 진실” 함수이며,
+-- 큐 워커(process_shop_search_refresh_queue)나 직접 호출로 실행됩니다.
+CREATE OR REPLACE FUNCTION public.refresh_shop_search(p_shop_id BIGINT)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  v_kw            TEXT := '';
+  v_name          TEXT := '';
+  v_addr          TEXT := '';
+  v_desc          TEXT := '';
+  v_cat           TEXT := '';
+  v_services      TEXT := '';
+  v_services_norm TEXT := '';
+  v_blob          TEXT;
+BEGIN
+  SELECT COALESCE(string_agg(k.term, ' ' ORDER BY sk.weight DESC, k.term), '')
+    INTO v_kw
+  FROM shop_keyword sk
+  JOIN keywords k ON k.keyword_id = sk.keyword_id
+  WHERE sk.shop_id = p_shop_id;
+
+  SELECT
+      trim(both ' ' FROM concat_ws(' ', s.shop_name, s.name)),
+      trim(both ' ' FROM concat_ws(' ', s.addr1, s.addr2)),
+      COALESCE(s.shop_description, '')
+    INTO v_name, v_addr, v_desc
+  FROM shop s
+  WHERE s.shop_id = p_shop_id;
+
+  SELECT COALESCE(string_agg(sc.name, ' ' ORDER BY scr.sort, sc.name), '')
+    INTO v_cat
+  FROM shop_category_relation scr
+  JOIN shop_categories sc ON sc.category_id = scr.category_id
+  WHERE scr.shop_id = p_shop_id;
+
+  SELECT COALESCE(
+           string_agg(
+             trim(both ' ' FROM concat_ws(' ', ss.service_name, ss.description)),
+             ' '
+             ORDER BY ss.main_yn DESC,
+                      ss.signature_yn DESC,
+                      ss.service_name
+           ),
+           ''
+         )
+    INTO v_services
+  FROM shop_services ss
+  WHERE ss.shop_id = p_shop_id;
+
+  v_services_norm := regexp_replace(v_services, '[\s()\-_/]+', '', 'g');
+
+  v_blob := trim(both ' ' FROM concat_ws(
+              ' ', v_name, v_addr, v_desc, v_cat, v_services, v_services_norm, v_kw
+            ));
+
+  UPDATE shop
+     SET search_text = NULLIF(v_blob, ''),
+         search_doc  = NULLIF(
+                         setweight(to_tsvector('ko_en', COALESCE(v_name, '')), 'A')
+                       || setweight(to_tsvector('ko_en', COALESCE(v_desc, '')), 'B')
+                       || setweight(to_tsvector('ko_en', COALESCE(v_addr, '')), 'B')    -- 주소 가중치 추가
+                       || setweight(to_tsvector('ko_en', COALESCE(v_cat,  '')), 'B')
+                       || setweight(to_tsvector('ko_en', COALESCE(v_services, '')), 'C')
+                       || setweight(to_tsvector('ko_en', COALESCE(v_kw,   '')), 'C')
+                       || setweight(to_tsvector('ko_en', COALESCE(v_services_norm, '')), 'D'),
+                         ''::tsvector
+                       )
+   WHERE shop_id = p_shop_id;
+END $$;
+
+
+
+가중치설정 키워드성격별
+가중치 설정 배열 : ARRAY[A:1.0, B:0.4, C:0.4, D:0.2]
+name => A
+description => B
+addr => B
+category => B
+services => C
+키워드 => C
+서비스 정규화 => D
+
+
+
+5-3) 공통 삽입용 함수(멱등) 이 함수의 기능은 : 
+- 검색 캐시 갱신을 비동기로 처리하기 위한 큐 적재 함수
+- 호출 시 전달받은 p_shop_id를 shop_search_refresh_queue 테이블에 넣고, 
+  이미 같은 shop_id가 큐에 있으면 ON CONFLICT DO NOTHING으로 중복 삽입을 막음
+- 이렇게 큐에 들어간 shop들은 나중에 process_shop_search_refresh_queue() 워커/배치 함수가 읽어 
+  refresh_shop_search()를 실행해 shop.search_text·shop.search_doc을 재계산
+- 따라서 트리거에서 이 함수를 호출하면 변경된 매장 정보가 즉시 캐시에 반영되는 대신, 
+  큐를 통해 안전하게(재시도·에러 로그 포함) 비동기 처리
+CREATE OR REPLACE FUNCTION enqueue_shop_refresh(p_shop_id bigint)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  INSERT INTO shop_search_refresh_queue (shop_id)
+  VALUES (p_shop_id)
+  ON CONFLICT (shop_id) DO NOTHING;
+END $$;
+
+5-4) 트리거 함수(큐 적재) 등록
+- a. shop 기본정보 변경시
+-- trg_enqueue_on_shop 함수 생성 : shop 기본정보 변경시 큐에 적재
+-- trg_enqueue_on_shop()은 shop 테이블의 특정 필드가 수정될 때 해당 매장을 검색 캐시 큐에 넣는 트리거 함수입니다.
+-- shop_enqueue_refresh 트리거에 연결되어 있으며, shop_name, name, addr1, addr2, shop_description이 UPDATE되면 실행됩니다.
+-- 함수 본문은 간단히 enqueue_shop_refresh(NEW.shop_id)를 호출해 큐에 적재하고, RETURN NEW;로 트리거 체인을 유지합니다.
+-- 이로 인해 매장 기본 정보가 바뀌면 즉시 shop_search_refresh_queue에 shop_id가 들어가고,
+-- 나중에 워커(process_shop_search_refresh_queue)가 refresh_shop_search를 호출해 search_text/search_doc을 최신 상태로 갱신하게 됩니다.
+CREATE OR REPLACE FUNCTION trg_enqueue_on_shop()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  PERFORM enqueue_shop_refresh(NEW.shop_id);
+  RETURN NEW;
+END $$;
+
+---- 트리거 삭제
+DROP TRIGGER IF EXISTS shop_enqueue_refresh ON shop;
+
+---- 트리거 생성
+CREATE TRIGGER shop_enqueue_refresh
+AFTER UPDATE OF shop_name, name, addr1, addr2, shop_description
+ON shop
+FOR EACH ROW
+EXECUTE FUNCTION trg_enqueue_on_shop();
+
+
+
+- b. shop_keyword 매핑 변경시 (추가/삭제/가중치)
+---- trg_enqueue_on_shop_keyword 함수 생성 : shop_keyword 매핑 변경시 큐에 적재
+---- shop_keyword 테이블에 대한 AFTER INSERT/UPDATE/DELETE 트리거에서 호출되는 함수입니다.
+---- 함수는 변경된 행의 shop_id를 enqueue_shop_refresh()에 넘겨 shop_search_refresh_queue에 적재하고,
+---- COALESCE(NEW, OLD)를 반환해 트리거 흐름을 유지합니다.
+---- 덕분에 키워드와 매장 매핑이 추가·수정·삭제되는 즉시 해당 매장이 큐에 올라가고,
+---- 워커(process_shop_search_refresh_queue)가 refresh_shop_search()를 돌려 search_text와 search_doc을 최신 상태로 재계산합니다.
+CREATE OR REPLACE FUNCTION trg_enqueue_on_shop_keyword()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  PERFORM enqueue_shop_refresh(COALESCE(NEW.shop_id, OLD.shop_id));
+  RETURN COALESCE(NEW, OLD);
+END $$;
+
+---- 트리거 삭제
+DROP TRIGGER IF EXISTS shop_keyword_enqueue_refresh ON shop_keyword;
+
+---- shop_keyword_enqueue_refresh 트리거 생성 : 
+---- shop_keyword 테이블에 대한 INSERT, UPDATE, DELETE 작업 후에 trg_enqueue_on_shop_keyword 함수를 실행
+CREATE TRIGGER shop_keyword_enqueue_refresh
+AFTER INSERT OR UPDATE OR DELETE
+ON shop_keyword
+  FOR EACH ROW
+EXECUTE FUNCTION trg_enqueue_on_shop_keyword();
+    
+    
+- c. keywords(사전) 변경시
+---- trg_enqueue_on_keywords 함수 생성 : keywords 변경시 큐에 적재
+---- trg_enqueue_on_keywords()는 keywords 테이블에 매핑된 매장들을 큐에 적재하는 트리거 함수입니다.
+--- 수행 순서: keywords에서 INSERT/UPDATE/DELETE가 일어나면 NEW 또는 OLD 행의 keyword_id를 기준으로,
+--- shop_keyword 테이블에서 해당 키워드를 사용하는 모든 shop_id를 찾아 shop_search_refresh_queue에 넣습니다.
+--- ON CONFLICT (shop_id) DO NOTHING으로 중복 적재를 막아, 키워드가 연속 변경되어도 매장이 큐에 한 번만 쌓이도록 보장합니다.
+--- 최종적으로 RETURN COALESCE(NEW, OLD);로 트리거 체인을 유지합니다.
+--- 이 함수는 keywords_enqueue_refresh 트리거에 연결되어 있어서,
+--- 키워드(사전) 단에서 수정이 발생하면 해당 매장들의 refresh_shop_search가 비동기로 재실행되도록 하는 역할을 합니다.
+CREATE OR REPLACE FUNCTION trg_enqueue_on_keywords()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  INSERT INTO shop_search_refresh_queue (shop_id)
+  SELECT DISTINCT sk.shop_id
+  FROM shop_keyword sk
+  WHERE sk.keyword_id = COALESCE(NEW.keyword_id, OLD.keyword_id)
+  ON CONFLICT (shop_id) DO NOTHING;
+  RETURN COALESCE(NEW, OLD);
+END $$;
+
+---- 트리거 삭제
+DROP TRIGGER IF EXISTS keywords_enqueue_refresh ON keywords;
+
+---- keywords_enqueue_refresh 트리거 생성 : 
+---- keywords 테이블에 대한 INSERT, UPDATE, DELETE 작업 후에 trg_enqueue_on_keywords 함수를 실행
+CREATE TRIGGER keywords_enqueue_refresh
+AFTER INSERT OR UPDATE OR DELETE
+ON keywords
+  FOR EACH ROW
+EXECUTE FUNCTION trg_enqueue_on_keywords();
+
+5-5) 워커/배치 처리 함수(재시도 내장)
+주기적으로 호출(pg_cron 또는 애플리케이션 워커).
+실패 시 attempts 올리고 last_error 기록, 과도한 재시도 방지.
+
+-- 워커/배치 처리 함수 등록 : 샵 검색 캐시 갱신 큐 처리 함수
+-- 큐에 적재된 매장 검색 캐시를 실제로 재계산하는 워커 함수입니다.
+-- shop_search_refresh_queue에서 enqueued_at 순으로 최대 p_limit개의 shop_id를 읽어옵니다.
+-- 각 shop_id에 대해 refresh_shop_search(shop_id)를 호출해 shop.search_text와 shop.search_doc을 재생성합니다.
+-- 성공하면 해당 shop_id를 큐에서 삭제하고 n_processed 카운트를 올립니다.
+-- 오류가 나면 attempts를 증가시키고 last_error에 메시지를 기록한 뒤 enqueued_at을 현재 시각으로 갱신해 재시도 기회를 남깁니다.
+-- 모든 후보를 처리하고 나서 처리한 개수를 반환합니다.
+-- 이 함수는 즉시 호출하거나 pg_cron/애플리케이션 워커로 주기 실행해 비동기 갱신을 완성합니다.
+-- 트리거(shop_enqueue_refresh, shop_keyword_enqueue_refresh, …)는 큐에 shop을 넣기만 하고,
+-- 이 함수가 실행되어야 실제 캐시가 최신 상태로 바뀝니다.
+-- 실패 레코드가 남는지 모니터링할 때도 SELECT * FROM shop_search_refresh_queue WHERE last_error IS NOT NULL;
+CREATE OR REPLACE FUNCTION process_shop_search_refresh_queue(p_limit int DEFAULT 1000)
+RETURNS int
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  r record;
+  n_processed int := 0;
+BEGIN
+  FOR r IN
+    SELECT shop_id
+    FROM shop_search_refresh_queue
+    ORDER BY enqueued_at
+    LIMIT p_limit
+  LOOP
+    BEGIN
+      PERFORM refresh_shop_search(r.shop_id);
+      DELETE FROM shop_search_refresh_queue WHERE shop_id = r.shop_id;
+      n_processed := n_processed + 1;
+    EXCEPTION WHEN OTHERS THEN
+      UPDATE shop_search_refresh_queue
+         SET attempts   = attempts + 1,
+             last_error = LEFT(SQLERRM, 1000),
+             enqueued_at = now()
+       WHERE shop_id = r.shop_id;
+    END;
+  END LOOP;
+
+  RETURN n_processed;
+END $$;
+
+-- 스케줄링 예시
+--- process_shop_search_refresh_queue() 함수 실행에 대해 스케줄링을 해야 하는 이유는
+--- 샵 검색 캐시 갱신 큐에 적재된 항목들을 주기적으로 처리하여 검색 캐시를 최신 상태로 유지하기 위함입니다.
+--- 이 함수는 큐에 쌓인 샵 ID들을 가져와서 각각의 샵에 대해 검색 캐시를 갱신하고, 처리된 항목들을 큐에서 제거합니다.
+--- 따라서, 이 함수를 정기적으로 실행함으로써 검색 캐시가 최신 상태로 유지되고,
+--- 사용자들이 검색할 때 최신 데이터를 기반으로 결과를 받을 수 있게 됩니다
+pg_cron 사용 가능(적용완료): SELECT cron.schedule('*/1 * * * *', $$SELECT process_shop_search_refresh_queue(2000);$$);
+pg_cron 불가: 앱(php/worker)에서 1~5분 주기로 SELECT process_shop_search_refresh_queue(2000);
+
+
+
+5-6) 카테고리 연결이 변하면 큐에 담도록 새 트리거 함수를 만듭니다.
+-- shop_category_relation(매장-카테고리 매핑) 테이블에서 변경이 발생할 때 해당 매장을 큐에 적재하는 함수입니다.
+-- shop_category_relation_enqueue_refresh 트리거(AFTER INSERT/UPDATE/DELETE)에 연결되어 있어 매핑이 추가되거나 삭제되거나 바뀌면 실행됩니다.
+-- 본문은 COALESCE(NEW.shop_id, OLD.shop_id)로 변경 대상 매장을 결정한 뒤 enqueue_shop_refresh를 호출합니다.
+-- 덕분에 매장-카테고리 매핑이 바뀌면 shop_search_refresh_queue에 매장이 들어가고, 이후 워커가 refresh_shop_search를 돌려 카테고리·검색 문구를 최신 상태로 유지합니다.
+-- 마지막 RETURN COALESCE(NEW, OLD);로 트리거 체인을 유지하여 표준 행 트리거의 흐름을 따릅니다.
+CREATE OR REPLACE FUNCTION trg_enqueue_on_shop_category_relation()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  PERFORM enqueue_shop_refresh(COALESCE(NEW.shop_id, OLD.shop_id));
+  RETURN COALESCE(NEW, OLD);
+END $$;
+
+DROP TRIGGER IF EXISTS shop_category_relation_enqueue_refresh ON shop_category_relation;
+
+CREATE TRIGGER shop_category_relation_enqueue_refresh
+AFTER INSERT OR UPDATE OR DELETE
+ON shop_category_relation
+FOR EACH ROW
+EXECUTE FUNCTION trg_enqueue_on_shop_category_relation();
+
+
+5-7) 카테고리 이름이 바뀔 때도 관련 매장을 큐에 올리도록 트리거를 추가하세요. 
+   기존 trg_enqueue_on_keywords 예제를 참고해 다음 함수를 실행하면 됩니다.
+-- shop_categories(카테고리 마스터) 테이블에서 이름이 바뀔 때, 해당 카테고리를 사용하는 모든 매장을 검색 갱신 큐에 올리는 함수입니다.
+-- shop_categories_enqueue_refresh 트리거에 연결되어 있고, AFTER UPDATE OF name 이벤트마다 실행됩니다.
+-- 함수는 shop_category_relation을 조회해 category_id가 변경된 행(NEW 또는 OLD)과 연결된 모든 shop_id를 찾습니다.
+-- 찾은 매장들을 shop_search_refresh_queue에 INSERT하며, ON CONFLICT (shop_id) DO NOTHING으로 중복을 없앱니다.
+-- 마지막에 RETURN COALESCE(NEW, OLD);로 트리거 체인을 유지합니다.
+-- 결과적으로, 카테고리 이름이 바뀌면 그 카테고리와 연결된 모든 매장의 search_text/search_doc이 비동기적으로 재계산되도록 보장합니다.
+CREATE OR REPLACE FUNCTION trg_enqueue_on_shop_categories()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  INSERT INTO shop_search_refresh_queue (shop_id)
+  SELECT DISTINCT scr.shop_id
+  FROM shop_category_relation scr
+  WHERE scr.category_id = COALESCE(NEW.category_id, OLD.category_id)
+  ON CONFLICT (shop_id) DO NOTHING;
+  RETURN COALESCE(NEW, OLD);
+END $$;
+
+DROP TRIGGER IF EXISTS shop_categories_enqueue_refresh ON shop_categories;
+
+CREATE TRIGGER shop_categories_enqueue_refresh
+AFTER UPDATE OF name
+ON shop_categories
+FOR EACH ROW
+EXECUTE FUNCTION trg_enqueue_on_shop_categories();
+
+
+5-8) 가맹점 서비스의 서비스명과 설명이 바뀔 때도 관련 매장을 큐에 올리도록 트리거를 추가하세요.
+-- shop_services 테이블에서 서비스명이나 설명이 바뀌거나 행이 추가·삭제될 때,
+-- 해당 매장의 shop.search_text, shop.search_doc 캐시를 재계산하도록 큐에 적재시키는 트리거 함수입니다.
+-- 변경 포착: INSERT/UPDATE/DELETE 발생 시 새/기존 레코드의 shop_id를 확인합니다.
+-- 큐 적재: enqueue_shop_refresh를 호출해 shop_search_refresh_queue에 그 매장을 넣습니다(중복 시 무시).
+-- 비동기 동작: 트리거는 즉시 종료하고, 실제 캐시 재생성은 워커(process_shop_search_refresh_queue)가 나중에 실행합니다.
+-- 목적: 서비스 정보(주요 서비스·설명 등) 수정이 검색 결과에 반영되도록 매장 캐시 업데이트를 자동으로 스케줄링합니다.
+CREATE OR REPLACE FUNCTION trg_enqueue_on_shop_services()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  PERFORM enqueue_shop_refresh(COALESCE(NEW.shop_id, OLD.shop_id));
+  RETURN COALESCE(NEW, OLD);
+END $$;
+
+DROP TRIGGER IF EXISTS shop_services_enqueue_refresh ON shop_services;
+
+CREATE TRIGGER shop_services_enqueue_refresh
+AFTER INSERT OR UPDATE OR DELETE
+ON shop_services
+FOR EACH ROW
+EXECUTE FUNCTION trg_enqueue_on_shop_services();
+
+
+
+5-9) 인덱스(검색성능)
+-- pg_trgm 확장 생성 명령어 실행(이 확장 명령어의 기능은 유사도 검색을 가능하게 하는 명령어를 제공)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- 1회(관리자)
+-- 인덱스 생성 idx_shop_search_trgm : search_text 컬럼에 대한 pg_trgm 인덱스
+CREATE INDEX IF NOT EXISTS idx_shop_search_trgm
+  ON shop USING gin (search_text gin_trgm_ops);
+-- 인덱스 생성 idx_shop_search_doc : search_doc 컬럼에 대한 tsvector 인덱스
+DROP INDEX IF EXISTS idx_shop_search_doc;
+CREATE INDEX idx_shop_search_doc
+    ON shop USING gin (search_doc);
+
+
+
+6. shop테이블의 search_text, search_doc 일괄갱신 일괄업데이트 전체갱신 전체업데이트
+BEGIN;
+-- 1) 기존 큐를 비워서 재시도 흔적 제거
+TRUNCATE shop_search_refresh_queue;
+
+-- 2) 모든 매장을 큐에 올림 (중복 방지를 위해 ON CONFLICT)
+INSERT INTO shop_search_refresh_queue (shop_id)
+SELECT shop_id
+FROM shop
+ON CONFLICT (shop_id) DO NOTHING;
+
+COMMIT;
+
+-- 3) 워커 함수 반복 호출 (트랜잭션 밖에서 실행)
+DO $$
+DECLARE
+    processed int;
+BEGIN
+    LOOP
+        processed := process_shop_search_refresh_queue(2000); -- 배치 크기 조절 가능
+        EXIT WHEN processed = 0;
+        PERFORM pg_sleep(0.1); -- 과도한 락/부하 완화용, 필요 시 조절
+    END LOOP;
+END $$;
+
+
+
+정의한 함수소유자 변경SQL쿼리
+ALTER FUNCTION enqueue_shop_refresh(p_shop_id bigint) OWNER TO wsd;
+ALTER FUNCTION immutable_unaccent(text) OWNER TO wsd;
+ALTER FUNCTION process_shop_search_refresh_queue(p_limit integer) OWNER TO wsd;
+ALTER FUNCTION refresh_shop_search(p_shop_id bigint) OWNER TO wsd;
+ALTER FUNCTION trg_enqueue_on_keywords() OWNER TO wsd;
+ALTER FUNCTION trg_enqueue_on_shop() OWNER TO wsd;
+ALTER FUNCTION trg_enqueue_on_shop_categories() OWNER TO wsd;
+ALTER FUNCTION trg_enqueue_on_shop_category_relation() OWNER TO wsd;
+ALTER FUNCTION trg_enqueue_on_shop_keyword() OWNER TO wsd;
+ALTER FUNCTION trg_enqueue_on_shop_services() OWNER TO wsd;
+
+
+
+
+각 함수 소유권확인 소유계정확인
+SELECT
+  n.nspname AS schema_name,
+  p.proname AS function_name,
+  pg_get_function_identity_arguments(p.oid) AS arguments,
+  r.rolname AS owner
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+JOIN pg_roles r ON r.oid = p.proowner
+WHERE n.nspname = 'public'
+  AND p.proname IN (
+    'immutable_unaccent',
+    'refresh_shop_search',
+    'enqueue_shop_refresh',
+    'process_shop_search_refresh_queue',
+    'trg_enqueue_on_shop',
+    'trg_enqueue_on_shop_keyword',
+    'trg_enqueue_on_keywords',
+    'trg_enqueue_on_shop_category_relation',
+    'trg_enqueue_on_shop_categories',
+    'trg_enqueue_on_shop_services'
+  )
+ORDER BY function_name;
+
+
+
+
+7. 조회 쿼리(부분일치/오타 허용)
+WITH raw_input AS (
+  SELECT trim(regexp_replace(immutable_unaccent('운동 센터'), '\s+', ' ', 'g')) AS raw_text
+),
+tokens AS (
+  SELECT r.raw_text,
+         array_agg(cleaned.token) FILTER (WHERE cleaned.token IS NOT NULL) AS words
+  FROM raw_input r
+  LEFT JOIN LATERAL (
+    SELECT NULLIF(regexp_replace(token, '[^[:alnum:]\uAC00-\uD7A3]', '', 'g'), '') AS token
+    FROM regexp_split_to_table(r.raw_text, '\s+') AS token
+  ) cleaned ON true
+  GROUP BY r.raw_text
+),
+ts_query AS (
+  SELECT raw_text,
+         CASE
+           WHEN array_length(words, 1) IS NULL THEN NULL
+           ELSE to_tsquery(
+                  'ko_en',
+                  array_to_string(
+                    ARRAY(
+                      SELECT quote_literal(word) || ':*'
+                      FROM unnest(words) AS word
+                    ),
+                    ' | '
+                  )
+                )
+         END AS tsq,
+         raw_text AS trigram_input
+  FROM tokens
+)
+SELECT s.shop_id,
+       COALESCE(ts_rank_cd(ARRAY[1.0, 0.4, 0.4, 0.2]::real[], s.search_doc, ts_query.tsq), 0) AS rank
+FROM shop s
+JOIN ts_query ON true
+WHERE (
+        (ts_query.tsq IS NOT NULL AND s.search_doc @@ ts_query.tsq)
+     OR (ts_query.trigram_input <> '' AND s.search_text % ts_query.trigram_input)
+      )
+ORDER BY rank DESC,
+         similarity(s.search_text, ts_query.trigram_input) DESC,
+         s.shop_id
+LIMIT 100;

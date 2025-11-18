@@ -1,6 +1,7 @@
 <?php
 $sub_menu = "920200";
 include_once("./_common.php");
+include_once(G5_ZSQL_PATH."/set_conf.php");
 
 @auth_check($auth[$sub_menu], 'w');
 
@@ -131,26 +132,40 @@ if($w == '' || $w == 'u'){
 
     // 메뉴 접근 권한 설정
     if(count($shop_auths) > 0){
+        //필수메뉴 배열
+        $essential_menus = $set_conf['set_shopmanager_basic_menu_arr'];
         // 기존 정보 삭제(초기화)
         $sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id = '".$mb_id."' ";
         sql_query($sql,1);
-        $sql = "INSERT INTO {$g5['auth_table']} SET
-                            mb_id = '".$mb_id."'
-                            , au_menu = '100000'
-                            , au_auth = 'r' ";
-        //echo $sql.'<br>';
+        $sql = " INSERT INTO {$g5['auth_table']} (mb_id, au_menu, au_auth) VALUES ";
+        // 필수메뉴 권한 추가
+        $en = 0;
+        foreach ($essential_menus as $essential_code => $essential_arr) {
+            $sql .= ($en == 0) ? "" : ",";
+            $sql .= "('".$mb_id."','".$essential_code."','".$essential_arr['auth']."')";
+            $en++;
+        }
         sql_query($sql,1);
-        foreach ($shop_auths as $shop_auth) {
-            if($shop_auth) {
-                $sql = "INSERT INTO {$g5['auth_table']} SET
-                            mb_id = '".$mb_id."'
-                            , au_menu = '".$shop_auth."'
-                            , au_auth = 'r,w,d'
-                ";
-                //echo $sql.'<br>';
-                sql_query($sql,1);
+        // 선택메뉴 권한 추가
+        // $shop_auths 배열에 요소가 있으면 foreach문으로 반복하면서 권한정보를 추가
+        if(count($shop_auths) > 0) {
+            $mmn = 0;
+            foreach ($shop_auths as $shop_auth) {
+                $sql .= ",('".$mb_id."','".$shop_auth."','r,w,d')";
+                $mmn++;
             }
         }
+        $sql .= " ON DUPLICATE KEY UPDATE au_auth = VALUES(au_auth) ";
+        sql_query($sql,1);
+    } else {
+        // 기존 권한정보 삭제(초기화)
+        $sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id = '".$mb_id."' ";
+        sql_query($sql,1);
+        // $sql = "INSERT INTO {$g5['auth_table']} SET
+        //                     mb_id = '".$mb_id."'
+        //                     , au_menu = '100000'
+        //                     , au_auth = 'r' ";
+        // sql_query($sql,1);
     }
 }
 

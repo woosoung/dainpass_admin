@@ -851,6 +851,23 @@ function delete_db_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
 
 
 // fle_db_tbl, fle_db_idx, fle_type 으로 파일삭제하기
+if(!function_exists('delete_s3_file')) {
+function delete_s3_file($fle_db_tbl='',$fle_db_idx=''){
+    global $conf_com_idx, $g5;
+    $sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
+                FROM {$g5['dain_file_table']}
+                WHERE fle_db_tbl = '{$fle_db_tbl}'
+                AND fle_db_idx = '{$fle_db_idx}'
+    ";
+    $fr = sql_fetch_pg($sql);
+    if($fr['fle_idxs']) {
+        $fle_idx_array = explode(',',$fr['fle_idxs']);
+        delete_idx_s3_file($fle_idx_array);
+    }
+}
+}
+
+// fle_db_tbl, fle_db_idx, fle_type 으로 파일삭제하기
 if(!function_exists('delete_db_s3_file')) {
 function delete_db_s3_file($fle_db_tbl='',$fle_db_idx='',$fle_type=''){
     global $conf_com_idx, $g5;

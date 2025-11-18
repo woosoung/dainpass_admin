@@ -54,3 +54,10 @@ $g5['setting_table']                     = 'setting';
 $g5['shop_table']                        = 'shop'; //가맹점
 $g5['shop_categories_table']             = 'shop_categories'; //업종(분류)
 $g5['shop_category_relation_table']      = 'shop_category_relation'; //업종-가맹점 크로스 테이블
+
+$g5['shop_keyword_table']                = 'shop_keyword'; //가맹점별 키워드 테이블
+$g5['keywords_table']                    = 'keywords'; //키워드 테이블
+$g5['shop_search_refresh_queue_table'] = 'shop_search_refresh_queue'; //가맹점 검색색인 갱신 큐 테이블
+
+$g5['amenities_table']                  = 'amenities'; //편의시설
+$g5['shop_amenities_table']             = 'shop_amenities'; //가맹점-편의시설 크로스 테이블

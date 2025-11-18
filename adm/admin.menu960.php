@@ -1,0 +1,7 @@
+<?php
+$menu["menu960"] = array(
+    array('960000', '고객관리', '' . G5_Z_URL . '/customeqa_list.php', 'customeqa_list'),
+    array('960100', '공지사항', '' . G5_Z_URL . '/notice_list.php', 'notice_list'),
+    array('960200', 'FAQ관리', '' . G5_Z_URL . '/faq_list.php', 'faq_list'),
+    array('960300', '고객문의관리', '' . G5_Z_URL . '/customer_inquiry_list.php', 'customer_inquiry_list'),
+);

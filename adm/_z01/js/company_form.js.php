@@ -1,7 +1,29 @@
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+    const copyIcons = document.querySelectorAll(".copy_url");
     const sortableEl = document.getElementById('cat_ul');
     const bsortableEl = document.getElementById('branch_imgs');
+    const kboxsortableEl = document.getElementById('keyword_box');
+    //초기화시 가맹점이미지의 sort순서번호 업데이트
+    updateSortNumbersBranch();
+    //초기화시 검색키워드의 sort순서번호 업데이트
+    updateSortKeywords();
+
+    copyIcons.forEach(icon => {
+        icon.addEventListener("click", function () {
+            const targetSpan = this.nextElementSibling;
+            if (targetSpan && targetSpan.classList.contains("copied_url")) {
+            const text = targetSpan.textContent;
+            navigator.clipboard.writeText(text)
+                .then(() => alert("텍스트가 복사되었습니다!"))
+                .catch(err => {
+                alert("복사에 실패했습니다.");
+                console.error("Clipboard copy failed:", err);
+                });
+            }
+        });
+    });
+
     // 리프레시 $('#cat_ul').sortable('refresh');
     $(sortableEl).sortable({
         update: function() {
@@ -19,6 +41,24 @@ document.addEventListener('DOMContentLoaded', function(){
                 updateSortNumbers(); // 순서번호 업데이트
                 $(sortableEl).sortable('refresh');
             }
+        }
+    });
+
+    // 리프레시 $('#branch_imgs').sortable('refresh');
+    $(bsortableEl).sortable({
+        update: function() {
+            $(this).sortable('refresh'); // 구조갱신
+            updateSortNumbersBranch(); // 순서번호 업데이트
+        }
+    });
+
+    // 리프레시 $('#keyword_box').sortable('refresh');
+    $(kboxsortableEl).sortable({
+        //드래그 기준 DOM 요소
+        // handle: '.sp_cont',
+        update: function() {
+            $(this).sortable('refresh'); // 구조갱신
+            updateSortKeywords(); // 순서번호 업데이트
         }
     });
 
@@ -66,21 +106,24 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
     // 업체담당자를 설정하는 이벤트
-    document.getElementById("btn_manager").addEventListener("click", function(e) {
-        e.preventDefault(); // return false와 동일한 효과
+    const btnManager = document.getElementById("btn_manager");
+    if (btnManager) {
+        btnManager.addEventListener("click", function(e) {
+            e.preventDefault(); // return false와 동일한 효과
 
-        const shop_id = this.getAttribute("shop_id");
-        const href = "./shop_manager_list.php?shop_id=" + shop_id;
+            const shop_id = this.getAttribute("shop_id");
+            const href = "./shop_manager_list.php?shop_id=" + shop_id;
 
-        const winShopMember = window.open(
-            href,
-            "winShopMember",
-            "left=100,top=100,width=620,height=760,scrollbars=1"
-        );
-        if (winShopMember) {
-            winShopMember.focus();
-        }
-    });
+            const winShopMember = window.open(
+                href,
+                "winShopMember",
+                "left=100,top=100,width=620,height=760,scrollbars=1"
+            );
+            if (winShopMember) {
+                winShopMember.focus();
+            }
+        });
+    }
 
     // console.log(cats);
     //########### 업체관련 멀티파일 ##############
@@ -105,28 +148,138 @@ document.addEventListener('DOMContentLoaded', function(){
     const inputBox = document.querySelector('input[name="mng_menus"]');
     const checkboxes = document.querySelectorAll('.mng_menu');
 
-    // 초기값($com['mng_menus']) 기반 체크 처리
-    const initVal = inputBox.value.trim();
-    if (initVal) {
-        const selectedVals = initVal.split(',');
+    if (inputBox) {
+        // 초기값($com['mng_menus']) 기반 체크 처리
+        const initVal = inputBox.value.trim();
+        if (initVal) {
+            const selectedVals = initVal.split(',');
+            checkboxes.forEach(chk => {
+                if (selectedVals.includes(chk.dataset.val)) {
+                    chk.checked = true;
+                }
+            });
+        }
+
+        // 체크박스 변경 시 input 값 업데이트
+        function updateInput() {
+            const checkedVals = Array.from(checkboxes)
+                .filter(chk => chk.checked)
+                .map(chk => chk.dataset.val);
+            inputBox.value = checkedVals.join(',');
+        }
+
         checkboxes.forEach(chk => {
-            if (selectedVals.includes(chk.dataset.val)) {
-                chk.checked = true;
-            }
+            chk.addEventListener('change', updateInput);
         });
     }
 
-    // 체크박스 변경 시 input 값 업데이트
-    function updateInput() {
-        const checkedVals = Array.from(checkboxes)
-            .filter(chk => chk.checked)
-            .map(chk => chk.dataset.val);
-        inputBox.value = checkedVals.join(',');
-    }
+    // ############ 검색 키워드 관리 ############
+    const keywordInput = document.getElementById('input_keyword');
+    const keywordHidden = document.getElementById('shop_keywords');
+    const keywordBox = document.getElementById('keyword_box');
+    const addKeywordBtn = document.getElementById('add_keyword');
 
-    checkboxes.forEach(chk => {
-        chk.addEventListener('change', updateInput);
-    });
+    if (keywordInput && keywordHidden && keywordBox && addKeywordBtn) {
+        let keywords = [];
+
+        const normalizeKeyword = (kw) => kw.trim();
+
+        const loadInitialKeywords = () => {
+            const initVal = keywordHidden.value || '';
+            keywords = initVal
+                .split(',')
+                .map(kw => normalizeKeyword(kw))
+                .filter(kw => kw.length);
+            renderKeywordChips();
+        };
+
+        const renderKeywordChips = () => {
+            keywordBox.innerHTML = '';
+            keywords.forEach((kw, index) => {
+                const chip = document.createElement('span');
+                chip.className = 'keyword-chip inline-flex items-center bg-gray-200 rounded px-2 py-1 mr-2 mb-2';
+                chip.dataset.index = String(index);
+
+                const label = document.createElement('span');
+                label.className = 'sp_cont';
+                label.textContent = kw;
+                chip.appendChild(label);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'ml-2 text-red-500';
+                removeBtn.setAttribute('aria-label', '키워드 삭제');
+                removeBtn.textContent = '×';
+                chip.appendChild(removeBtn);
+
+                keywordBox.appendChild(chip);
+            });
+            keywordHidden.value = keywords.join(', ');
+        };
+
+        const validateKeyword = (raw) => {
+            if (!raw.length) {
+                alert('키워드를 입력해 주세요.');
+                return false;
+            }
+            if (raw.includes(',')) {
+                alert('키워드에는 쉼표를 포함할 수 없습니다.');
+                return false;
+            }
+            const spacePattern = /^[^\s]+(?:\s[^\s]+)?$/;
+            if (!spacePattern.test(raw)) {
+                alert('키워드는 공백을 최대 1개까지만 사용할 수 있습니다.');
+                return false;
+            }
+            const allowedPattern = /^[A-Za-z0-9가-힣](?:[A-Za-z0-9가-힣'\-]*[A-Za-z0-9가-힣])?(?:\s[A-Za-z0-9가-힣](?:[A-Za-z0-9가-힣'\-]*[A-Za-z0-9가-힣])?)?$/;
+            if (!allowedPattern.test(raw)) {
+                alert("키워드는 영문/숫자/한글과 내부의 ' 또는 - 만 사용할 수 있으며, 특수문자는 단어의 처음과 끝에 올 수 없습니다.");
+                return false;
+            }
+            return true;
+        };
+
+        addKeywordBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const rawValue = keywordInput.value.trim();
+            if (!validateKeyword(rawValue)) {
+                keywordInput.focus();
+                return;
+            }
+
+            if (keywords.length >= 10) {
+                alert('키워드는 최대 10개까지 등록할 수 있습니다.');
+                keywordInput.focus();
+                return;
+            }
+
+            const normalized = normalizeKeyword(rawValue);
+            if (keywords.includes(normalized)) {
+                alert('이미 등록된 키워드입니다.');
+                keywordInput.value = '';
+                keywordInput.focus();
+                return;
+            }
+
+            keywords.push(normalized);
+            renderKeywordChips();
+            keywordInput.value = '';
+            keywordInput.focus();
+        });
+
+        keywordBox.addEventListener('click', function(e) {
+            const target = e.target;
+            if (target.tagName === 'BUTTON' && target.parentElement && target.parentElement.dataset.index) {
+                const idx = parseInt(target.parentElement.dataset.index, 10);
+                if (!Number.isNaN(idx)) {
+                    keywords.splice(idx, 1);
+                    renderKeywordChips();
+                }
+            }
+        });
+
+        loadInitialKeywords();
+    }
 });
 
 // sortable .cat_li 요소를 순회하면서 .sp_sort안에 순서번호를 업데이트하는 함수
@@ -145,6 +298,62 @@ function updateSortNumbers() {
         }
     });
     document.querySelector('input[name="category_ids"]').value = cate_ids;
+}
+// sortable .branch_li 요소를 순회하면서 .sp_sort안에 순서번호를 업데이트하는 함수
+async function updateSortNumbersBranch() {
+    const categoryItems = document.querySelectorAll('.branch_li');
+    let branch_ids = '';
+    categoryItems.forEach((li, index) => {
+        // li의 속성중에 data-id값을 cate_ids에 콤마로 구분해서 추가
+        const dataId = li.getAttribute('data-id');
+        if (dataId) {
+            branch_ids += (branch_ids ? ',' : '') + dataId;
+        }
+        const sortSpan = li.querySelector('.sp_sort');
+        if (sortSpan) {
+            sortSpan.textContent = index + 1; // 순서대로 1, 2, 3, ...
+        }
+    });
+    document.querySelector('input[name="branch_ids"]').value = branch_ids;
+    //fle_sort 업데이트
+    const url = '<?=G5_Z_URL?>/ajax/fle_sort_change.php';
+    try{
+        const data = {
+            brc_ids: branch_ids,
+        };
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+        const rst = await res.text();
+        
+        if(!res.ok){
+            throw new Error('네트워크 상태가 불안정합니다.');
+        }
+
+    }catch(e){
+        console.error('Error:',err);
+    }
+}
+
+// 
+function updateSortKeywords() {
+    const keywordItems = document.querySelectorAll('.keyword-chip');
+    let keywords = [];
+    keywordItems.forEach((chip, index) => {
+        const label = chip.querySelector('span.sp_cont');
+        if (label) {
+            keywords.push(label.textContent);
+        }
+        const sortSpan = chip.querySelector('.sp_sort');
+        if (sortSpan) {
+            sortSpan.textContent = index + 1; // 순서대로 1, 2, 3, ...
+        }
+    });
+    document.getElementById('shop_keywords').value = keywords.join(', ');
 }
 
 function form01_submit(f) {

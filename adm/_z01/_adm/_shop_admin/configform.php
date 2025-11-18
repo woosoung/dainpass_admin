@@ -157,6 +157,32 @@ add_javascript('<script src="'.G5_Z_URL.'/js/colpick/colpick.js"></script>',0);
             </td>
         </tr>
         <tr>
+            <th scope="row"><label for="de_point_unit">포인트 단위<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_point_unit</span><?php } ?></label></th>
+            <td>
+                <?php echo help("포인트 적립 및 사용시 사용되는 기본 단위를 설정합니다. (예: 1, 10, 100, 1000)"); ?>
+                <select id="de_point_unit" name="de_point_unit">
+                    <option value="1" <?php echo get_selected($default2['de_point_unit']??1, 1); ?>>1</option>
+                    <option value="10" <?php echo get_selected($default2['de_point_unit']??1, 10); ?>>10</option>
+                    <option value="100" <?php echo get_selected($default2['de_point_unit']??1, 100); ?>>100</option>
+                    <option value="1000" <?php echo get_selected($default2['de_point_unit']??1, 1000); ?>>1000</option>
+                </select> 점
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="de_settle_max_point_ratio">최대 포인트 결제 비율<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_settle_max_point_ratio</span><?php } ?></label></th>
+            <td>
+                <?php echo help("결제시 최대로 사용할 수 있는 포인트 비율을 설정합니다. (할인 금액 제외, 단위: %)\n예: 50으로 설정하면 결제 금액의 50%까지 포인트로 결제 가능합니다."); ?>
+                <input type="text" name="de_settle_max_point_ratio" value="<?php echo get_sanitize_input($default2['de_settle_max_point_ratio']??0); ?>" id="de_settle_max_point_ratio" class="frm_input" size="5"> %
+            </td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="de_point_getting_rate">포인트 적립 비율<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_point_getting_rate</span><?php } ?></label></th>
+            <td>
+                <?php echo help("구매시 적립되는 포인트 비율을 설정합니다. (할인 금액 제외, 단위: %)\n예: 1로 설정하면 결제 금액의 1%가 포인트로 적립됩니다."); ?>
+                <input type="text" name="de_point_getting_rate" value="<?php echo get_sanitize_input($default2['de_point_getting_rate']??0); ?>" id="de_point_getting_rate" class="frm_input" size="5"> %
+            </td>
+        </tr>
+        <tr>
             <th scope="row"><label for="de_card_point">포인트부여<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_card_point [Y/N]</span><?php } ?></label></th>
             <td>
                 <?php echo help("신용카드, 계좌이체, 휴대폰 결제시 포인트를 부여할지를 설정합니다. (기본값은 '아니오')"); ?>
