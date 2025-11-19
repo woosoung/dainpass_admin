@@ -165,17 +165,15 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
     
-    if(is_ultra){
-        // 현재 활성화된 기본업체명을 최상단 왼쪽편에 표시한다.
-        $('<span id="logo_company_name" class="block absolute left-[240px] top-[20px] text-gray-300 text-[16px]">'+cf_shop_title+'</span>').appendTo('#logo');
-        // 기본업체명을 변경하기위한 버튼을 최상단 오른쪽편에 표시한다.
-        if(!$('.tnb_shop_select').length){
-            $('<li class="tnb_li"><a href="javascript:" class="tnb_shop_select border border-gray-300 rounded-sm">디폴트업체</a></li>').prependTo($('#tnb > ul'));
-        }
+    // 현재 활성화된 기본업체명을 최상단 왼쪽편에 표시한다.
+    $('<span id="logo_company_name" class="block absolute left-[240px] top-[20px] text-gray-300 text-[16px]">'+cf_shop_title+'</span>').appendTo('#logo');
+    // 기본업체명을 변경하기위한 버튼을 최상단 오른쪽편에 표시한다.
+    if(!$('.tnb_shop_select').length && is_manager){
+        $('<li class="tnb_li"><a href="javascript:" class="tnb_shop_select border border-gray-300 rounded-sm">디폴트업체</a></li>').prependTo($('#tnb > ul'));
         // 기본업체명 변경 버튼을 클릭하면 팝업창이 뜬다.
         $('.tnb_shop_select').on('click',function(){
             winDefaultShop = window.open(g5_z_url+'/shop_change.popup.php?file_name='+file_name, "winDefaultShop", "left=10,top=10,width=500,height=600");
-		    winDefaultShop.focus();
+            winDefaultShop.focus();
         });
     }
 });

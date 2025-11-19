@@ -285,8 +285,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         </table>
     </div>
     <div class="btn_fixed_top">
-        <input type="submit" name="act_button" value="디폴트업체변경" onclick="document.pressed=this.value" class="btn_03 btn" style="margin-right:50px;display:none;">
-
         <?php if(!@auth_check($auth[$sub_menu],"d",1)) { ?>
         <input type="submit" name="act_button" value="선택수정" onclick="document.pressed=this.value" class="btn_02 btn" style="display:none;">
         <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">

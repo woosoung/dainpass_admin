@@ -61,3 +61,5 @@ $g5['shop_search_refresh_queue_table'] = 'shop_search_refresh_queue'; //가맹�
 
 $g5['amenities_table']                  = 'amenities'; //편의시설
 $g5['shop_amenities_table']             = 'shop_amenities'; //가맹점-편의시설 크로스 테이블
+
+$g5['customers_table']                    = 'customers'; //고객(사용자)회원
