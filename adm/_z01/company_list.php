@@ -31,6 +31,17 @@ $where = array();
 $where[] = " status != 'trash' ";
 
 $_GET['sfl'] = !empty($_GET['sfl']) ? $_GET['sfl'] : '';
+$ser_com_type = isset($_GET['ser_com_type']) ? trim($_GET['ser_com_type']) : '';
+
+// 업종 필터링
+if (!empty($ser_com_type)) {
+    $ser_com_type = addslashes($ser_com_type);
+    $where[] = " shop_id IN (
+        SELECT shop_id 
+        FROM {$g5['shop_category_relation_table']} 
+        WHERE category_id = '{$ser_com_type}'
+    ) ";
+}
 
 if ($stx) {
     switch ($sfl) {
@@ -113,9 +124,21 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <span class="btn_ov01"><span class="ov_txt">승인대기</span><span class="ov_num"> <?php echo number_format($pending_count) ?></span></span>
 </div>
 <form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
-<label for="sfl" class="sound_only">검색대상</label>
-<select name="ser_com_type" class="cp_field" title="업종선택">
+<label for="ser_com_type" class="sound_only">업종선택</label>
+<select name="ser_com_type" id="ser_com_type" class="cp_field" title="업종선택">
 	<option value="">전체업종</option>
+	<?php 
+	if (!empty($cats)) {
+		foreach ($cats as $cat_key => $cat_data) {
+			if (!empty($cat_data['mid']) && is_array($cat_data['mid'])) {
+				foreach ($cat_data['mid'] as $mid_key => $mid_name) {
+					$selected = (isset($_GET['ser_com_type']) && $_GET['ser_com_type'] == $mid_key) ? ' selected' : '';
+					echo '<option value="'.$mid_key.'"'.$selected.'>'.htmlspecialchars($mid_name).'</option>'.PHP_EOL;
+				}
+			}
+		}
+	}
+	?>
 </select>
 
 <select name="sfl" id="sfl">

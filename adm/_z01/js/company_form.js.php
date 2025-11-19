@@ -280,6 +280,72 @@ document.addEventListener('DOMContentLoaded', function(){
 
         loadInitialKeywords();
     }
+
+    // ############ 편의시설 버튼 토글 관리 ############
+    const amenitiesHidden = document.getElementById('amenities_id_list');
+    const amenityButtons = document.querySelectorAll('.amenity-btn');
+
+    if (amenitiesHidden && amenityButtons.length > 0) {
+        // 초기 선택된 편의시설 ID 배열
+        let selectedAmenityIds = [];
+        const initVal = amenitiesHidden.value.trim();
+        if (initVal) {
+            selectedAmenityIds = initVal.split(',').map(id => id.trim()).filter(id => id.length > 0);
+        }
+
+        // 버튼 클릭 이벤트 처리
+        amenityButtons.forEach(btn => {
+            const amenityId = btn.getAttribute('data-amenity-id');
+            const amenityName = btn.getAttribute('data-amenity-name');
+            const isInitiallyActive = selectedAmenityIds.includes(amenityId);
+
+            // 초기 상태 설정
+            if (isInitiallyActive) {
+                btn.classList.remove('bg-gray-200', 'text-gray-700');
+                btn.classList.add('bg-blue-500', 'text-white');
+            }
+
+            // 버튼 클릭 이벤트
+            btn.addEventListener('click', function() {
+                const currentAmenityId = this.getAttribute('data-amenity-id');
+                const isActive = this.classList.contains('bg-blue-500');
+                const iconEnabled = this.getAttribute('data-icon-enabled');
+                const iconDisabled = this.getAttribute('data-icon-disabled');
+                const iconImg = this.querySelector('.amenity-icon');
+
+                if (isActive) {
+                    // 비활성화: 선택된 목록에서 제거
+                    selectedAmenityIds = selectedAmenityIds.filter(id => id !== currentAmenityId);
+                    this.classList.remove('bg-blue-500', 'text-white');
+                    this.classList.add('bg-gray-200', 'text-gray-700');
+                    // 아이콘 변경
+                    if (iconImg && iconDisabled) {
+                        iconImg.src = iconDisabled;
+                        iconImg.style.display = 'inline-block';
+                    } else if (iconImg && !iconDisabled) {
+                        iconImg.style.display = 'none';
+                    }
+                } else {
+                    // 활성화: 선택된 목록에 추가
+                    if (!selectedAmenityIds.includes(currentAmenityId)) {
+                        selectedAmenityIds.push(currentAmenityId);
+                    }
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('bg-blue-500', 'text-white');
+                    // 아이콘 변경
+                    if (iconImg && iconEnabled) {
+                        iconImg.src = iconEnabled;
+                        iconImg.style.display = 'inline-block';
+                    } else if (iconImg && !iconEnabled) {
+                        iconImg.style.display = 'none';
+                    }
+                }
+
+                // hidden input 값 갱신
+                amenitiesHidden.value = selectedAmenityIds.join(',');
+            });
+        });
+    }
 });
 
 // sortable .cat_li 요소를 순회하면서 .sp_sort안에 순서번호를 업데이트하는 함수

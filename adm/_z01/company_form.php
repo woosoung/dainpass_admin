@@ -204,9 +204,49 @@ else if ($w == 'u') {
 		$keywords[] = $row['keyword'];
 	}
 	$com['shop_keywords'] = implode(',', $keywords);
+	
+	// shop_amenities 테이블에서 현재 선택된 편의시설 ID 목록 가져오기
+	$sa_sql = " SELECT amenity_id FROM {$g5['shop_amenities_table']} WHERE shop_id = '{$shop_id}' AND available_yn = 'Y' ORDER BY amenity_id ";
+	$sa_result = sql_query_pg($sa_sql);
+	$selected_amenity_ids = [];
+	if ($sa_result && is_object($sa_result) && isset($sa_result->result)) {
+		while ($row = sql_fetch_array_pg($sa_result->result)) {
+			$selected_amenity_ids[] = $row['amenity_id'];
+		}
+	}
+	// shop 테이블의 amenities_id_list가 없거나 비어있으면 shop_amenities 테이블에서 가져온 값으로 설정
+	if (empty($com['amenities_id_list']) && !empty($selected_amenity_ids)) {
+		$com['amenities_id_list'] = implode(',', $selected_amenity_ids);
+	}
+	
+	// 편의시설 목록 조회
+	$amenities_sql = " SELECT amenity_id, amenity_name, icon_url_enabled, icon_url_disabled 
+						FROM {$g5['amenities_table']} 
+						ORDER BY amenity_id ";
+	$amenities_result = sql_query_pg($amenities_sql);
+	$amenities_list = [];
+	if ($amenities_result && is_object($amenities_result) && isset($amenities_result->result)) {
+		while ($row = sql_fetch_array_pg($amenities_result->result)) {
+			$amenities_list[] = $row;
+		}
+	}
 }
 else
     alert('제대로 된 값이 넘어오지 않았습니다.');
+
+// 편의시설 목록 조회 (신규 등록 시에도 필요)
+if ($w == '') {
+	$amenities_sql = " SELECT amenity_id, amenity_name, icon_url_enabled, icon_url_disabled 
+						FROM {$g5['amenities_table']} 
+						ORDER BY amenity_id ";
+	$amenities_result = sql_query_pg($amenities_sql);
+	$amenities_list = [];
+	if ($amenities_result && is_object($amenities_result) && isset($amenities_result->result)) {
+		while ($row = sql_fetch_array_pg($amenities_result->result)) {
+			$amenities_list[] = $row;
+		}
+	}
+}
 
 // print_r2($rank_arr);exit;
 // 라디오&체크박스 선택상태 자동 설정 (필드명 배열 선언!)
@@ -630,8 +670,38 @@ let cats = <?=json_encode($cats)?>;
 	<tr>
 		<th scope="row"><label for="amenities_id_list">편의시설 ID 목록</label></th>
 		<td colspan="3">
-			<?php echo help("편의시설 ID를 쉼표로 구분하여 입력해 주세요. 예: 23,34,543"); ?>
-			<input type="text" name="amenities_id_list" value="<?=$com['amenities_id_list']??''?>" id="amenities_id_list" class="frm_input w-full" placeholder="23,34,543">
+			<?php echo help("편의시설을 선택해 주세요. 버튼을 클릭하여 활성/비활성 상태를 전환할 수 있습니다."); ?>
+			<input type="hidden" name="amenities_id_list" value="<?=$com['amenities_id_list']??''?>" id="amenities_id_list" class="frm_input w-full" placeholder="23,34,543">
+			<div id="amenities_button_container" class="mt-3 flex flex-wrap gap-2">
+				<?php 
+				$selected_amenities = isset($com['amenities_id_list']) && $com['amenities_id_list'] ? explode(',', $com['amenities_id_list']) : [];
+				$selected_amenities = array_map('trim', $selected_amenities);
+				if (!empty($amenities_list)) {
+					foreach ($amenities_list as $amenity) {
+						$is_active = in_array((string)$amenity['amenity_id'], $selected_amenities);
+						$active_class = $is_active ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700';
+						$icon_url = $is_active ? ($amenity['icon_url_enabled'] ?? '') : ($amenity['icon_url_disabled'] ?? '');
+				?>
+					<button type="button" 
+							class="amenity-btn px-4 py-2 rounded border border-gray-300 <?=$active_class?> hover:opacity-80 transition-opacity" 
+							data-amenity-id="<?=$amenity['amenity_id']?>"
+							data-amenity-name="<?=htmlspecialchars($amenity['amenity_name'])?>"
+							data-icon-enabled="<?=htmlspecialchars($amenity['icon_url_enabled'] ?? '')?>"
+							data-icon-disabled="<?=htmlspecialchars($amenity['icon_url_disabled'] ?? '')?>">
+						<?php if ($icon_url): ?>
+							<img src="<?=$icon_url?>" alt="<?=htmlspecialchars($amenity['amenity_name'])?>" class="amenity-icon inline-block w-5 h-5 mr-2" onerror="this.style.display='none'">
+						<?php else: ?>
+							<img src="" alt="<?=htmlspecialchars($amenity['amenity_name'])?>" class="amenity-icon inline-block w-5 h-5 mr-2" style="display:none;">
+						<?php endif; ?>
+						<?=htmlspecialchars($amenity['amenity_name'])?>
+					</button>
+				<?php 
+					}
+				} else {
+					echo '<p class="text-gray-500">등록된 편의시설이 없습니다.</p>';
+				}
+				?>
+			</div>
 		</td>
 	</tr>
 	<?php if($w == 'u') { ?>

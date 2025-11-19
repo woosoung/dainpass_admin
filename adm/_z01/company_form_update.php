@@ -465,6 +465,39 @@ if (isset($_POST['shop_keywords']) && trim($_POST['shop_keywords']) !== '') {
     sql_query_pg($queue_sql);
 }
 
+// 가맹점 편의시설 처리
+if ($shop_id && isset($_POST['amenities_id_list'])) {
+    $amenities_id_list = trim($_POST['amenities_id_list']);
+    
+    // 기존 shop_amenities 데이터 삭제 (해당 shop_id의 모든 레코드)
+    $delete_sql = " DELETE FROM {$g5['shop_amenities_table']} WHERE shop_id = '{$shop_id}' ";
+    sql_query_pg($delete_sql);
+    
+    // amenities_id_list가 있으면 새로운 레코드 추가
+    if (!empty($amenities_id_list)) {
+        $amenity_ids_arr = explode(',', $amenities_id_list);
+        $amenity_ids_arr = array_map('trim', $amenity_ids_arr);
+        $amenity_ids_arr = array_filter($amenity_ids_arr, function($id) {
+            return !empty($id) && is_numeric($id);
+        });
+        
+        if (count($amenity_ids_arr) > 0) {
+            $insert_sql = " INSERT INTO {$g5['shop_amenities_table']} (shop_id, amenity_id, available_yn) VALUES ";
+            $values = array();
+            foreach ($amenity_ids_arr as $amenity_id) {
+                $amenity_id = (int)$amenity_id;
+                if ($amenity_id > 0) {
+                    $values[] = "('{$shop_id}', '{$amenity_id}', 'Y')";
+                }
+            }
+            if (count($values) > 0) {
+                $insert_sql .= implode(',', $values);
+                sql_query_pg($insert_sql);
+            }
+        }
+    }
+}
+
 
 foreach($_REQUEST as $key => $value ) {
     if(substr($key,0,4)=='ser_') {
