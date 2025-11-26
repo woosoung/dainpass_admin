@@ -50,7 +50,46 @@ $sql  = " SELECT *
 // if($is_ultra) echo $sql;
 $result = sql_query_pg($sql);
 
+// 모든 amenity_id를 먼저 수집
+$amenity_ids = array();
+$amenity_rows = array();
+while ($temp_row = sql_fetch_array_pg($result->result)) {
+    $amenity_ids[] = $temp_row['amenity_id'];
+    $amenity_rows[] = $temp_row;
+}
+
+// 이미지 데이터를 한 번의 쿼리로 가져오기 (PostgreSQL DISTINCT ON 사용으로 성능 최적화)
+$file_images = array();
+$amenity_count = count($amenity_ids);
+$i_wd = 80;
+$i_ht = 80;
+
+if ($amenity_count > 0) {
+    $amenity_ids_str = "'" . implode("','", array_map('addslashes', $amenity_ids)) . "'";
+    // DISTINCT ON을 사용하여 각 amenity_id와 fle_type 조합에 대해 최신 레코드만 가져오기
+    $file_sql = " SELECT DISTINCT ON (fle_db_idx, fle_type) 
+                         fle_db_idx, fle_type, fle_path, fle_name_orig
+                  FROM {$g5['dain_file_table']}
+                  WHERE fle_db_tbl = 'amenities'
+                    AND fle_type IN ('amnt_enabled', 'amnt_disabled')
+                    AND fle_dir = 'shop/amenity_img'
+                    AND fle_db_idx IN ($amenity_ids_str)
+                  ORDER BY fle_db_idx, fle_type, fle_reg_dt DESC ";
+    $file_result = sql_query_pg($file_sql);
+    
+    // amenity_id와 fle_type을 키로 하는 배열로 구성 (이미 DISTINCT ON으로 최신 것만 가져옴)
+    while ($file_row = sql_fetch_array_pg($file_result->result)) {
+        $key = $file_row['fle_db_idx'] . '_' . $file_row['fle_type'];
+        $file_images[$key] = $file_row;
+    }
+}
+
+// 이미지 URL 생성에 사용할 기본 URL 미리 준비 (성능 최적화)
+$imgproxy_base = $set_conf['set_imgproxy_url'] . '/rs:fill:' . $i_wd . ':' . $i_ht . ':1/plain/' . $set_conf['set_s3_basicurl'] . '/';
+
 $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
+
+include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 ?>
 
 <div class="local_ov01 local_ov">
@@ -98,32 +137,40 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
     <tbody>
     <?php
     $s_add = $s_vie = $s_upd = $s_del = '';
-    $i_wd = 80;
-    $i_ht = 80;
-    for ($i=0; $row=sql_fetch_array_pg($result->result); $i++)
+    $amenity_count = count($amenity_rows);
+    $empty_thumb = '<span class="inline-block bg_transparent w-['.$i_wd.'px] h-['.$i_ht.'px]" style="opacity:0.3"></span>';
+    
+    for ($i=0; $i < $amenity_count; $i++)
     {
-        $s_upd = '<a href="./amenities_form.php?w=u&amp;amenity_id='.$row['amenity_id'].'&amp;'.$qstr.'" class="btn btn_02"><span class="sound_only">'.get_text($row['amenity_name']).' </span>수정</a> ';
+        $row = $amenity_rows[$i];
+        $amenity_id = $row['amenity_id'];
+        $amenity_name = get_text($row['amenity_name']);
+        
+        $s_upd = '<a href="./amenities_form.php?w=u&amp;amenity_id='.$amenity_id.'&amp;'.$qstr.'" class="btn btn_02"><span class="sound_only">'.$amenity_name.' </span>수정</a> ';
 
         if ($is_admin == 'super' || $member['mb_level'] >= 9) {
-            $s_del = '<a href="./amenities_form_update.php?w=d&amp;amenity_id='.$row['amenity_id'].'&amp;'.$qstr.'" onclick="return delete_confirm(this);" class="btn btn_02 !bg-red-600"><span class="sound_only">'.get_text($row['amenity_name']).' </span>삭제</a> ';
+            $s_del = '<a href="./amenities_form_update.php?w=d&amp;amenity_id='.$amenity_id.'&amp;'.$qstr.'" onclick="return delete_confirm(this);" class="btn btn_02 !bg-red-600"><span class="sound_only">'.$amenity_name.' </span>삭제</a> ';
         }
         
+        // 활성화 아이콘 이미지 (이미 로드된 배열에서 가져오기)
+        $enabled_key = $amenity_id . '_amnt_enabled';
+        $rs = isset($file_images[$enabled_key]) ? $file_images[$enabled_key] : array();
+        if (!empty($rs['fle_path']) && is_s3file($rs['fle_path'])) {
+            $rs['thumb_url'] = $imgproxy_base . $rs['fle_path'];
+            $rs['thumb'] = '<span class="inline-block bg_transparent"><img src="'.$rs['thumb_url'].'" alt="'.htmlspecialchars($rs['fle_name_orig'], ENT_QUOTES).'" style="width:'.$i_wd.'px;height:'.$i_ht.'px;border:1px solid #ddd;"></span>';
+        } else {
+            $rs['thumb'] = $empty_thumb;
+        }
 
-        // 활성화 아이콘 이미지
-        $isql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'amenities' AND fle_type = 'amnt_enabled' AND fle_dir = 'shop/amenity_img' AND fle_db_idx = '{$row['amenity_id']}' ORDER BY fle_reg_dt DESC LIMIT 1 ";
-        // echo $isql."<br>";
-        $rs = sql_fetch_pg($isql);
-        $is_s3file_yn = (isset($rs['fle_path']) && is_s3file($rs['fle_path'])) ? 1 : 0;
-        @$rs['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$i_wd.':'.$i_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$rs['fle_path'];
-        $rs['thumb'] = ($is_s3file_yn) ? '<span class="inline-block bg_transparent"><img src="'.$rs['thumb_url'].'" alt="'.$rs['fle_name_orig'].'" style="width:'.$i_wd.'px;height:'.$i_ht.'px;border:1px solid #ddd;"></span>' : '<span class="inline-block bg_transparent w-['.$i_wd.'px] h-['.$i_ht.'px]" style="opacity:0.3"></span>';
-
-        // 비활성화 아이콘 이미지
-        $isql2 = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'amenities' AND fle_type = 'amnt_disabled' AND fle_dir = 'shop/amenity_img' AND fle_db_idx = '{$row['amenity_id']}' ORDER BY fle_reg_dt DESC LIMIT 1 ";
-        // echo $isql2."<br>";exit;
-        $rs2 = sql_fetch_pg($isql2);
-        $is_s3file_yn2 = (isset($rs2['fle_path']) && is_s3file($rs2['fle_path'])) ? 1 : 0;
-        @$rs2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$i_wd.':'.$i_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$rs2['fle_path'];
-        $rs2['thumb'] = ($is_s3file_yn2) ? '<span class="inline-block bg_transparent"><img src="'.$rs2['thumb_url'].'" alt="'.$rs2['fle_name_orig'].'" style="width:'.$i_wd.'px;height:'.$i_ht.'px;border:1px solid #ddd;"></span>' : '<span class="inline-block bg_transparent w-['.$i_wd.'px] h-['.$i_ht.'px]" style="opacity:0.3"></span>';
+        // 비활성화 아이콘 이미지 (이미 로드된 배열에서 가져오기)
+        $disabled_key = $amenity_id . '_amnt_disabled';
+        $rs2 = isset($file_images[$disabled_key]) ? $file_images[$disabled_key] : array();
+        if (!empty($rs2['fle_path']) && is_s3file($rs2['fle_path'])) {
+            $rs2['thumb_url'] = $imgproxy_base . $rs2['fle_path'];
+            $rs2['thumb'] = '<span class="inline-block bg_transparent"><img src="'.$rs2['thumb_url'].'" alt="'.htmlspecialchars($rs2['fle_name_orig'], ENT_QUOTES).'" style="width:'.$i_wd.'px;height:'.$i_ht.'px;border:1px solid #ddd;"></span>';
+        } else {
+            $rs2['thumb'] = $empty_thumb;
+        }
 
         $bg = 'bg'.($i%2);
     ?>
@@ -134,8 +181,8 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
         </td>
         <td class="td_img"><?=$rs['thumb']?></td>
         <td class="td_img2"><?=$rs2['thumb']?></td>
-        <td headers="sct_name" class="sct_name"><input type="text" name="amenity_name[<?=$i?>]" value="<?php echo get_text($row['amenity_name'])?>" id="amenity_name_<?=$i?>" required class="tbl_input full_input required"></td>
-        <td headers="sct_desc" class="sct_desc td_desc"><input type="text" name="description[<?=$i?>]" value="<?php echo get_text($row['description'])?>" id="description_<?=$i?>" class="tbl_input"></td>
+        <td headers="sct_name" class="sct_name"><input type="text" name="amenity_name[<?=$i?>]" value="<?php echo htmlspecialchars($row['amenity_name'], ENT_QUOTES)?>" id="amenity_name_<?=$i?>" required class="tbl_input full_input required"></td>
+        <td headers="sct_desc" class="sct_desc td_desc"><input type="text" name="description[<?=$i?>]" value="<?php echo htmlspecialchars($row['description'], ENT_QUOTES)?>" id="description_<?=$i?>" class="tbl_input"></td>
         <td class="td_mng td_mng_s">
             <?=$s_add?>
             <?=$s_vie?>

@@ -15,8 +15,8 @@ foreach($_REQUEST as $key => $value ) {
             }
         }
         else {
-            $qstr .= '&'.$key.'='.(($key == 'ser_stx')?urlencode(cut_str($value, 40, '')):$value);
-            $form_input .= '<input type="hidden" name="'.$key.'" value="'.(($key == 'ser_stx')?urlencode(cut_str($value, 40, '')):$value).'" class="frm_input">'.PHP_EOL;
+            $qstr .= '&'.$key.'='.(($key == 'ser_stx')?urlencode(cut_str($value ?? '', 40, '')):$value);
+            $form_input .= '<input type="hidden" name="'.$key.'" value="'.(($key == 'ser_stx')?urlencode(cut_str($value ?? '', 40, '')):$value).'" class="frm_input">'.PHP_EOL;
         }
     }
 }
@@ -238,7 +238,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     <td class="td_name td_left"><b><?=get_text($row['name'])?></b></td><!-- 이름 -->
                     <td class="td_nickname td_left"><?=get_text($row['nickname'])?></td><!-- 닉네임 -->
                     <td class="td_phone"><?=get_text($row['phone'])?></td><!-- 연락처 -->
-                    <td class="td_email"><?=cut_str($row['email'],30,'...')?></td><!-- 이메일 -->
+                    <td class="td_email"><?=!empty($row['email']) ? cut_str($row['email'],30,'...') : ''?></td><!-- 이메일 -->
                     <td class="td_gender"><?=isset($gender_arr[$row['gender']]) ? $gender_arr[$row['gender']] : ''?></td><!-- 성별 -->
                     <td headers="list_status" class="td_status"><?=isset($status_arr[$row['status']]) ? $status_arr[$row['status']] : '미설정'?></td><!-- 상태 -->
                     <td class="td_withdraw"><?=($row['withdraw'] == 'Y') ? '탈퇴' : '정상'?></td><!-- 탈퇴여부 -->
