@@ -21,6 +21,14 @@ if($w == '' || $w == 'u'){
             $merge_del[$k] = $v;
         }
     }
+
+    // noimage 삭제 처리
+    $noimage_del_var = $_POST['set_type'].'_noimage_del';
+    if(isset(${$noimage_del_var}) && is_array(${$noimage_del_var}) && count(${$noimage_del_var}) > 0){
+        foreach(${$noimage_del_var} as $k=>$v) {
+            $merge_del[$k] = $v;
+        }
+    }
     
     // ogplfimg 삭제 처리
     $ogplfimg_del_var = $_POST['set_type'].'_ogplfimg_del';
@@ -45,6 +53,8 @@ if($w == '' || $w == 'u'){
     upload_multi_file($_FILES['file_favicon'],'set','favicon','plf');
     //로고 멀티파일처리
     upload_multi_file($_FILES['file_plflogo'],'set','plflogo','plf');
+    //noimage 멀티파일처리
+    upload_multi_file($_FILES['file_noimage'],'set','noimage','plf');
     //ogimg 멀티파일처리
     upload_multi_file($_FILES['file_ogimg'],'set','ogimg','plf');
     //siemap 멀티파일처리

@@ -973,7 +973,7 @@ function upload_multi_file($_files=array(),$tbl='',$idx=0,$fle_dir='',$fle_type=
     global $conf_com_idx, $g5, $config, $member;
     // echo 'tbl='.$tbl.', $idx='.$idx.', fle_dir='.$fle_dir.', fle_type='.$fle_type;exit;
     // 해당 파일이 이미지파일이면 width, height를 구해야 한다.
-    $f_flag = (!count($_files['name']) || !$_files['name'][0]) ? false : true;
+    $f_flag = (isset($_files['name']) && is_array($_files['name']) && count($_files['name']) > 0 && $_files['name'][0]) ? true : false;
     if($f_flag){
         for($i=0;$i<count($_files['name']);$i++) {
             if ($_files['name'][$i]) {

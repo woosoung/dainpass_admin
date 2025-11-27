@@ -51,6 +51,8 @@ $g5['dain_file_table']                   = 'dain_file';
 $g5['meta_table']                        = 'meta';
 $g5['setting_table']                     = 'setting';
 
+$g5['service_terms_table']            = 'service_terms'; //서비스약관 테이블
+
 $g5['shop_table']                        = 'shop'; //가맹점
 $g5['shop_categories_table']             = 'shop_categories'; //업종(분류)
 $g5['shop_category_relation_table']      = 'shop_category_relation'; //업종-가맹점 크로스 테이블

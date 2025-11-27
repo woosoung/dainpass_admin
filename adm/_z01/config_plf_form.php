@@ -60,6 +60,32 @@ for($i=0;$row2=sql_fetch_array_pg($rs2->result);$i++) {
     @array_push($plflogo['plflogo_fidxs'], $row2['fle_idx']);
 }
 
+// 플랫폼사이트 no-image 기본이미지
+$sql22 = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'set' AND fle_dir = '{$set_type}' AND fle_db_idx = 'noimage' ORDER BY fle_reg_dt DESC ";
+// echo $sql2;exit;
+$rs22 = sql_query_pg($sql22);
+$noimage_wd = 116;
+$noimage_ht = 30;
+$noimage['noimage_f_arr'] = array();
+$noimage['noimage_fidxs'] = array();
+$noimage['noimage_lst_idx'] = 0;
+$noimage['fle_db_idx'] = 'noimage';
+for($i=0;$row2=sql_fetch_array_pg($rs22->result);$i++) {
+    // print_r2($row2);
+    $is_s3file_yn = is_s3file($row2['fle_path']);
+    $row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$plflogo_wd.':'.$plflogo_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
+    $row2['thumb'] = '<img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$plflogo_wd.'px;height:'.$plflogo_ht.'px;margin-left:20px;border:1px solid #ddd;"><br>&nbsp;&nbsp;&nbsp;&nbsp;<span>'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>'.PHP_EOL;
+    $row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="'.$set_type.'_'.$row2['fle_db_idx'].'_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+    $row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
+    '<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql22).' LIMIT 1;</span></span>
+    <br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+    <br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+    $row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
+    $noimage['fle_db_idx'] = $row2['fle_db_idx'];
+    @array_push($noimage['noimage_f_arr'], array('file'=>$row2['down_del']));
+    @array_push($noimage['noimage_fidxs'], $row2['fle_idx']);
+}
+
 // exit;
 // 플랫폼사이트 오픈그래프 대표이미지
 $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'set' AND fle_dir = '{$set_type}' AND fle_db_idx = 'ogimg' ORDER BY fle_reg_dt DESC ";
@@ -209,17 +235,17 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             </td>
         </tr>
         <tr>
-            <th>플랫폼사이트 로고 이미지</th>
+            <th>플랫폼사이트 No-Image 기본이미지</th>
             <td colspan="3" class="tms_help">
-                <?php echo help("플랫폼사이트의 '로고'이미지 파일을 관리해 주시면 됩니다."); ?>
+                <?php echo help("플랫폼사이트의 'No-Image' 기본이미지 파일을 관리해 주시면 됩니다."); ?>
                 <div class="tms_hint flex gap-4">
                     <div>
-                        <input type="file" id="file_plflogo" name="file_plflogo[]" multiple class="multifile">
+                        <input type="file" id="file_noimage" name="file_noimage[]" multiple class="multifile">
                         <?php
-                        if(@count($plflogo['plflogo_f_arr'])){
+                        if(@count($noimage['noimage_f_arr'])){
                             echo '<ul>'.PHP_EOL;
-                            for($i=0;$i<count($plflogo['plflogo_f_arr']);$i++) {
-                                echo "<li>[".($i+1).']'.$plflogo['plflogo_f_arr'][$i]['file']."</li>".PHP_EOL;
+                            for($i=0;$i<count($noimage['noimage_f_arr']);$i++) {
+                                echo "<li>[".($i+1).']'.$noimage['noimage_f_arr'][$i]['file']."</li>".PHP_EOL;
                             }
                             echo '</ul>'.PHP_EOL;
                         }
@@ -227,9 +253,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
                     </div>
                     <?php if($is_dev_manager){ ?>
                     <div class="tms_hbox">
-                        <?php if(isset(${'set_'.$set_type}['plflogo_str'])){ ?>
+                        <?php if(isset(${'set_'.$set_type}['noimage_str'])){ ?>
                         <div class="tms_hcon">
-                            <?=${'set_'.$set_type}['plflogo_str']?>
+                            <?=${'set_'.$set_type}['noimage_str']?>
                         </div>
                         <?php } ?>
                     </div>

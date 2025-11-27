@@ -39,6 +39,11 @@ $('#file_plflogo').MultiFile({
     accept:'jpg|jpeg|png|gif',
 });
 
+$('#file_noimage').MultiFile({
+    max:1,
+    accept:'jpg|jpeg|png|gif',
+});
+
 $('#file_ogimg').MultiFile({
     max:1,
     accept:'jpg|jpeg|png|gif',
