@@ -1,21 +1,73 @@
 <?php
-$sub_menu = "920200";
+$sub_menu = "930100";
 include_once("./_common.php");
 include_once(G5_LIB_PATH."/register.lib.php");
 
+// 가맹점측 관리자 접근 권한 체크
+$has_access = false;
+$shop_id = 0;
+
+if ($is_member && $member['mb_id']) {
+    // MySQL에서 회원 정보 확인
+    // 플랫폼 관리자(mb_level >= 6)는 mb_2 = 'N'일 수 있으므로 mb_2 조건을 다르게 적용
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
+                FROM {$g5['member_table']} 
+                WHERE mb_id = '{$member['mb_id']}' 
+                AND mb_level >= 4 
+                AND (
+                    mb_level >= 6 
+                    OR (mb_level < 6 AND mb_2 = 'Y')
+                )
+                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
+                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+    
+    $mb_row = sql_fetch($mb_sql, 1);
+    
+    if ($mb_row && $mb_row['mb_id']) {
+        $mb_1_value = trim($mb_row['mb_1']);
+        
+        // mb_1 = '0'인 경우: 플랫폼 관리자
+        if ($mb_1_value === '0' || $mb_1_value === '') {
+            // 플랫폼 관리자는 shop_id = 0에 해당하는 레코드가 없으므로 '업체 데이터가 없습니다.' 표시
+            alert('업체 데이터가 없습니다.');
+        }
+        
+        // mb_1에 shop_id 값이 있는 경우: 해당 shop_id로 shop 테이블 조회
+        if (!empty($mb_1_value)) {
+            // PostgreSQL에서 shop_id 확인 (shop_id는 bigint이므로 정수로 비교)
+            $shop_id_check = (int)$mb_1_value;
+            $shop_sql = " SELECT shop_id FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_row = sql_fetch_pg($shop_sql);
+            
+            if ($shop_row && $shop_row['shop_id']) {
+                $has_access = true;
+                $shop_id = (int)$shop_row['shop_id'];
+            } else {
+                // shop_id에 해당하는 레코드가 없는 경우
+                alert('업체 데이터가 없습니다.');
+            }
+        }
+    }
+}
+
+// 접근 권한이 없으면 메시지 표시
+if (!$has_access) {
+    alert('접속할 수 없는 페이지 입니다.');
+}
+
 // 입력 기본값 안전 초기화
 $w = isset($_POST['w']) ? trim($_POST['w']) : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
-$shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
-// 본사 선택값: shop_parent_id만 사용
-$shop_parent_id = isset($_POST['shop_parent_id']) ? (int)$_POST['shop_parent_id'] : 0;
-$head_clear = isset($_POST['head_clear']) ? (int)$_POST['head_clear'] : 0;
+$post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
+
+// 가맹점측 관리자는 자신의 가맹점만 수정 가능
+if ($post_shop_id != $shop_id) {
+    alert('접속할 수 없는 페이지 입니다.');
+}
 
 if ($w == 'u')
     check_demo();
 
-@auth_check($auth[$sub_menu], 'w');
 //check_admin_token();
-// print_r2($_POST);exit;
 if(!trim($_POST['category_ids'])) alert('업종(분류)을 반드시 선택해 주세요.');
 if(!trim($_POST['name'])) alert('업체명을 입력해 주세요.');
 if(!trim($_POST['contact_email'])) alert('이메일을 입력해 주세요.');
@@ -46,16 +98,16 @@ $bank_account = isset($_POST['bank_account']) ? trim($_POST['bank_account']) : '
 $bank_account = preg_replace('/[^0-9]/', '', $bank_account); // 계좌번호 숫자만 추출
 $bank_name = isset($_POST['bank_name']) ? trim($_POST['bank_name']) : ''; //은행명
 $bank_holder = isset($_POST['bank_holder']) ? trim($_POST['bank_holder']) : ''; //예금주
-$settlement_type = isset($_POST['settlement_type']) ? trim($_POST['settlement_type']) : ''; //정산타입(수동/자동)
-$settlement_cycle = isset($_POST['settlement_cycle']) ? trim($_POST['settlement_cycle']) : ''; //정산주기(monthly, weekly, 2monthly)
-$settlement_day = isset($_POST['settlement_day']) ? (int)$_POST['settlement_day'] : 0; //정산일(25 | 01 ...)
+// 가맹점측 관리자는 정산 관련 필드 수정 불가
+// $settlement_type = isset($_POST['settlement_type']) ? trim($_POST['settlement_type']) : ''; //정산타입(수동/자동)
+// $settlement_cycle = isset($_POST['settlement_cycle']) ? trim($_POST['settlement_cycle']) : ''; //정산주기(monthly, weekly, 2monthly)
+// $settlement_day = isset($_POST['settlement_day']) ? (int)$_POST['settlement_day'] : 0; //정산일(25 | 01 ...)
 $tax_type = isset($_POST['tax_type']) ? trim($_POST['tax_type']) : ''; //과세유형
-$settlement_memo = isset($_POST['settlement_memo']) ? conv_unescape_nl(stripslashes($_POST['settlement_memo'])) : ''; //정산메모
-$is_active = (isset($_POST['is_active']) && $_POST['is_active'] != '') ? $_POST['is_active'] : 'N'; //활성화여부
+// $settlement_memo = isset($_POST['settlement_memo']) ? conv_unescape_nl(stripslashes($_POST['settlement_memo'])) : ''; //정산메모
+// $is_active = (isset($_POST['is_active']) && $_POST['is_active'] != '') ? $_POST['is_active'] : 'N'; //활성화여부
 $cancel_policy = isset($_POST['cancel_policy']) ? conv_unescape_nl(stripslashes($_POST['cancel_policy'])) : '';
-// point_rate는 소수점 2자리까지만
-$point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
-$point_rate = number_format($point_rate,2,'.','');
+// $point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
+// $point_rate = number_format($point_rate,2,'.','');
 // names 업체명 히스토리
 $branch = trim($_POST['branch']);
 // shop_parent_id 본사가맹점 id
@@ -69,11 +121,6 @@ $blog_url = isset($_POST['blog_url']) ? trim($_POST['blog_url']) : '';
 $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) : '';
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
 $amenities_id_list = isset($_POST['amenities_id_list']) ? trim($_POST['amenities_id_list']) : '';
-
-// exit;
-// if($w != '' && $shop_id == $shop_parent_id){
-//     alert('현재의 가맹점을 본사로 등록할 수 없습니다.');
-// }
 
 // 이메일 형식 체크
 if(!preg_match("/^[a-z0-9_+.-]+@([a-z0-9-]+\.)+[a-z0-9]{2,4}$/",$contact_email)) {
@@ -93,53 +140,22 @@ if($longitude){
     }
 }
 
-
-
-
-
 if ($w=='u'){
-    // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
-    // 이전 mng_menus 정보가져와서 새로 넘어온 mng_menus와 비교
-    $prev_mng_sql = " SELECT mng_menus FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ";
-    $prev_mng_res = sql_fetch_pg($prev_mng_sql);
-    // 이전의 메뉴구성과, 새로 넘어온 메뉴구성 비교 달라진내용이 있는지 확인이 필요(달라진게 있어야만 수정할 수 있잖아!)
-    if($mng_menus != $prev_mng_res['mng_menus']){
-        // 조건에서 이전의 메뉴구성과, 새로 넘어온 메뉴구성이 달라졌으므로 다시 auth테이블 업데이트해야 한다.
-        // 우선 auth테이블 업데이트를 위해서 해당 shop_id의 관리회원들을 추출
-        $auth_mbs_sql = " SELECT GROUP_CONCAT(mb_id) AS mb_ids FROM {$g5['member_table']}
-                            WHERE mb_level IN (4,5)
-                            AND mb_1 = '{$shop_id}'
-                            AND mb_2 = 'Y' ";
-        $auth_mbs_res = sql_fetch($auth_mbs_sql);
-        // 관리회원이 존재하면 우선 해당 회원들의 이전 메뉴권한을 삭제하고 새로 넘어온 메뉴권한을 다시 모든 관리자에게 부여
-        if(isset($auth_mbs_res['mb_ids']) && $auth_mbs_res['mb_ids']) {
-            $mb_ids_arr = explode(',',$auth_mbs_res['mb_ids']);
-            $mb_ids_str = '';
-            foreach($mb_ids_arr as $mb_id){
-                $mb_ids_str .= "'{$mb_id}',";
-            }
-            $mb_ids_str = rtrim($mb_ids_str,',');
-            // 이전 회원의 권한을 모두 삭제
-            $auth_del_sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id IN ($mb_ids_str) ";
-            sql_query($auth_del_sql,1);
-            // 새로 넘어온 메뉴구성으로 다시 권한부여
-            $menus = explode(',',$mng_menus);
-            foreach($mb_ids_arr as $mb_id){
-                $auth_sql = " INSERT INTO {$g5['auth_table']} (mb_id,au_menu,au_auth) VALUES
-                                    ('{$mb_id}','100000','r') ";
-                foreach($menus as $menu){
-                    $auth_sql .= " ,('{$mb_id}','{$menu}','r,w,d') ";
-                }
-                sql_query($auth_sql,1);
-            }
-        }
-    }
-
-    
     // 업체정보 추출
     $com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '$shop_id' ");
+    
+    if (!$com['shop_id']) {
+        alert('존재하지 않는 가맹점자료입니다.');
+    }
+    
+    // 가맹점측 관리자는 정산 관련 필드 수정 불가이므로 기존 값 유지
+    $settlement_type = $com['settlement_type'] ?? 'manual';
+    $settlement_cycle = $com['settlement_cycle'] ?? 'monthly';
+    $settlement_day = $com['settlement_day'] ?? 25;
+    $settlement_memo = $com['settlement_memo'] ?? '';
+    $is_active = $com['is_active'] ?? 'N';
+    $point_rate = $com['point_rate'] ?? 0;
 }
-
 
 // 업체명 히스토리
 if($w == 'u' && $com['name'] != $name) {
@@ -186,8 +202,12 @@ $sql_common = "	name = '".addslashes($name)."'
                 , tax_type = '{$tax_type}'
                 , branch = '".addslashes($branch)."'
                 , mng_menus = '".$mng_menus."'
+                , settlement_type = '{$settlement_type}'
+                , settlement_cycle = '{$settlement_cycle}'
+                , settlement_day = {$settlement_day}
                 , settlement_memo = '".addslashes($settlement_memo)."'
                 , point_rate = {$point_rate}
+                , is_active = '{$is_active}'
                 , notice = '".addslashes($notice)."'
                 , cancellation_period = {$cancellation_period}
                 , shop_names = '".addslashes($shop_names)."'
@@ -197,50 +217,8 @@ $sql_common = "	name = '".addslashes($name)."'
                 , amenities_id_list = '".addslashes($amenities_id_list)."'
 ";
 
-$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,cancel_policy,names,tax_type,branch,mng_menus,settlement_memo,point_rate,notice,cancellation_period,shop_names,blog_url,instagram_url,kakaotalk_url,amenities_id_list";
-
-$sql_common_i_col = $sql_common_col.",created_at,updated_at";
-
-$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo)."',".$point_rate.",'".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."'";
-
-$sql_common_i_val = $sql_common_val.",'".G5_TIME_YMDHIS."','".G5_TIME_YMDHIS."'";
-
-// API key 생성
-// tms_get_random_string('09azAZ',40);
-if(isset($key_renewal)){
-    $com_api_key = tms_get_random_string('09azAZ',40);
-    $sql_common .= " , api_key = '{$com_api_key}' ";
-    $sql_common_i_col .= ",api_key";
-    $sql_common_i_val .= ",'{$com_api_key}' ";
-}
-else if(isset($key_clear)){
-    $sql_common .= " , api_key = '' ";
-    $sql_common_i_col .= ",api_key";
-    $sql_common_i_val .= ",'' ";
-}
-
-$sql_common .= ($head_clear) ? " , shop_parent_id = 0 " : " , shop_parent_id = ".$shop_parent_id." ";
-$sql_common_i_col .= ",shop_parent_id";
-$sql_common_i_val .= ",".($head_clear ? 0 : $shop_parent_id);
-
-// 생성
-if ($w == '') {
-    // 업체 정보 생성
-	// $sql = " INSERT into {$g5['shop_table']} SET
-	// 			{$sql_common}
-    //             , created_at = '".G5_TIME_YMDHIS."'
-    //             , updated_at = '".G5_TIME_YMDHIS."'
-	// ";
-    $sql = " INSERT INTO {$g5['shop_table']} ({$sql_common_i_col}) VALUES ({$sql_common_i_val}) ";
-    // echo $sql;exit;
-    sql_query_pg($sql);
-	$shop_id = sql_insert_id_pg('shop');
-    // echo $shop_id;exit;
-
-}
 // 수정
-else if ($w == 'u') {
-
+if ($w == 'u') {
 	if (!$com['shop_id'])
 		alert('존재하지 않는 업체자료입니다.');
  
@@ -249,31 +227,7 @@ else if ($w == 'u') {
 					, updated_at = '".G5_TIME_YMDHIS."'
 				WHERE shop_id = '{$shop_id}' 
 	";
-    // echo $sql.'<br>';exit;
     sql_query_pg($sql);
-}
-else if ($w=="d") {
-
-	if (!$com['shop_id']) {
-		alert('존재하지 않는 업체자료입니다.');
-	} else {
-		// 자료 삭제
-        if(!$set_conf['set_del_yn']){
-            // 완전삭제가 아닌 상태값만 '휴지통'으로 변경
-            $sql = " UPDATE {$g5['shop_table']} SET status = 'trash' WHERE shop_id = $shop_id ";
-        }
-        else{
-            // 관련파일 전부 삭제
-            delete_s3_file('shop', $shop_id);
-            $rd_sql = " DELETE FROM {$g5['shop_category_relation_table']} WHERE shop_id = $shop_id ";
-            sql_query_pg($rd_sql);
-            // 완전삭제
-            $sql = " DELETE FROM {$g5['shop_table']} WHERE shop_id = $shop_id ";
-        }
-		sql_query_pg($sql);
-	}
-
-    goto_url('./company_list.php?'.$qstr, false);
 }
 
 // 먼저 shop 해당 업체(shop_id)와 관계되는 category_id들을 전부 삭제
@@ -281,7 +235,7 @@ if($w == 'u'){
     $cdsql = " DELETE FROM {$g5['shop_category_relation_table']} WHERE shop_id = '{$shop_id}' ";
     sql_query_pg($cdsql);
 }
-// print_r2($_POST);exit;
+
 // $category_ids 라는 (,)로 구분된 문자열을 (,)구분자로 배열에 담는다.
 // $shop_id 가 반드시 있어야 카테고리 등록이 가능
 if($shop_id){
@@ -297,9 +251,7 @@ if($shop_id){
         $cisql .= implode(',', $values);
         sql_query_pg($cisql);
     }
-    // print_r2($category_ids_arr);exit;
 }
-
 
 if($w == '' || $w == 'u'){
     
@@ -361,11 +313,9 @@ if($w == '' || $w == 'u'){
     }
 }
 
-
 // 가맹점 키워드 처리
 if (isset($_POST['shop_keywords']) && trim($_POST['shop_keywords']) !== '') {
     $shop_keywords = trim($_POST['shop_keywords']);
-    // echo $shop_keywords;exit;
     $sql = " WITH raw_terms AS (
                 SELECT
                     '{$shop_id}'::bigint AS shop_id,
@@ -415,13 +365,13 @@ if (isset($_POST['shop_keywords']) && trim($_POST['shop_keywords']) !== '') {
                     FROM {$g5['keywords_table']} k
                     WHERE k.term_norm = r.term_norm
                 )
-                RETURNING keyword_id AS keyword_id,  -- keyword_id 컬럼명 업데이트
+                RETURNING keyword_id AS keyword_id,
                           regexp_replace(lower(immutable_unaccent(term)), '\\s+', ' ', 'g') AS term_norm
             ),
             resolved AS (
                 SELECT
                     r.shop_id,
-                    k.keyword_id AS keyword_id,  -- keyword_id 컬럼명 업데이트
+                    k.keyword_id AS keyword_id,
                     r.weight,
                     r.term_norm
                 FROM ranked r
@@ -439,7 +389,7 @@ if (isset($_POST['shop_keywords']) && trim($_POST['shop_keywords']) !== '') {
                 DELETE FROM {$g5['shop_keyword_table']} sk
                 USING {$g5['keywords_table']} k
                 WHERE sk.shop_id = '{$shop_id}'
-                  AND sk.keyword_id = k.keyword_id  -- keyword_id 컬럼명 업데이트
+                  AND sk.keyword_id = k.keyword_id
                   AND NOT EXISTS (
                         SELECT 1
                         FROM ranked r
@@ -452,7 +402,6 @@ if (isset($_POST['shop_keywords']) && trim($_POST['shop_keywords']) !== '') {
                 (SELECT count(*) FROM insert_keywords) AS keywords_inserted,
                 (SELECT count(*) FROM upsert)          AS shop_keyword_upserted,
                 (SELECT count(*) FROM deleted)         AS shop_keyword_deleted ";
-    // echo $sql;exit;
     $result = sql_query_pg($sql);
     if (!$result) {
         alert('키워드 처리 중 오류가 발생했습니다.');
@@ -499,7 +448,6 @@ if ($shop_id && isset($_POST['amenities_id_list'])) {
     }
 }
 
-
 foreach($_REQUEST as $key => $value ) {
     if(substr($key,0,4)=='ser_') {
         if(is_array($value)) {
@@ -513,14 +461,10 @@ foreach($_REQUEST as $key => $value ) {
     }
 }
 
-// exit;
 if($w == 'u') {
-	//alert('업체 정보를 수정하였습니다.','./company_form.php?'.$qstr.'&amp;w=u&amp;com_idx='.$com_idx, false);
-	// alert('업체 정보를 수정하였습니다.','./company_list.php?'.$qstr, false);
-    // goto_url('./company_list.php?'.$qstr, false);
-    goto_url('./company_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
+    goto_url('./store_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
 }
 else {
-	// alert('업체 정보를 등록하였습니다.','./company_list.php', false);
-    goto_url('./company_list.php?'.$qstr, false);
+    alert('가맹점 추가는 플랫폼 관리자만 가능합니다.');
 }
+

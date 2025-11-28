@@ -103,14 +103,14 @@ if ($result && $result->result) {
     }
 }
 
-$g5['title'] = '기본 영업시간 관리';
+$g5['title'] = '업종별 기본 영업시간 관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 ?>
 
 <div class="local_desc01 local_desc">
     <p>
-        기본 영업시간을 관리합니다.<br>
+        업종별 기본 영업시간을 관리합니다.<br>
         <!-- - category_id = 0: 모든 업종에 대한 기본 영업시간<br>
         - category_id가 2자리: 1차 업종(분류)의 영업시간<br>
         - category_id가 4자리: 2차 업종(분류)의 영업시간 -->

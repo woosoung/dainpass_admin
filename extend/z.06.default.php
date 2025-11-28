@@ -85,6 +85,7 @@ if(!$is_admin && $g5['dir_name'] != 'bbs' && $g5['file_name'] != 'login'){
 //업체 정보 추출
 $g5['shop'] = array();
 $g5['shop']['shop_title'] = $default2['de_admin_company_name'];
+// print_r2($member);exit;
 // echo $g5['shop']['shop_title'];exit;
 if (isset($_SESSION['ss_shop_id']) && !empty($_SESSION['ss_shop_id'])) {
 	$shop = get_table_pg('shop','shop_id',$_SESSION['ss_shop_id']);
