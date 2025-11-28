@@ -86,7 +86,7 @@ require_once G5_ADMIN_PATH.'/admin.head.php';
     <th scope="col" style="width:10%">위치이동</th>
     <th scope="col" style="width:5%;white-space:nowrap;">고유코드</th>
 	<th scope="col" style="width:6%">숨김</th>
-    <th scope="col" style="width:6%">관리</th>
+    <?php if($is_ultra) { ?><th scope="col" style="width:6%">관리</th><?php } ?>
 </tr>
 </thead>
 <tbody>
@@ -115,9 +115,11 @@ require_once G5_ADMIN_PATH.'/admin.head.php';
 			<input type="hidden" name="trm_status[]" value="ok">
 			<input type="checkbox" name="trm_use[]">
 	    </td>
+	    <?php if($is_ultra) { ?>
 	    <td class="td_del" style="text-align:center">
 	        <a href="#">삭제</a>
 	    </td>
+	    <?php } ?>
 	</tr>
 	<!-- //항목 추가를 위한 DOM (복제후 제거됨) -->
 <?php
@@ -170,12 +172,15 @@ for ($i=0; $row=sql_fetch_array($result); $i++)
 			<input type="hidden" name="trm_status[]" value="<?=$status_txt?>">
 	        <input type="checkbox" name="trm_use[]" <?=$usechecked?>>
 	    </td>
+	    <?php if($is_ultra) { ?>
 		<td class="td_del" style="text-align:center">
 	        <a href="#">삭제</a>
 	    </td>
+	    <?php } ?>
 	</tr>
 <?php }
-if ($i == 0) echo "<tr class=\"no-data\"><td colspan=\"9\" class=\"empty_table\">자료가 한 건도 없습니다.</td></tr>\n";
+$colspan = $is_ultra ? 9 : 8;
+if ($i == 0) echo "<tr class=\"no-data\"><td colspan=\"{$colspan}\" class=\"empty_table\">자료가 한 건도 없습니다.</td></tr>\n";
 ?>
 </tbody>
 </table>
