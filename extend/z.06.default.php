@@ -85,10 +85,9 @@ if(!$is_admin && $g5['dir_name'] != 'bbs' && $g5['file_name'] != 'login'){
 //업체 정보 추출
 $g5['shop'] = array();
 $g5['shop']['shop_title'] = $default2['de_admin_company_name'];
-// print_r2($member);exit;
-// echo $g5['shop']['shop_title'];exit;
-if (isset($_SESSION['ss_shop_id']) && !empty($_SESSION['ss_shop_id'])) {
-	$shop = get_table_pg('shop','shop_id',$_SESSION['ss_shop_id']);
+if($is_member && $member['mb_1'] != '0'){
+    $current_shop_id = (int)$member['mb_1'];
+    $shop = get_table_pg('shop','shop_id',$current_shop_id);
     // print_r3($shop);
     if($shop && is_array($shop)) {
         $g5['shop'] = $shop;
@@ -96,6 +95,9 @@ if (isset($_SESSION['ss_shop_id']) && !empty($_SESSION['ss_shop_id'])) {
         $g5['shop']['shop_title'] = $shop['shop_name'].($branch ? '('.$branch.')' : '');
     }
 }
+// print_r2($member);exit;
+// echo $g5['shop']['shop_title'];exit;
+
 
 if(defined('G5_IS_ADMIN') && is_file(G5_Z_PATH.'/_adm_custom.php')){
     include_once(G5_ZSQL_PATH.'/set_menu.php');//솔루션 환경설정에서 menu에 해당하는 데이터를 가져온다.
