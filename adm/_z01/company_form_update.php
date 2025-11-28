@@ -62,6 +62,10 @@ $branch = trim($_POST['branch']);
 // shop_names = 가맹점명 히스토리
 $mng_menus = ($w == 'u') ? addslashes(trim($_POST['mng_menus'])) : '';
 
+
+// echo print_r2($set_conf['set_shopmanager_basic_menu']);exit;
+// echo print_r2($set_conf['set_shopmanager_basic_menu_arr']);exit;
+
 // 추가 필드 처리
 $notice = isset($_POST['notice']) ? conv_unescape_nl(stripslashes($_POST['notice'])) : '';
 $cancellation_period = isset($_POST['cancellation_period']) ? (int)$_POST['cancellation_period'] : 1;
@@ -94,17 +98,15 @@ if($longitude){
 }
 
 
-
-
-
 if ($w=='u'){
     // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
     // 이전 mng_menus 정보가져와서 새로 넘어온 mng_menus와 비교
-    $prev_mng_sql = " SELECT mng_menus FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ";
-    $prev_mng_res = sql_fetch_pg($prev_mng_sql);
-    // 이전의 메뉴구성과, 새로 넘어온 메뉴구성 비교 달라진내용이 있는지 확인이 필요(달라진게 있어야만 수정할 수 있잖아!)
-    if($mng_menus != $prev_mng_res['mng_menus']){
-        // 조건에서 이전의 메뉴구성과, 새로 넘어온 메뉴구성이 달라졌으므로 다시 auth테이블 업데이트해야 한다.
+    // $prev_mng_sql = " SELECT mng_menus FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ";
+    // $prev_mng_res = sql_fetch_pg($prev_mng_sql);
+    $menus = (isset($mng_menus) && $mng_menus != '') ? explode(',',$mng_menus) : array();
+    // 관리메뉴 데이터가 존재하면 관리메뉴 권한 업데이트
+    if(@count($menus) > 0){
+        // 관리메뉴 데이터가 존재하므로 다시 auth테이블 업데이트해야 한다.
         // 우선 auth테이블 업데이트를 위해서 해당 shop_id의 관리회원들을 추출
         $auth_mbs_sql = " SELECT GROUP_CONCAT(mb_id) AS mb_ids FROM {$g5['member_table']}
                             WHERE mb_level IN (4,5)
@@ -121,15 +123,40 @@ if ($w=='u'){
             $mb_ids_str = rtrim($mb_ids_str,',');
             // 이전 회원의 권한을 모두 삭제
             $auth_del_sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id IN ($mb_ids_str) ";
+            // echo $auth_del_sql;exit;
             sql_query($auth_del_sql,1);
             // 새로 넘어온 메뉴구성으로 다시 권한부여
-            $menus = explode(',',$mng_menus);
+            // $menus = explode(',',$mng_menus);
+            $auth_values = array();
             foreach($mb_ids_arr as $mb_id){
-                $auth_sql = " INSERT INTO {$g5['auth_table']} (mb_id,au_menu,au_auth) VALUES
-                                    ('{$mb_id}','100000','r') ";
+                // 기본 메뉴 권한 추가 (중복 방지를 위해 배열로 관리)
+                $added_menus = array();
+                
+                // 기본 100000 메뉴 권한 추가
+                $auth_values[] = "('{$mb_id}','100000','r')";
+                $added_menus['100000'] = true;
+                
+                // 선택한 관리메뉴 권한 추가
                 foreach($menus as $menu){
-                    $auth_sql .= " ,('{$mb_id}','{$menu}','r,w,d') ";
+                    if(!isset($added_menus[$menu])){
+                        $auth_values[] = "('{$mb_id}','{$menu}','r,w,d')";
+                        $added_menus[$menu] = true;
+                    }
                 }
+                
+                // 기본 메뉴 권한 추가 (중복 체크)
+                if(isset($set_conf['set_shopmanager_basic_menu_arr']) && @count($set_conf['set_shopmanager_basic_menu_arr']) > 0){
+                    foreach($set_conf['set_shopmanager_basic_menu_arr'] as $menu_code => $menu_arr){
+                        if(!isset($added_menus[$menu_code])){
+                            $auth_values[] = "('{$mb_id}','{$menu_code}','{$menu_arr['auth']}')";
+                            $added_menus[$menu_code] = true;
+                        }
+                    }
+                }
+            }
+            if(count($auth_values) > 0){
+                $auth_sql = " INSERT INTO {$g5['auth_table']} (mb_id,au_menu,au_auth) VALUES " . implode(',', $auth_values);
+                // echo $auth_sql;exit;
                 sql_query($auth_sql,1);
             }
         }

@@ -155,6 +155,69 @@ if ($w=='u'){
     $settlement_memo = $com['settlement_memo'] ?? '';
     $is_active = $com['is_active'] ?? 'N';
     $point_rate = $com['point_rate'] ?? 0;
+    
+    // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
+    // 이전 mng_menus 정보가져와서 새로 넘어온 mng_menus와 비교
+    // $prev_mng_sql = " SELECT mng_menus FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ";
+    // $prev_mng_res = sql_fetch_pg($prev_mng_sql);
+    $menus = (isset($mng_menus) && $mng_menus != '') ? explode(',',$mng_menus) : array();
+    // 관리메뉴 데이터가 존재하면 관리메뉴 권한 업데이트
+    if(@count($menus) > 0){
+        // 관리메뉴 데이터가 존재하므로 다시 auth테이블 업데이트해야 한다.
+        // 우선 auth테이블 업데이트를 위해서 해당 shop_id의 관리회원들을 추출
+        $auth_mbs_sql = " SELECT GROUP_CONCAT(mb_id) AS mb_ids FROM {$g5['member_table']}
+                            WHERE mb_level IN (4,5)
+                            AND mb_1 = '{$shop_id}'
+                            AND mb_2 = 'Y' ";
+        $auth_mbs_res = sql_fetch($auth_mbs_sql);
+        // 관리회원이 존재하면 우선 해당 회원들의 이전 메뉴권한을 삭제하고 새로 넘어온 메뉴권한을 다시 모든 관리자에게 부여
+        if(isset($auth_mbs_res['mb_ids']) && $auth_mbs_res['mb_ids']) {
+            $mb_ids_arr = explode(',',$auth_mbs_res['mb_ids']);
+            $mb_ids_str = '';
+            foreach($mb_ids_arr as $mb_id){
+                $mb_ids_str .= "'{$mb_id}',";
+            }
+            $mb_ids_str = rtrim($mb_ids_str,',');
+            // 이전 회원의 권한을 모두 삭제
+            $auth_del_sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id IN ($mb_ids_str) ";
+            // echo $auth_del_sql;exit;
+            sql_query($auth_del_sql,1);
+            // 새로 넘어온 메뉴구성으로 다시 권한부여
+            // $menus = explode(',',$mng_menus);
+            $auth_values = array();
+            foreach($mb_ids_arr as $mb_id){
+                // 기본 메뉴 권한 추가 (중복 방지를 위해 배열로 관리)
+                $added_menus = array();
+                
+                // 기본 100000 메뉴 권한 추가
+                $auth_values[] = "('{$mb_id}','100000','r')";
+                $added_menus['100000'] = true;
+                
+                // 선택한 관리메뉴 권한 추가
+                foreach($menus as $menu){
+                    if(!isset($added_menus[$menu])){
+                        $auth_values[] = "('{$mb_id}','{$menu}','r,w,d')";
+                        $added_menus[$menu] = true;
+                    }
+                }
+                
+                // 기본 메뉴 권한 추가 (중복 체크)
+                if(isset($set_conf['set_shopmanager_basic_menu_arr']) && @count($set_conf['set_shopmanager_basic_menu_arr']) > 0){
+                    foreach($set_conf['set_shopmanager_basic_menu_arr'] as $menu_code => $menu_arr){
+                        if(!isset($added_menus[$menu_code])){
+                            $auth_values[] = "('{$mb_id}','{$menu_code}','{$menu_arr['auth']}')";
+                            $added_menus[$menu_code] = true;
+                        }
+                    }
+                }
+            }
+            if(count($auth_values) > 0){
+                $auth_sql = " INSERT INTO {$g5['auth_table']} (mb_id,au_menu,au_auth) VALUES " . implode(',', $auth_values);
+                // echo $auth_sql;exit;
+                sql_query($auth_sql,1);
+            }
+        }
+    }
 }
 
 // 업체명 히스토리
