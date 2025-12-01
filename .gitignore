@@ -2,3 +2,5 @@ data/
 extend/z.03.pgconfig.php
 .cursor/
 docs/
+.claude/
+CLAUDE.md
