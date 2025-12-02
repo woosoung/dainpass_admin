@@ -66,5 +66,3 @@ $g5['shop_admin_inquiry_table']         = 'shop_admin_inquiry'; //가맹점이 �
 $g5['keywords_table']                    = 'keywords'; //키워드 테이블
 $g5['amenities_table']                  = 'amenities'; //편의시설
 $g5['customers_table']                  = 'customers'; //고객(사용자)회원
-
-
