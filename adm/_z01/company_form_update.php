@@ -484,7 +484,7 @@ if (isset($_POST['shop_keywords']) && trim($_POST['shop_keywords']) !== '') {
         alert('키워드 처리 중 오류가 발생했습니다.');
     }
 
-    // Register shop_id in the shop_search_refresh_queue table for asynchronous cache refresh
+    // 비동기 캐시 새로 고침을 위해 shop_search_refresh_queue 테이블에 shop_id를 등록
     $queue_table = $g5['shop_search_refresh_queue_table'];
     $queue_sql = "INSERT INTO {$queue_table} (shop_id)
                    VALUES ('{$shop_id}')
