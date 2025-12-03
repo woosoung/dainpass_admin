@@ -29,11 +29,3 @@ function valid_mb_password($reg_mb_password)
 
     return "";
 }
-
-function match_mb_password($reg_mb_password, $reg_mb_password_re)
-{
-    if ($reg_mb_password != $reg_mb_password_re)
-        return "비밀번호가 같지 않습니다.";
-    else
-        return "";
-}
