@@ -27,6 +27,7 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		<input type="hidden" name="agree2" value="<?php echo $agree2 ?>">
 		<input type="hidden" name="cert_type" value="">
 		<input type="hidden" name="cert_no" value="">
+		<input type="hidden" name="mb_nick" id="reg_mb_nick" value="">
 
 		<!-- Section 1: 로그인 정보 -->
 		<section class="mb-8">
@@ -235,6 +236,8 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		$("#reg_mb_id").on("input", function() {
 			var value = this.value;
 
+			$("#reg_mb_nick").val(value);
+
 			if (value.length === 0) {
 				$("#msg_mb_id").html('');
 				return;
@@ -266,6 +269,8 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		$("#reg_mb_id").on("blur", function() {
 			clearTimeout(idCheckTimeout);
 			var value = this.value;
+
+			$("#reg_mb_nick").val(value);
 
 			if (value.length === 0) {
 				$("#msg_mb_id").html('');
@@ -424,6 +429,8 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 
 	// Form Submit 검증
 	function fregisterform_submit(f) {
+		$("#reg_mb_nick").val($("#reg_mb_id").val());
+
 		// 아이디 검증
 		if (f.w.value == "") {
 			var msg = reg_mb_id_check();
