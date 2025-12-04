@@ -33,3 +33,10 @@ let reg_business_no_check = function () {
   });
   return result;
 };
+
+// 랜덤 닉네임 생성 함수
+function generateRandomNick() {
+  var timestamp = new Date().getTime();
+  var random = Math.random().toString(36).substring(2, 8);
+  return "tmp" + timestamp + random;
+}
