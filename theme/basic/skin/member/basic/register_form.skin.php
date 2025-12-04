@@ -29,6 +29,22 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		<input type="hidden" name="cert_no" value="">
 		<input type="hidden" name="mb_nick" id="reg_mb_nick" value="">
 
+		<?php if (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false): ?>
+			<!-- 개발 환경 전용: 테스트 데이터 입력 버튼 -->
+			<div class="p-4 mb-4 border-2 border-yellow-400 rounded-lg bg-yellow-50">
+				<div class="flex items-center justify-between">
+					<div>
+						<h3 class="text-sm font-bold text-yellow-800">🛠️ 개발자 도구</h3>
+						<p class="text-xs text-yellow-700">localhost 환경에서만 표시됩니다</p>
+					</div>
+					<button type="button" id="btn_fill_test_data"
+						class="px-4 py-2 text-sm font-semibold text-white transition duration-200 bg-yellow-600 rounded-lg hover:bg-yellow-700">
+						⚡ 테스트 데이터 입력
+					</button>
+				</div>
+			</div>
+		<?php endif; ?>
+
 		<!-- Section 1: 로그인 정보 -->
 		<section class="mb-8">
 			<h2 class="pb-2 mb-4 text-xl font-bold text-gray-800 border-b-2 border-gray-200">
@@ -540,5 +556,46 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		return true;
 	}
 </script>
+
+<?php if (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false): ?>
+	<!-- 개발 환경 전용: 테스트 데이터 입력 스크립트 -->
+	<script>
+		// ========================================
+		// 개발 환경 전용: 테스트 데이터 자동 입력
+		// ========================================
+
+		function fillTestData() {
+			// 랜덤 ID 생성 (중복 방지)
+			var randomId = 'test_' + Math.random().toString(36).substring(2, 8);
+
+			// 기본 정보
+			$("#reg_mb_id").val(randomId).trigger('input');
+			$("#reg_mb_password").val("Test1234!@").trigger('input');
+			$("#reg_mb_password_re").val("Test1234!@").trigger('input');
+
+			// 사업자 정보 (유효한 사업자번호 사용)
+			$("#reg_business_no").val("1231231231").trigger('input');
+			$("#reg_mb_name").val("홍길동").trigger('input');
+			$("#reg_shop_name").val("테스트상점").trigger('input');
+
+			// 주소 정보 (주소 검색 버튼 클릭 필요 - 자동 입력 불가)
+			$("#reg_mb_addr2").val("101호").trigger('input');
+
+			// 담당자 정보
+			$("#reg_mb_email").val("test" + Math.random().toString(36).substring(2, 8) + "@test.com").trigger('input');
+			$("#reg_mb_hp").val("01012345678").trigger('input');
+
+			// 알림 표시
+			alert("✅ 테스트 데이터가 입력");
+		}
+
+		// 테스트 데이터 버튼 클릭 이벤트
+		$(document).ready(function() {
+			$("#btn_fill_test_data").on("click", function() {
+				fillTestData();
+			});
+		});
+	</script>
+<?php endif; ?>
 
 <!-- } 회원정보 입력/수정 끝 -->
