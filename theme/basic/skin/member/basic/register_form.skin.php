@@ -252,8 +252,6 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		$("#reg_mb_id").on("input", function() {
 			var value = this.value;
 
-			$("#reg_mb_nick").val(value);
-
 			if (value.length === 0) {
 				$("#msg_mb_id").html('');
 				return;
@@ -285,8 +283,6 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		$("#reg_mb_id").on("blur", function() {
 			clearTimeout(idCheckTimeout);
 			var value = this.value;
-
-			$("#reg_mb_nick").val(value);
 
 			if (value.length === 0) {
 				$("#msg_mb_id").html('');
@@ -445,7 +441,8 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 
 	// Form Submit 검증
 	function fregisterform_submit(f) {
-		$("#reg_mb_nick").val($("#reg_mb_id").val());
+		var randomNick = generateRandomNick();
+		$("#reg_mb_nick").val(randomNick);
 
 		// 아이디 검증
 		if (f.w.value == "") {
@@ -453,6 +450,14 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 			if (msg) {
 				alert(msg);
 				f.mb_id.select();
+				return false;
+			}
+		}
+		if (f.w.value == "") {
+			var msg = reg_mb_nick_check();
+			if (msg) {
+				alert(msg);
+				f.mb_nick.select();
 				return false;
 			}
 		}
@@ -517,15 +522,15 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 			return false;
 		}
 
-		if (!f.category_minor.value) {
+		if (!f.category_id.value) {
 			alert("업종 중분류를 선택하십시오.");
-			f.category_minor.focus();
+			f.category_id.focus();
 			return false;
 		}
 
 		if (!f.category_id.value) {
 			alert("업종을 올바르게 선택하십시오.");
-			f.category_minor.focus();
+			f.category_id.focus();
 			return false;
 		}
 
