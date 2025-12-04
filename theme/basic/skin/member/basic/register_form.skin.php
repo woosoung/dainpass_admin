@@ -20,6 +20,15 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 
 	<form id="fregisterform" name="fregisterform" action="<?php echo $register_action_url ?>" onsubmit="return fregisterform_submit(this);" method="post" enctype="multipart/form-data" autocomplete="off">
 
+		<!-- 로딩 오버레이 -->
+		<div id="loading-overlay" class="fixed inset-0 z-50 items-center justify-center hidden bg-gray-900 bg-opacity-50">
+			<div class="flex flex-col items-center p-8 bg-white rounded-lg shadow-2xl">
+				<div class="w-16 h-16 border-b-4 border-blue-600 rounded-full animate-spin"></div>
+				<p class="mt-4 text-lg font-semibold text-gray-700">회원가입 처리중...</p>
+				<p class="mt-2 text-sm text-gray-500">잠시만 기다려주세요</p>
+			</div>
+		</div>
+
 		<!-- Hidden Fields -->
 		<input type="hidden" name="w" value="<?php echo $w ?>">
 		<input type="hidden" name="url" value="<?php echo $urlencode ?>">
@@ -534,6 +543,11 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 
 		// Captcha 검증
 		<?php echo chk_captcha_js(); ?>
+
+		// 로딩 오버레이 표시
+		var loadingOverlay = document.getElementById("loading-overlay");
+		loadingOverlay.classList.remove("hidden");
+		loadingOverlay.classList.add("flex");
 
 		// Submit 버튼 비활성화
 		document.getElementById("btn_submit").disabled = true;
