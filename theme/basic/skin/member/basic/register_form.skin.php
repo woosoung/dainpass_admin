@@ -126,7 +126,7 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 				</label>
 				<input type="text" name="shop_name" id="reg_shop_name"
 					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="업체명을 입력하세요" required>
+					placeholder="업체명을 입력하세요" maxlength="30" required>
 			</div>
 
 			<!-- 주소 -->
