@@ -117,7 +117,7 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 				</label>
 				<input type="text" name="shop_name" id="reg_shop_name"
 					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="업체명을 입력하세요" maxlength="30" required>
+					placeholder="업체명" maxlength="30" required>
 			</div>
 
 			<!-- 주소 -->
@@ -192,7 +192,7 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 				</label>
 				<input type="email" name="mb_email" id="reg_mb_email" value="<?php echo isset($member['mb_email']) ? $member['mb_email'] : ''; ?>"
 					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="example@email.com" required>
+					placeholder="이메일" required>
 				<input type="hidden" name="old_email" value="<?php echo $member['mb_email'] ?>">
 			</div>
 
@@ -203,7 +203,7 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 				</label>
 				<input type="text" name="mb_hp" id="reg_mb_hp" value="<?php echo get_text($member['mb_hp']) ?>"
 					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="010-0000-0000" required>
+					placeholder="휴대폰번호" required>
 			</div>
 		</section>
 
