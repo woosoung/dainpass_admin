@@ -203,6 +203,37 @@ include_once('./js/staff_schedule_calendar.js.php');
     background: #f8f9fa;
 }
 
+.btn-add-schedule-cell {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    padding-top:3px;
+    background: #228be6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.calendar-cell:hover .btn-add-schedule-cell {
+    opacity: 1;
+}
+
+.btn-add-schedule-cell:hover {
+    background: #1c7ed6;
+    transform: scale(1.1);
+}
+
 .calendar-date {
     font-size: 14px;
     font-weight: bold;
@@ -354,6 +385,7 @@ include_once('./js/staff_schedule_calendar.js.php');
             elseif ($weekday == 6) $day_class = 'saturday';
             
             echo '<div class="calendar-cell" data-date="'.$date.'">';
+            echo '<button class="btn-add-schedule-cell" onclick="addScheduleForDate(\''.$date.'\')" title="이 날짜에 근무일정 추가">+</button>';
             echo '<div class="calendar-date '.$day_class.'">'.$day.'</div>';
             
             // 해당 날짜의 스케줄 출력

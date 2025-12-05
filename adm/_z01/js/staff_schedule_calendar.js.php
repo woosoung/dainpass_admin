@@ -27,6 +27,11 @@ function changeYearMonth() {
     location.href = './staff_schedule_calendar.php?year=' + year + '&month=' + month;
 }
 
+// 특정 날짜에 스케줄 추가
+function addScheduleForDate(date) {
+    location.href = './staff_schedule_form.php?work_date=' + date;
+}
+
 // 스케줄 수정
 function editSchedule(scheduleId) {
     location.href = './staff_schedule_form.php?w=u&schedule_id=' + scheduleId;

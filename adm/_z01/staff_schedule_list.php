@@ -157,10 +157,19 @@ if ($staff_result && is_object($staff_result) && isset($staff_result->result)) {
     }
 }
 
-$qstr = '';
+// 페이징용 쿼리스트링 (page 제외)
+$qstr_paging = '';
+if ($ser_staff_id) $qstr_paging .= '&ser_staff_id='.$ser_staff_id;
+if ($ser_date_from) $qstr_paging .= '&ser_date_from='.$ser_date_from;
+if ($ser_date_to) $qstr_paging .= '&ser_date_to='.$ser_date_to;
+
+// 전체 쿼리스트링 (page 포함)
+$qstr = "page={$page}";
 if ($ser_staff_id) $qstr .= '&ser_staff_id='.$ser_staff_id;
 if ($ser_date_from) $qstr .= '&ser_date_from='.$ser_date_from;
 if ($ser_date_to) $qstr .= '&ser_date_to='.$ser_date_to;
+
+$listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
 
 $g5['title'] = '직원별 근무시간 관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
@@ -168,8 +177,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 include_once('./js/staff_schedule_list.js.php');
 ?>
 
-<div class="local_desc01 local_desc">
-    <p>직원별 근무 일정을 목록으로 확인하고 관리할 수 있습니다.</p>
+<div class="local_ov01 local_ov">
+    <?php echo $listall ?>
+    <span class="btn_ov01"><span class="ov_txt">전체 </span><span class="ov_num"> <?php echo number_format($total_count) ?>건 </span></span>
 </div>
 
 <!-- 검색 폼 -->
@@ -198,12 +208,8 @@ include_once('./js/staff_schedule_list.js.php');
 </div>
 </form>
 
-<!-- 상단 버튼 -->
-<div class="local_desc02 local_desc">
-    <div class="btn_wr">
-        <a href="./staff_schedule_calendar.php" class="btn btn_02">달력보기</a>
-        <a href="./staff_schedule_form.php" class="btn btn_01">근무일정 추가</a>
-    </div>
+<div class="local_desc01 local_desc">
+    <p>직원별 근무 일정을 목록으로 확인하고 관리할 수 있습니다.</p>
 </div>
 
 <!-- 목록 -->
@@ -258,7 +264,7 @@ include_once('./js/staff_schedule_list.js.php');
             echo '<td class="td_center">'.$start_time.' ~ '.$end_time.' ('.$work_time_text.')</td>';
             echo '<td class="td_center">'.$created_at.'</td>';
             echo '<td class="td_mng">';
-            echo '<a href="./staff_schedule_form.php?w=u&schedule_id='.$row['schedule_id'].$qstr.'" class="btn btn_03">수정</a> ';
+            echo '<a href="./staff_schedule_form.php?w=u&schedule_id='.$row['schedule_id'].'&'.$qstr.'" class="btn btn_03">수정</a> ';
             echo '<a href="javascript:deleteSchedule('.$row['schedule_id'].');" class="btn btn_02">삭제</a>';
             echo '</td>';
             echo '</tr>';
@@ -273,9 +279,14 @@ include_once('./js/staff_schedule_list.js.php');
     </table>
 </div>
 
+<div class="btn_fixed_top btn_confirm">
+    <a href="./staff_schedule_calendar.php" class="btn btn_02">달력보기</a>
+    <a href="./staff_schedule_form.php" class="btn btn_01">근무일정 추가</a>
+</div>
+
 <!-- 페이징 -->
 <?php
-$write_pages = get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, './staff_schedule_list.php?'.$qstr.'&page=');
+$write_pages = get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, './staff_schedule_list.php?'.ltrim($qstr_paging, '&').'&page=');
 echo $write_pages;
 ?>
 

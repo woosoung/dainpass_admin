@@ -109,7 +109,15 @@ if ($w == '') {
     $html_title = '추가';
     $schedule = array();
     $schedule['staff_id'] = 0;
-    $schedule['work_date'] = date('Y-m-d');
+    
+    // URL 파라미터로 work_date가 전달되면 사용, 없으면 오늘 날짜
+    $work_date_param = isset($_REQUEST['work_date']) ? trim($_REQUEST['work_date']) : '';
+    if ($work_date_param && preg_match('/^\d{4}-\d{2}-\d{2}$/', $work_date_param)) {
+        $schedule['work_date'] = $work_date_param;
+    } else {
+        $schedule['work_date'] = date('Y-m-d');
+    }
+    
     $schedule['start_time'] = '09:00';
     $schedule['end_time'] = '18:00';
 } else if ($w == 'u') {
