@@ -171,7 +171,8 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 					</div>
 					<div>
 						<select name="category_id" id="reg_category_minor"
-							class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							disabled
 							required>
 							<option value="">중분류 선택</option>
 						</select>
@@ -415,14 +416,35 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 			majorCateSelect.addEventListener('change', function(e) {
 				let selectedValue = e.target.value;
 				let minorCateSelect = document.getElementById('reg_category_minor');
+
+				// 옵션 초기화
 				minorCateSelect.innerHTML = '<option value="">중분류 선택</option>';
-				if (selectedValue !== '') { // 대분류값이 존재하는 option으로 변경되었을때
+				minorCateSelect.value = ''; // 선택 값 초기화
+
+				if (selectedValue !== '') { // 대분류가 선택된 경우
+					// 중분류 옵션 추가
+					let hasOptions = false;
 					for (let ck in cats[selectedValue]['mid']) {
 						let opt = document.createElement("option");
 						opt.value = ck;
 						opt.textContent = cats[selectedValue]['mid'][ck];
 						minorCateSelect.appendChild(opt);
+						hasOptions = true;
 					}
+
+					// 중분류 옵션이 있는 경우에만 활성화
+					if (hasOptions) {
+						minorCateSelect.disabled = false;
+						minorCateSelect.classList.remove('bg-gray-100', 'cursor-not-allowed');
+					} else {
+						// 중분류 옵션이 없는 경우 비활성화 유지
+						minorCateSelect.disabled = true;
+						minorCateSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
+					}
+				} else { // 대분류가 선택 해제된 경우
+					// 중분류 비활성화
+					minorCateSelect.disabled = true;
+					minorCateSelect.classList.add('bg-gray-100', 'cursor-not-allowed');
 				}
 			});
 		}
