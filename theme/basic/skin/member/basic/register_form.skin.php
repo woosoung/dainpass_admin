@@ -40,7 +40,7 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 
 		<section class="mb-8">
 			<h2 class="pb-2 mb-4 text-xl font-bold text-gray-800 border-b-2 border-gray-200">
-				로그인 정보
+				기본 정보
 			</h2>
 
 			<!-- 아이디 -->
@@ -74,6 +74,27 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 						minlength="8" maxlength="20" placeholder="비밀번호 확인">
 					<span id="msg_mb_password_re" class="block mt-1 text-sm"></span>
 				</div>
+			</div>
+
+			<!-- 이메일 -->
+			<div class="mb-4">
+				<label for="reg_mb_email" class="block mb-2 text-sm font-semibold text-gray-700">
+					이메일
+				</label>
+				<input type="email" name="mb_email" id="reg_mb_email" value="<?php echo isset($member['mb_email']) ? $member['mb_email'] : ''; ?>"
+					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					placeholder="이메일" required>
+				<input type="hidden" name="old_email" value="<?php echo $member['mb_email'] ?>">
+			</div>
+
+			<!-- 휴대폰번호 -->
+			<div class="mb-4">
+				<label for="reg_mb_hp" class="block mb-2 text-sm font-semibold text-gray-700">
+					휴대폰번호
+				</label>
+				<input type="text" name="mb_hp" id="reg_mb_hp" value="<?php echo get_text($member['mb_hp']) ?>"
+					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					placeholder="휴대폰번호" required>
 			</div>
 		</section>
 
@@ -178,33 +199,6 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 						</select>
 					</div>
 				</div>
-			</div>
-		</section>
-
-		<section class="mb-8">
-			<h2 class="pb-2 mb-4 text-xl font-bold text-gray-800 border-b-2 border-gray-200">
-				담당자 정보
-			</h2>
-
-			<!-- 이메일 -->
-			<div class="mb-4">
-				<label for="reg_mb_email" class="block mb-2 text-sm font-semibold text-gray-700">
-					이메일
-				</label>
-				<input type="email" name="mb_email" id="reg_mb_email" value="<?php echo isset($member['mb_email']) ? $member['mb_email'] : ''; ?>"
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="이메일" required>
-				<input type="hidden" name="old_email" value="<?php echo $member['mb_email'] ?>">
-			</div>
-
-			<!-- 휴대폰번호 -->
-			<div class="mb-4">
-				<label for="reg_mb_hp" class="block mb-2 text-sm font-semibold text-gray-700">
-					휴대폰번호
-				</label>
-				<input type="text" name="mb_hp" id="reg_mb_hp" value="<?php echo get_text($member['mb_hp']) ?>"
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="휴대폰번호" required>
 			</div>
 		</section>
 
