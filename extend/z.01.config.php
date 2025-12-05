@@ -57,6 +57,7 @@ $g5['service_terms_table']               = 'service_terms'; //서비스약관 �
 $g5['shop_table']                        = 'shop'; //가맹점
 $g5['shop_categories_table']             = 'shop_categories'; //업종(분류)
 $g5['shop_category_relation_table']      = 'shop_category_relation'; //업종-가맹점 크로스 테이블
+$g5['category_default_table']            = 'category_default'; //업종별 기본값(예약준비시간 등)
 $g5['shop_keyword_table']                = 'shop_keyword'; //가맹점별 키워드 테이블
 $g5['shop_search_refresh_queue_table']   = 'shop_search_refresh_queue'; //가맹점 검색색인 갱신 큐 테이블
 $g5['shop_amenities_table']             = 'shop_amenities'; //가맹점-편의시설 크로스 테이블

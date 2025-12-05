@@ -140,6 +140,7 @@ $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) 
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
 $amenities_id_list = isset($_POST['amenities_id_list']) ? trim($_POST['amenities_id_list']) : '';
 $reservation_mode = isset($_POST['reservation_mode']) ? trim($_POST['reservation_mode']) : 'SERVICE_ONLY';
+$prep_period_for_reservation = isset($_POST['prep_period_for_reservation']) && $_POST['prep_period_for_reservation'] !== '' ? (int)$_POST['prep_period_for_reservation'] : null;
 
 // 이메일 형식 체크
 if(!preg_match("/^[a-z0-9_+.-]+@([a-z0-9-]+\.)+[a-z0-9]{2,4}$/",$contact_email)) {
@@ -297,6 +298,7 @@ $sql_common = "	name = '".addslashes($name)."'
                 , kakaotalk_url = '".addslashes($kakaotalk_url)."'
                 , amenities_id_list = '".addslashes($amenities_id_list)."'
                 , reservation_mode = '".addslashes($reservation_mode)."'
+                , prep_period_for_reservation = ".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL')."
 ";
 
 // 수정

@@ -92,6 +92,7 @@ $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) 
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
 $amenities_id_list = isset($_POST['amenities_id_list']) ? trim($_POST['amenities_id_list']) : '';
 $reservation_mode = isset($_POST['reservation_mode']) ? trim($_POST['reservation_mode']) : 'SERVICE_ONLY';
+$prep_period_for_reservation = isset($_POST['prep_period_for_reservation']) && $_POST['prep_period_for_reservation'] !== '' ? (int)$_POST['prep_period_for_reservation'] : null;
 
 // exit;
 // if($w != '' && $shop_id == $shop_parent_id){
@@ -241,13 +242,14 @@ $sql_common = "	name = '".addslashes($name)."'
                 , kakaotalk_url = '".addslashes($kakaotalk_url)."'
                 , amenities_id_list = '".addslashes($amenities_id_list)."'
                 , reservation_mode = '".addslashes($reservation_mode)."'
+                , prep_period_for_reservation = ".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL')."
 ";
 
-$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,cancel_policy,names,tax_type,branch,mng_menus,settlement_memo,point_rate,notice,cancellation_period,shop_names,blog_url,instagram_url,kakaotalk_url,amenities_id_list,reservation_mode";
+$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,cancel_policy,names,tax_type,branch,mng_menus,settlement_memo,point_rate,notice,cancellation_period,shop_names,blog_url,instagram_url,kakaotalk_url,amenities_id_list,reservation_mode,prep_period_for_reservation";
 
 $sql_common_i_col = $sql_common_col.",created_at,updated_at";
 
-$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo)."',".$point_rate.",'".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."'";
+$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo)."',".$point_rate.",'".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."',".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL');
 
 $sql_common_i_val = $sql_common_val.",'".G5_TIME_YMDHIS."','".G5_TIME_YMDHIS."'";
 

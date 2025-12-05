@@ -530,6 +530,15 @@ include_once('./js/store_form.js.php');
 		</td>
 	</tr>
 	<tr>
+		<th scope="row"><label for="prep_period_for_reservation">예약 준비시간</label></th>
+		<td>
+			<?php echo help("예약과 예약 사이에 필요한 준비시간을 분 단위로 설정합니다. (예: 청소, 세팅 등의 준비시간)"); ?>
+			<input type="number" name="prep_period_for_reservation" value="<?=$com['prep_period_for_reservation']??''?>" id="prep_period_for_reservation" class="frm_input text-center w-[100px]" min="0">
+			<span>분</span>
+		</td>
+		<td colspan="2"></td>
+	</tr>
+	<tr>
 		<th scope="row"><label for="notice">공지 및 알림</label></th>
 		<td colspan="3">
 			<?php echo help("가맹점 관련 공지사항 및 알림 내용을 입력해 주세요."); ?>
