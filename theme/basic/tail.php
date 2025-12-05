@@ -13,6 +13,7 @@ if (G5_COMMUNITY_USE === false) {
 ?>
 
 </main>
+</div>
 <!-- } 콘텐츠 끝 -->
 
 
