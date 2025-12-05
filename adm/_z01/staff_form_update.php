@@ -22,7 +22,6 @@ if ($is_member && $member['mb_id']) {
                 AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
     
     $mb_row = sql_fetch($mb_sql, 1);
-    
     if ($mb_row && $mb_row['mb_id']) {
         $mb_1_value = trim($mb_row['mb_1']);
         
@@ -42,6 +41,7 @@ if ($is_member && $member['mb_id']) {
             if ($shop_row && $shop_row['shop_id']) {
                 $has_access = true;
                 $shop_id = (int)$shop_row['shop_id'];
+
             } else {
                 // shop_id에 해당하는 레코드가 없는 경우
                 alert('업체 데이터가 없습니다.');
@@ -55,6 +55,7 @@ if (!$has_access) {
     alert('접속할 수 없는 페이지 입니다.');
 }
 
+// print_r2($_POST);exit;
 // 입력 기본값 안전 초기화
 $w = isset($_POST['w']) ? trim($_POST['w']) : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
 $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
@@ -62,7 +63,7 @@ $steps_id = isset($_POST['steps_id']) ? (int)$_POST['steps_id'] : (isset($_REQUE
 
 // 가맹점측 관리자는 자신의 가맹점만 수정 가능
 if ($post_shop_id != $shop_id) {
-    alert('접속할 수 없는 페이지 입니다.');
+    alert('가맹점소속의 관리자가 아니네요.접속할 수 없는 페이지 입니다.');
 }
 
 if ($w == 'u')
@@ -100,15 +101,10 @@ if ($w == '') {
                 ".($title ? "'".addslashes($title)."'" : "NULL").",
                 '".G5_TIME_YMDHIS."',
                 '".G5_TIME_YMDHIS."'
-            ) RETURNING steps_id ";
-    
-    $result = sql_query_pg($sql);
-    if ($result && is_object($result) && isset($result->result)) {
-        $row = sql_fetch_array_pg($result->result);
-        $steps_id = (int)$row['steps_id'];
-    } else {
-        alert('직원 추가 중 오류가 발생했습니다.');
-    }
+            ) ";
+    // echo $sql;exit;
+    sql_query_pg($sql);
+    $steps_id = sql_insert_id_pg('staff');
 } else if ($w == 'u') {
     // 수정
     // 해당 직원이 해당 가맹점의 것인지 확인

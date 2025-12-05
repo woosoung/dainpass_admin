@@ -161,15 +161,30 @@ document.addEventListener('DOMContentLoaded', function(){
     const checkboxes = document.querySelectorAll('.mng_menu');
 
     if (inputBox) {
-        // 초기값($com['mng_menus']) 기반 체크 처리
+        // 공간관리(930600)와 공간그룹관리(930550) 동기화
+        const SPACE_MENU = '930600'; // 공간관리
+        const SPACE_GROUP_MENU = '930550'; // 공간그룹관리
+        
+        // 초기값($com['mng_menus']) 기반 체크 처리 및 동기화
         const initVal = inputBox.value.trim();
         if (initVal) {
-            const selectedVals = initVal.split(',');
+            let selectedVals = initVal.split(',').map(v => v.trim());
+            
+            // 초기 로드 시 둘 중 하나만 선택되어 있으면 나머지도 자동 선택
+            if (selectedVals.includes(SPACE_MENU) && !selectedVals.includes(SPACE_GROUP_MENU)) {
+                selectedVals.push(SPACE_GROUP_MENU);
+            } else if (selectedVals.includes(SPACE_GROUP_MENU) && !selectedVals.includes(SPACE_MENU)) {
+                selectedVals.push(SPACE_MENU);
+            }
+            
             checkboxes.forEach(chk => {
                 if (selectedVals.includes(chk.dataset.val)) {
                     chk.checked = true;
                 }
             });
+            
+            // 동기화된 값으로 hidden input 업데이트
+            inputBox.value = selectedVals.join(',');
         }
 
         // 체크박스 변경 시 input 값 업데이트
@@ -181,7 +196,22 @@ document.addEventListener('DOMContentLoaded', function(){
         }
 
         checkboxes.forEach(chk => {
-            chk.addEventListener('change', updateInput);
+            chk.addEventListener('change', function() {
+                const currentVal = this.dataset.val;
+                const isChecked = this.checked;
+                
+                // 공간관리 또는 공간그룹관리가 변경되면 상대방도 동기화
+                if (currentVal === SPACE_MENU || currentVal === SPACE_GROUP_MENU) {
+                    const targetVal = (currentVal === SPACE_MENU) ? SPACE_GROUP_MENU : SPACE_MENU;
+                    const targetCheckbox = Array.from(checkboxes).find(cb => cb.dataset.val === targetVal);
+                    
+                    if (targetCheckbox) {
+                        targetCheckbox.checked = isChecked;
+                    }
+                }
+                
+                updateInput();
+            });
         });
     }
 

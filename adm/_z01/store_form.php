@@ -435,6 +435,18 @@ include_once('./js/store_form.js.php');
 		</td>
 	</tr>
 	<tr>
+		<th scope="row"><label for="reservation_mode">예약 모드</label></th>
+		<td colspan="3">
+			<?php echo help("예약 모드를 선택해 주세요. SERVICE_ONLY(공간 미사용), SPACE_ONLY(공간만 예약), SERVICE_AND_SPACE(서비스+공간 둘 다 사용)"); ?>
+			<select name="reservation_mode" id="reservation_mode" class="frm_input">
+				<option value="SERVICE_ONLY">공간 미사용 (SERVICE_ONLY)</option>
+				<option value="SPACE_ONLY">공간만 예약 (SPACE_ONLY)</option>
+				<option value="SERVICE_AND_SPACE">서비스+공간 (SERVICE_AND_SPACE)</option>
+			</select>
+			<script>$('select[name="reservation_mode"]').val('<?=($com['reservation_mode'] ?? 'SERVICE_ONLY')?>');</script>
+		</td>
+	</tr>
+	<tr>
 		<th scope="row"><label for="shop_management_menu">관리옵션선택</label></th>
         <td colspan="3">
 			<?php

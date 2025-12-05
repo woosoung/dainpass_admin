@@ -62,6 +62,9 @@ $g5['shop_search_refresh_queue_table']   = 'shop_search_refresh_queue'; //가맹
 $g5['shop_amenities_table']             = 'shop_amenities'; //가맹점-편의시설 크로스 테이블
 $g5['shop_qna_table']                   = 'shop_qna'; //고객회원이 가맹점 및 플랫폼에 문의
 $g5['shop_admin_inquiry_table']         = 'shop_admin_inquiry'; //가맹점이 플랫폼에 문의
+$g5['shop_services_table']              = 'shop_services'; //가맹점 서비스
+$g5['shop_space_group_table']           = 'shop_space_group'; //공간 그룹 (층/홀/존)
+$g5['shop_space_unit_table']            = 'shop_space_unit'; //공간 유닛 (룸/테이블/좌석)
 
 $g5['keywords_table']                    = 'keywords'; //키워드 테이블
 $g5['amenities_table']                  = 'amenities'; //편의시설

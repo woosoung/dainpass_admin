@@ -114,6 +114,24 @@ $branch = trim($_POST['branch']);
 // shop_names = 가맹점명 히스토리
 $mng_menus = ($w == 'u') ? addslashes(trim($_POST['mng_menus'])) : '';
 
+// 공간관리(930600)와 공간그룹관리(930550) 동기화 처리
+if ($w == 'u' && $mng_menus) {
+    $mng_menus_arr = array_map('trim', explode(',', $mng_menus));
+    $has_space_menu = in_array('930600', $mng_menus_arr); // 공간관리
+    $has_space_group_menu = in_array('930550', $mng_menus_arr); // 공간그룹관리
+    
+    // 둘 중 하나만 있으면 나머지도 추가
+    if ($has_space_menu && !$has_space_group_menu) {
+        $mng_menus_arr[] = '930550';
+    } else if ($has_space_group_menu && !$has_space_menu) {
+        $mng_menus_arr[] = '930600';
+    }
+    
+    // 중복 제거 후 다시 문자열로 변환
+    $mng_menus_arr = array_unique($mng_menus_arr);
+    $mng_menus = addslashes(implode(',', $mng_menus_arr));
+}
+
 // 추가 필드 처리
 $notice = isset($_POST['notice']) ? conv_unescape_nl(stripslashes($_POST['notice'])) : '';
 $cancellation_period = isset($_POST['cancellation_period']) ? (int)$_POST['cancellation_period'] : 1;
@@ -121,6 +139,7 @@ $blog_url = isset($_POST['blog_url']) ? trim($_POST['blog_url']) : '';
 $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) : '';
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
 $amenities_id_list = isset($_POST['amenities_id_list']) ? trim($_POST['amenities_id_list']) : '';
+$reservation_mode = isset($_POST['reservation_mode']) ? trim($_POST['reservation_mode']) : 'SERVICE_ONLY';
 
 // 이메일 형식 체크
 if(!preg_match("/^[a-z0-9_+.-]+@([a-z0-9-]+\.)+[a-z0-9]{2,4}$/",$contact_email)) {
@@ -277,6 +296,7 @@ $sql_common = "	name = '".addslashes($name)."'
                 , instagram_url = '".addslashes($instagram_url)."'
                 , kakaotalk_url = '".addslashes($kakaotalk_url)."'
                 , amenities_id_list = '".addslashes($amenities_id_list)."'
+                , reservation_mode = '".addslashes($reservation_mode)."'
 ";
 
 // 수정
