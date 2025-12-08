@@ -226,7 +226,7 @@ $business_license_accept = '.' . implode(',.', $business_license_extensions); //
 						</label>
 						<input type="file"
 							id="business_license_file"
-							name="data[]"
+							name="business_license_file[]"
 							accept="<?php echo $business_license_accept; ?>"
 							class="hidden">
 						<span id="file_name_display" class="text-sm text-gray-500">
