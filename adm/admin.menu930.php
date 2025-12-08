@@ -10,5 +10,5 @@ $menu["menu930"] = array(
     array('930600', '공간관리', '' . G5_Z_URL . '/shop_space_unit_list.php', 'shop_space_unit_list'),
     array('930700', '요일별운영시간', '' . G5_Z_URL . '/shop_weeks_slot_list.php', 'shop_weeks_slot_list'),
     array('930800', '정기휴무규칙', '' . G5_Z_URL . '/holiday_rules_list.php', 'holiday_rules_list'),
-    array('930900', '특별휴무/영업일시', '' . G5_Z_URL . '/special_schedule_list.php', 'special_schedule_list'),
+    array('930900', '특별휴무/영업일시', '' . G5_Z_URL . '/shop_business_exceptions_list.php', 'shop_business_exceptions_list'),
 );
