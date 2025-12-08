@@ -1,11 +1,81 @@
 <?php
-$sub_menu = "920800";
+$sub_menu = "930700";
 include_once('./_common.php');
 
-@auth_check($auth[$sub_menu], 'r');
+// 가맹점측 관리자 접근 권한 체크
+$has_access = false;
+$shop_id = 0;
+$shop_info = null;
 
-// 검색 파라미터
-$sca = isset($_GET['sca']) ? trim($_GET['sca']) : '0'; // category_id (초기 접근 시 '0')
+if ($is_member && $member['mb_id']) {
+    // MySQL에서 회원 정보 확인
+    // 플랫폼 관리자(mb_level >= 6)는 mb_2 = 'N'일 수 있으므로 mb_2 조건을 다르게 적용
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
+                FROM {$g5['member_table']} 
+                WHERE mb_id = '{$member['mb_id']}' 
+                AND mb_level >= 4 
+                AND (
+                    mb_level >= 6 
+                    OR (mb_level < 6 AND mb_2 = 'Y')
+                )
+                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
+                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+    $mb_row = sql_fetch($mb_sql, 1);
+    
+    if ($mb_row && $mb_row['mb_id']) {
+        $mb_1_value = trim($mb_row['mb_1']);
+        
+        // mb_1 = '0'인 경우: 플랫폼 관리자
+        if ($mb_1_value === '0' || $mb_1_value === '') {
+            // 플랫폼 관리자는 shop_id = 0에 해당하는 레코드가 없으므로 '업체 데이터가 없습니다.' 표시
+            $g5['title'] = '가맹점별 요일별 영업시간 관리';
+            include_once(G5_ADMIN_PATH.'/admin.head.php');
+            echo '<div class="local_desc01 local_desc text-center py-[200px]">';
+            echo '<p>업체 데이터가 없습니다.</p>';
+            echo '</div>';
+            include_once(G5_ADMIN_PATH.'/admin.tail.php');
+            exit;
+        }
+        
+        // mb_1에 shop_id 값이 있는 경우: 해당 shop_id로 shop 테이블 조회
+        if (!empty($mb_1_value)) {
+            // PostgreSQL에서 shop_id 확인 (shop_id는 bigint이므로 정수로 비교)
+            $shop_id_check = (int)$mb_1_value;
+            $shop_sql = " SELECT shop_id, shop_name, name 
+                         FROM {$g5['shop_table']} 
+                         WHERE shop_id = {$shop_id_check} ";
+            $shop_row = sql_fetch_pg($shop_sql);
+            
+            if ($shop_row && $shop_row['shop_id']) {
+                $has_access = true;
+                $shop_id = (int)$shop_row['shop_id'];
+                $shop_info = $shop_row;
+            } else {
+                // shop_id에 해당하는 레코드가 없는 경우
+                $g5['title'] = '가맹점별 요일별 영업시간 관리';
+                include_once(G5_ADMIN_PATH.'/admin.head.php');
+                echo '<div class="local_desc01 local_desc text-center py-[200px]">';
+                echo '<p>업체 데이터가 없습니다.</p>';
+                echo '</div>';
+                include_once(G5_ADMIN_PATH.'/admin.tail.php');
+                exit;
+            }
+        }
+    }
+}
+
+// 접근 권한이 없으면 메시지 표시
+if (!$has_access) {
+    $g5['title'] = '가맹점별 요일별 영업시간 관리';
+    include_once(G5_ADMIN_PATH.'/admin.head.php');
+    echo '<div class="local_desc01 local_desc text-center py-[200px]">';
+    echo '<p>접속할 수 없는 페이지 입니다.</p>';
+    echo '</div>';
+    include_once(G5_ADMIN_PATH.'/admin.tail.php');
+    exit;
+}
+
+@auth_check($auth[$sub_menu], 'r');
 
 // 요일 배열
 $weekdays = array(
@@ -18,82 +88,13 @@ $weekdays = array(
     6 => '토요일'
 );
 
-// 모든 업종 목록 가져오기 (0 포함, 계층 구조로 정렬)
-$categories = array();
-$categories['0'] = '모든 업종 기본';
-
-// 1차 분류(2자리) 가져오기
-$sql_primary = " SELECT category_id, name 
-                  FROM {$g5['shop_categories_table']} 
-                  WHERE use_yn = 'Y' 
-                  AND char_length(category_id) = 2
-                  ORDER BY category_id ASC ";
-$result_primary = sql_query_pg($sql_primary);
-
-if ($result_primary && $result_primary->result) {
-    while ($row = sql_fetch_array_pg($result_primary->result)) {
-        $primary_id = isset($row['category_id']) ? $row['category_id'] : '';
-        $primary_name = isset($row['name']) ? $row['name'] : '';
-        
-        if ($primary_id) {
-            // 1차 분류 추가
-            $categories[$primary_id] = $primary_name;
-            
-            // 해당 1차 분류의 2차 분류(4자리) 가져오기
-            $primary_id_escaped = sql_real_escape_string($primary_id);
-            $sql_secondary = " SELECT category_id, name 
-                               FROM {$g5['shop_categories_table']} 
-                               WHERE use_yn = 'Y' 
-                               AND char_length(category_id) = 4
-                               AND left(category_id, 2) = '{$primary_id_escaped}'
-                               ORDER BY category_id ASC ";
-            $result_secondary = sql_query_pg($sql_secondary);
-            
-            if ($result_secondary && $result_secondary->result) {
-                while ($row_sec = sql_fetch_array_pg($result_secondary->result)) {
-                    $secondary_id = isset($row_sec['category_id']) ? $row_sec['category_id'] : '';
-                    $secondary_name = isset($row_sec['name']) ? $row_sec['name'] : '';
-                    
-                    if ($secondary_id) {
-                        // 2차 분류 추가 (부모명 포함)
-                        $categories[$secondary_id] = $primary_name . ' > ' . $secondary_name;
-                    }
-                }
-            }
-        }
-    }
-}
-
-// 영업시간 슬롯 조회
-$where = array();
-
-if ($sca !== '' && $sca !== 'all') {
-    // 특정 업종 선택
-    $sca_escaped = sql_real_escape_string($sca);
-    $where[] = "s.category_id = '{$sca_escaped}'";
-} else if ($sca === 'all') {
-    // 전체 선택 - where 조건 없음 (모든 레코드 표시)
-} else {
-    // 초기 접근 시 category_id = 0만 표시
-    $where[] = "s.category_id = '0'";
-}
-
-$where_sql = !empty($where) ? "WHERE " . implode(" AND ", $where) : "";
-
+// 영업시간 슬롯 조회 (해당 shop_id만)
 $sql = " SELECT s.*, 
-                COALESCE(c.name, '모든 업종 기본') AS category_name,
-                CASE 
-                    WHEN s.category_id = '0' THEN '모든 업종 기본'
-                    WHEN char_length(s.category_id) = 2 THEN c.name
-                    WHEN char_length(s.category_id) = 4 THEN 
-                        COALESCE(p.name || ' > ' || c.name, c.name)
-                    ELSE c.name
-                END AS display_name
-         FROM {$g5['default_business_hour_slots_table']} AS s
-         LEFT JOIN {$g5['shop_categories_table']} AS c ON s.category_id = c.category_id
-         LEFT JOIN {$g5['shop_categories_table']} AS p ON char_length(s.category_id) = 4 AND p.category_id = left(s.category_id, 2)
-         {$where_sql}
-         ORDER BY s.category_id ASC, s.weekday ASC, s.slot_seq ASC ";
+                COALESCE(sh.shop_name, sh.name, '') AS shop_display_name
+         FROM business_hour_slots AS s
+         LEFT JOIN {$g5['shop_table']} AS sh ON s.shop_id = sh.shop_id
+         WHERE s.shop_id = {$shop_id}
+         ORDER BY s.weekday ASC, s.slot_seq ASC ";
 
 $result = sql_query_pg($sql);
 $slots = array();
@@ -103,48 +104,34 @@ if ($result && $result->result) {
     }
 }
 
-$g5['title'] = '업종별 요일별 기본 영업시간 관리';
+$g5['title'] = '가맹점별 요일별 영업시간 관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
+
+$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_desc01 local_desc">
     <p>
-        업종별 요일별 기본 영업시간을 관리합니다.<br>
-        <!-- - category_id = 0: 모든 업종에 대한 기본 영업시간<br>
-        - category_id가 2자리: 1차 업종(분류)의 영업시간<br>
-        - category_id가 4자리: 2차 업종(분류)의 영업시간 -->
+        가맹점별 요일별 영업시간을 관리합니다.<br>
+        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 
-<form name="fsearch" method="get" class="local_sch01 local_sch">
-    <div class="sch_last">
-        <label for="sca" class="sound_only">업종 선택</label>
-        <select name="sca" id="sca" onchange="this.form.submit();">
-            <?php foreach ($categories as $cat_id => $cat_name) { ?>
-                <option value="<?php echo $cat_id; ?>" <?php echo ($sca == $cat_id) ? 'selected' : ''; ?>>
-                    <?php echo get_text($cat_name); ?>
-                </option>
-            <?php } ?>
-        </select>
-    </div>
-</form>
-
 <div class="btn_fixed_top">
-    <a href="./default_slot_list.php?sca=<?php echo $sca; ?>" class="btn_01 btn">목록</a>
+    <a href="./shop_weeks_slot_list.php" class="btn_01 btn">목록</a>
     <button type="button" onclick="addSlot();" class="btn_02 btn">시간대 추가</button>
 </div>
 
-<form name="frm" method="post" action="./default_slot_list_update.php" onsubmit="return frm_check(this);">
+<form name="frm" method="post" action="./shop_weeks_slot_list_update.php" onsubmit="return frm_check(this);">
 <input type="hidden" name="token" value="<?php echo get_admin_token(); ?>">
-<input type="hidden" name="sca" value="<?php echo $sca; ?>">
+<input type="hidden" name="shop_id" id="shop_id" value="<?php echo $shop_id; ?>">
 
 <div class="tbl_head01 tbl_wrap">
     <table>
     <caption><?php echo $g5['title']; ?> 목록</caption>
     <thead>
     <tr>
-        <th scope="col">업종</th>
         <th scope="col">요일</th>
         <th scope="col">순서</th>
         <th scope="col">시작시간</th>
@@ -156,27 +143,25 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <tbody>
     <?php
     if (empty($slots)) {
-        echo '<tr><td colspan="7" class="empty_table">등록된 시간대가 없습니다.</td></tr>';
+        echo '<tr><td colspan="6" class="empty_table">등록된 시간대가 없습니다.</td></tr>';
     } else {
         foreach ($slots as $slot) {
-            $category_id = isset($slot['category_id']) ? $slot['category_id'] : '';
+            $slot_shop_id = isset($slot['shop_id']) ? $slot['shop_id'] : '';
             $weekday = isset($slot['weekday']) ? (int)$slot['weekday'] : 0;
             $slot_seq = isset($slot['slot_seq']) ? (int)$slot['slot_seq'] : 0;
             $open_time = isset($slot['open_time']) ? $slot['open_time'] : '';
             $close_time = isset($slot['close_time']) ? $slot['close_time'] : '';
             $is_open = isset($slot['is_open']) && ($slot['is_open'] == 't' || $slot['is_open'] === true || $slot['is_open'] == '1');
-            $display_name = isset($slot['display_name']) && $slot['display_name'] ? $slot['display_name'] : '모든 업종 기본';
     ?>
     <tr>
-        <td><?php echo get_text($display_name); ?></td>
         <td><?php echo isset($weekdays[$weekday]) ? $weekdays[$weekday] : ''; ?></td>
         <td><?php echo $slot_seq; ?></td>
         <td><?php echo $open_time ? substr($open_time, 0, 5) : ''; ?></td>
         <td><?php echo $close_time ? substr($close_time, 0, 5) : ''; ?></td>
         <td><?php echo $is_open ? '<span class="txt_yes">영업</span>' : '<span class="txt_no">휴무</span>'; ?></td>
         <td class="td_mng">
-            <a href="javascript:void(0);" onclick="editSlot('<?php echo addslashes($category_id); ?>', <?php echo $weekday; ?>, <?php echo $slot_seq; ?>, '<?php echo addslashes($open_time); ?>', '<?php echo addslashes($close_time); ?>', <?php echo $is_open ? 'true' : 'false'; ?>);" class="btn btn_03">수정</a>
-            <a href="javascript:void(0);" onclick="deleteSlot('<?php echo addslashes($category_id); ?>', <?php echo $weekday; ?>, <?php echo $slot_seq; ?>);" class="btn btn_02">삭제</a>
+            <a href="javascript:void(0);" onclick="editSlot(<?php echo $slot_shop_id; ?>, <?php echo $weekday; ?>, <?php echo $slot_seq; ?>, '<?php echo addslashes($open_time); ?>', '<?php echo addslashes($close_time); ?>', <?php echo $is_open ? 'true' : 'false'; ?>);" class="btn btn_03">수정</a>
+            <a href="javascript:void(0);" onclick="deleteSlot(<?php echo $slot_shop_id; ?>, <?php echo $weekday; ?>, <?php echo $slot_seq; ?>);" class="btn btn_02">삭제</a>
         </td>
     </tr>
     <?php
@@ -258,7 +243,8 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                 <h2 id="modalTitle">시간대 추가</h2>
             <form name="frmSlot" id="frmSlot">
                 <input type="hidden" name="action" id="action" value="add">
-                <input type="hidden" name="old_category_id" id="old_category_id" value="">
+                <input type="hidden" name="shop_id" id="modal_shop_id" value="<?php echo $shop_id; ?>">
+                <input type="hidden" name="old_shop_id" id="old_shop_id" value="">
                 <input type="hidden" name="old_weekday" id="old_weekday" value="">
                 <input type="hidden" name="old_slot_seq" id="old_slot_seq" value="">
                 
@@ -269,17 +255,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                         <col>
                     </colgroup>
                     <tbody>
-                    <tr>
-                        <th scope="row"><label for="modal_category_id">업종<strong class="sound_only">필수</strong></label></th>
-                        <td>
-                            <select name="category_id" id="modal_category_id" class="frm_input required" required>
-                                <option value="">선택하세요</option>
-                                <?php foreach ($categories as $cat_id => $cat_name) { ?>
-                                    <option value="<?php echo $cat_id; ?>"><?php echo get_text($cat_name); ?></option>
-                                <?php } ?>
-                            </select>
-                        </td>
-                    </tr>
                     <tr>
                         <th scope="row"><label for="modal_weekday">요일<strong class="sound_only">필수</strong></label></th>
                         <td>
@@ -336,9 +311,10 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 </form>
 
 <?php
-include_once('./js/default_slot_list.js.php');
+include_once('./js/shop_weeks_slot_list.js.php');
 ?>
 
 <?php
 include_once(G5_ADMIN_PATH.'/admin.tail.php');
 ?>
+
