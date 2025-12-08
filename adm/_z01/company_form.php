@@ -538,7 +538,7 @@ let cats = <?=json_encode($cats)?>;
 			<select name="status" id="status">
 				<option value="active">정상<?=(($is_dev_manager)?'(active)':'')?></option>
 				<option value="pending">대기<?=(($is_dev_manager)?'(pending)':'')?></option>
-				<option value="stoped">휴업<?=(($is_dev_manager)?'(stoped)':'')?></option>
+				<option value="stopped">휴업<?=(($is_dev_manager)?'(stopped)':'')?></option>
 				<option value="closed">폐업<?=(($is_dev_manager)?'(closed)':'')?></option>
 				<option value="shutdown">금지<?=(($is_dev_manager)?'(shutdown)':'')?></option>
 			</select>

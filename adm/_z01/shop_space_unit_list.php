@@ -34,10 +34,16 @@ if ($is_member && $member['mb_id']) {
         
         if (!empty($mb_1_value)) {
             $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
             $shop_row = sql_fetch_pg($shop_sql);
             
             if ($shop_row && $shop_row['shop_id']) {
+                if ($shop_row['status'] == 'pending')
+                    alert('아직 승인이 되지 않았습니다.');
+                if ($shop_row['status'] == 'closed')
+                    alert('폐업되었습니다.');
+                if ($shop_row['status'] == 'shutdown')
+                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
                 $has_access = true;
                 $shop_id = (int)$shop_row['shop_id'];
             } else {

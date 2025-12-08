@@ -42,10 +42,16 @@ if ($is_member && $member['mb_id']) {
         if (!empty($mb_1_value)) {
             // PostgreSQL에서 shop_id 확인 (shop_id는 bigint이므로 정수로 비교)
             $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
             $shop_row = sql_fetch_pg($shop_sql);
             
             if ($shop_row && $shop_row['shop_id']) {
+				if ($shop_row['status'] == 'pending')
+					alert('아직 승인이 되지 않았습니다.');
+				if ($shop_row['status'] == 'closed')
+					alert('폐업되었습니다.');
+				if ($shop_row['status'] == 'shutdown')
+					alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
                 $has_access = true;
                 $shop_id = (int)$shop_row['shop_id'];
             } else {
@@ -115,17 +121,6 @@ if (isset($shop_id) && $shop_id) {
 // 가맹점 데이터 조회
 $com = get_table_meta_pg('shop','shop_id',$shop_id);
 
-if (!$com['shop_id'])
-	alert('존재하지 않는 가맹점자료입니다.');
-
-if ($com['status'] == 'pending')
-	alert('아직 승인이 되지 않았습니다.');
-
-if ($com['status'] == 'closed')
-	alert('폐업되었습니다.');
-
-if ($com['status'] == 'shutdown')
-	alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
 
 // 본사 com_idx_parent가 있으면 com_name_parent를 가져온다.
 $sql = " SELECT name FROM {$g5['shop_table']} WHERE shop_id = '{$com['shop_parent_id']}' ";
@@ -436,8 +431,7 @@ include_once('./js/store_form.js.php');
 		<td>
 			<select name="status" id="status">
 				<option value="active">정상<?=(($is_dev_manager)?'(active)':'')?></option>
-				<option value="stoped">휴업<?=(($is_dev_manager)?'(stoped)':'')?></option>
-				<option value="closed">폐업<?=(($is_dev_manager)?'(closed)':'')?></option>
+				<option value="stopped">일시휴업<?=(($is_dev_manager)?'(stopped)':'')?></option>
 			</select>
 			<script>$('select[name="status"]').val('<?=$com['status']?>');</script>
 		</td>
