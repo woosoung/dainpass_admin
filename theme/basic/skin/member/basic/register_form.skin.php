@@ -236,8 +236,8 @@ $business_license_accept = '.' . implode(',.', $business_license_extensions); //
 
 					<!-- 파일 선택 상태 -->
 					<div id="file_preview" class="hidden">
-						<div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg bg-gray-50">
-							<div class="flex items-center gap-3">
+						<div class="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+							<div class="flex items-center flex-1 min-w-0 gap-3">
 								<svg class="flex-shrink-0 w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 										d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
