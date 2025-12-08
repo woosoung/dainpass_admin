@@ -261,5 +261,27 @@ window.onclick = function(event) {
         closeModal();
     }
 }
+
+// 페이지 로드 시 URL 파라미터 확인하여 모달 자동 열기
+$(document).ready(function() {
+    if (typeof addDateParam !== 'undefined' && addDateParam) {
+        // 날짜가 전달된 경우 신규등록 모달 열기
+        setTimeout(function() {
+            document.getElementById('modal_date').value = addDateParam;
+            addException();
+        }, 100);
+    } else if (typeof editExceptionData !== 'undefined' && editExceptionData) {
+        // 수정할 날짜 데이터가 전달된 경우 모달 열기
+        setTimeout(function() {
+            editException(
+                editExceptionData.date,
+                editExceptionData.is_open,
+                editExceptionData.open_time,
+                editExceptionData.close_time,
+                editExceptionData.reason
+            );
+        }, 100);
+    }
+});
 </script>
 

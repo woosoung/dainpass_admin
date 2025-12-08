@@ -96,6 +96,22 @@ $sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
 $stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
 $sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; // is_open 필터
 
+// 달력에서 전달된 날짜 파라미터
+$add_date = isset($_GET['add_date']) ? clean_xss_tags($_GET['add_date']) : '';
+$edit_date = isset($_GET['edit_date']) ? clean_xss_tags($_GET['edit_date']) : '';
+
+// edit_date가 있으면 해당 데이터 가져오기
+$edit_exception_data = null;
+if ($edit_date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $edit_date)) {
+    $edit_sql = " SELECT * FROM business_exceptions 
+                  WHERE shop_id = {$shop_id} 
+                  AND date = '{$edit_date}' ";
+    $edit_result = sql_fetch_pg($edit_sql);
+    if ($edit_result) {
+        $edit_exception_data = $edit_result;
+    }
+}
+
 $where_sql = " WHERE shop_id = {$shop_id} ";
 
 if ($sfl && $stx) {
@@ -293,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <div class="btn_fixed_top btn_confirm">
+    <a href="./shop_business_exceptions_calendar.php" class="btn btn_03">달력보기</a>
     <button type="button" onclick="flist_delete_submit();" class="btn btn_02">선택삭제</button>
     <button type="button" onclick="addException();" class="btn btn_01">신규등록</button>
 </div>
@@ -435,6 +452,29 @@ echo $write_pages;
 </div>
 
 <?php
+// edit_date 데이터를 JavaScript에 전달
+if ($edit_exception_data) {
+    $edit_is_open = isset($edit_exception_data['is_open']) && ($edit_exception_data['is_open'] == 't' || $edit_exception_data['is_open'] === true || $edit_exception_data['is_open'] == '1' || $edit_exception_data['is_open'] === 'true');
+    $edit_open_time = $edit_exception_data['open_time'] ? substr($edit_exception_data['open_time'], 0, 5) : '';
+    $edit_close_time = $edit_exception_data['close_time'] ? substr($edit_exception_data['close_time'], 0, 5) : '';
+    $edit_reason = $edit_exception_data['reason'] ? addslashes($edit_exception_data['reason']) : '';
+    echo '<script>';
+    echo 'var editExceptionData = {';
+    echo '    date: "'.$edit_date.'",';
+    echo '    is_open: '.($edit_is_open ? 'true' : 'false').',';
+    echo '    open_time: "'.$edit_open_time.'",';
+    echo '    close_time: "'.$edit_close_time.'",';
+    echo '    reason: "'.$edit_reason.'"';
+    echo '};';
+    echo '</script>';
+} else {
+    echo '<script>var editExceptionData = null;</script>';
+}
+if ($add_date) {
+    echo '<script>var addDateParam = "'.$add_date.'";</script>';
+} else {
+    echo '<script>var addDateParam = null;</script>';
+}
 include_once('./js/shop_business_exceptions_list.js.php');
 include_once(G5_ADMIN_PATH.'/admin.tail.php');
 ?>
