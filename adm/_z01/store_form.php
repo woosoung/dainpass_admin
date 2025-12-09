@@ -42,10 +42,16 @@ if ($is_member && $member['mb_id']) {
         if (!empty($mb_1_value)) {
             // PostgreSQL에서 shop_id 확인 (shop_id는 bigint이므로 정수로 비교)
             $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
             $shop_row = sql_fetch_pg($shop_sql);
             
             if ($shop_row && $shop_row['shop_id']) {
+				if ($shop_row['status'] == 'pending')
+					alert('아직 승인이 되지 않았습니다.');
+				if ($shop_row['status'] == 'closed')
+					alert('폐업되었습니다.');
+				if ($shop_row['status'] == 'shutdown')
+					alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
                 $has_access = true;
                 $shop_id = (int)$shop_row['shop_id'];
             } else {
@@ -115,116 +121,114 @@ if (isset($shop_id) && $shop_id) {
 // 가맹점 데이터 조회
 $com = get_table_meta_pg('shop','shop_id',$shop_id);
 
-if (!$com['shop_id'])
-	alert('존재하지 않는 가맹점자료입니다.');
 
-	// 본사 com_idx_parent가 있으면 com_name_parent를 가져온다.
-	$sql = " SELECT name FROM {$g5['shop_table']} WHERE shop_id = '{$com['shop_parent_id']}' ";
-	
-	$pcom = sql_fetch_pg($sql);
-	$com['com_name_parent'] = (!empty($pcom['name'])) ? $pcom['name'] : '';
+// 본사 com_idx_parent가 있으면 com_name_parent를 가져온다.
+$sql = " SELECT name FROM {$g5['shop_table']} WHERE shop_id = '{$com['shop_parent_id']}' ";
 
-	$com['name'] = get_text($com['name']);
-	$com['contact_phone'] = get_text($com['contact_phone']);
-	$com['url'] = get_text($com['url']);
-	$com['addr1'] = ($com['addr1'])?get_text($com['addr1']):'';
-	$com['addr2'] = ($com['addr2'])?get_text($com['addr2']):'';
-	$com['addr3'] = ($com['addr3'])?get_text($com['addr3']):'';
-	
-	
-	// 업체관련 파일(사업자등록증등등...)
-	$sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comf' AND fle_dir = 'shop/shop_file' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
-	$rs = sql_query_pg($sql);
+$pcom = sql_fetch_pg($sql);
+$com['com_name_parent'] = (!empty($pcom['name'])) ? $pcom['name'] : '';
 
-	$comf['comf_f_arr'] = array();
-	$comf['comf_fidxs'] = array();
-	$comf['comf_lst_idx'] = 0;
-	$comf['fle_db_idx'] = $shop_id;
+$com['name'] = get_text($com['name']);
+$com['contact_phone'] = get_text($com['contact_phone']);
+$com['url'] = get_text($com['url']);
+$com['addr1'] = ($com['addr1'])?get_text($com['addr1']):'';
+$com['addr2'] = ($com['addr2'])?get_text($com['addr2']):'';
+$com['addr3'] = ($com['addr3'])?get_text($com['addr3']):'';
+
+
+// 업체관련 파일(사업자등록증등등...)
+$sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comf' AND fle_dir = 'shop/shop_file' AND fle_db_idx = '{$shop_id}' ORDER BY fle_reg_dt DESC ";
+$rs = sql_query_pg($sql);
+
+$comf['comf_f_arr'] = array();
+$comf['comf_fidxs'] = array();
+$comf['comf_lst_idx'] = 0;
+$comf['fle_db_idx'] = $shop_id;
+for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
+	$is_s3file_yn = is_s3file($row2['fle_path']);
+	$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comf_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+	$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
+	'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+	<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+	$comf['fle_db_idx'] = $row2['fle_db_idx'];
+	@array_push($comf['comf_f_arr'], array('file'=>$row2['down_del']));
+	@array_push($comf['comf_fidxs'], $row2['fle_idx']);
+}
+
+// 가맹점관련 이미지
+$sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comi' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_sort, fle_reg_dt DESC ";
+$rs = sql_query_pg($sql);
+$comi_wd = 110;
+$comi_ht = 80;
+$comi['comi_f_arr'] = array();
+$comi['comi_fidxs'] = array();
+$comi['comi_lst_idx'] = 0;
+$comi['fle_db_idx'] = $shop_id;
+if ($rs && is_object($rs) && isset($rs->result)) {
 	for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 		$is_s3file_yn = is_s3file($row2['fle_path']);
-		$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comf_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
+		$row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$comi_wd.':'.$comi_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
+		$row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$comi_wd.'px;height:'.$comi_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
+		$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 		$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-		'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-		<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
-		$comf['fle_db_idx'] = $row2['fle_db_idx'];
-		@array_push($comf['comf_f_arr'], array('file'=>$row2['down_del']));
-		@array_push($comf['comf_fidxs'], $row2['fle_idx']);
+		'<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+		<br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+		<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+		$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
+		$comi['fle_db_idx'] = $row2['fle_db_idx'];
+		@array_push($comi['comi_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
+		@array_push($comi['comi_fidxs'], $row2['fle_idx']);
 	}
+}
 
-	// 가맹점관련 이미지
-    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'shop' AND fle_type = 'comi' AND fle_dir = 'shop/shop_img' AND fle_db_idx = '{$shop_id}' ORDER BY fle_sort, fle_reg_dt DESC ";
-	$rs = sql_query_pg($sql);
-    $comi_wd = 110;
-    $comi_ht = 80;
-    $comi['comi_f_arr'] = array();
-    $comi['comi_fidxs'] = array();
-    $comi['comi_lst_idx'] = 0;
-    $comi['fle_db_idx'] = $shop_id;
-	if ($rs && is_object($rs) && isset($rs->result)) {
-		for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
-			$is_s3file_yn = is_s3file($row2['fle_path']);
-			$row2['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$comi_wd.':'.$comi_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'];
-			$row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$comi_wd.'px;height:'.$comi_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
-			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
-			$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-			'<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-			<br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
-			<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
-			$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
-			$comi['fle_db_idx'] = $row2['fle_db_idx'];
-			@array_push($comi['comi_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
-			@array_push($comi['comi_fidxs'], $row2['fle_idx']);
-		}
-	}
+// 가맹점관리담당자
+$mng_sql = " SELECT mb_id, mb_name, mb_hp, mb_email, mb_2 FROM {$g5['member_table']} WHERE mb_1 = '{$shop_id}' AND mb_level < 6 AND mb_leave_date IS NULL AND mb_intercept_date IS NULL ORDER BY mb_id,mb_name,mb_datetime ";
+$mng_res = sql_query($mng_sql,1);
+$com['shop_managers_text'] = '';
+for($i=0;$row=sql_fetch_array($mng_res);$i++) {
+	$com['shop_managers_text'] .= ($com['shop_managers_text'] ? ', ' : '').$row['mb_name'].' <span class="sp_rank">'.$rank_arr[$row['mb_2']].'</span> <span class="">'.$row['mb_hp'].'</span> ['.$row['mb_id'].']<br>'.PHP_EOL;
+}
 
-	// 가맹점관리담당자
-	$mng_sql = " SELECT mb_id, mb_name, mb_hp, mb_email, mb_2 FROM {$g5['member_table']} WHERE mb_1 = '{$shop_id}' AND mb_level < 6 AND mb_leave_date IS NULL AND mb_intercept_date IS NULL ORDER BY mb_id,mb_name,mb_datetime ";
-	$mng_res = sql_query($mng_sql,1);
-	$com['shop_managers_text'] = '';
-	for($i=0;$row=sql_fetch_array($mng_res);$i++) {
-		$com['shop_managers_text'] .= ($com['shop_managers_text'] ? ', ' : '').$row['mb_name'].' <span class="sp_rank">'.$rank_arr[$row['mb_2']].'</span> <span class="">'.$row['mb_hp'].'</span> ['.$row['mb_id'].']<br>'.PHP_EOL;
+// Fetch keywords for the shop
+$ksql = " SELECT k.term AS keyword 
+		FROM {$g5['shop_keyword_table']} sk
+		JOIN {$g5['keywords_table']} k ON sk.keyword_id = k.keyword_id
+		WHERE sk.shop_id = '" . $shop_id . "' 
+		ORDER BY sk.weight DESC ";
+$kresult = sql_query_pg($ksql);
+$keywords = [];
+if ($kresult && is_object($kresult) && isset($kresult->result)) {
+	while ($row = sql_fetch_array_pg($kresult->result)) {
+		$keywords[] = $row['keyword'];
 	}
+}
+$com['shop_keywords'] = implode(',', $keywords);
 
-	// Fetch keywords for the shop
-	$ksql = " SELECT k.term AS keyword 
-			FROM {$g5['shop_keyword_table']} sk
-			JOIN {$g5['keywords_table']} k ON sk.keyword_id = k.keyword_id
-			WHERE sk.shop_id = '" . $shop_id . "' 
-			ORDER BY sk.weight DESC ";
-	$kresult = sql_query_pg($ksql);
-	$keywords = [];
-	if ($kresult && is_object($kresult) && isset($kresult->result)) {
-		while ($row = sql_fetch_array_pg($kresult->result)) {
-			$keywords[] = $row['keyword'];
-		}
+// shop_amenities 테이블에서 현재 선택된 편의시설 ID 목록 가져오기
+$sa_sql = " SELECT amenity_id FROM {$g5['shop_amenities_table']} WHERE shop_id = '{$shop_id}' AND available_yn = 'Y' ORDER BY amenity_id ";
+$sa_result = sql_query_pg($sa_sql);
+$selected_amenity_ids = [];
+if ($sa_result && is_object($sa_result) && isset($sa_result->result)) {
+	while ($row = sql_fetch_array_pg($sa_result->result)) {
+		$selected_amenity_ids[] = $row['amenity_id'];
 	}
-	$com['shop_keywords'] = implode(',', $keywords);
-	
-	// shop_amenities 테이블에서 현재 선택된 편의시설 ID 목록 가져오기
-	$sa_sql = " SELECT amenity_id FROM {$g5['shop_amenities_table']} WHERE shop_id = '{$shop_id}' AND available_yn = 'Y' ORDER BY amenity_id ";
-	$sa_result = sql_query_pg($sa_sql);
-	$selected_amenity_ids = [];
-	if ($sa_result && is_object($sa_result) && isset($sa_result->result)) {
-		while ($row = sql_fetch_array_pg($sa_result->result)) {
-			$selected_amenity_ids[] = $row['amenity_id'];
-		}
+}
+// shop 테이블의 amenities_id_list가 없거나 비어있으면 shop_amenities 테이블에서 가져온 값으로 설정
+if (empty($com['amenities_id_list']) && !empty($selected_amenity_ids)) {
+	$com['amenities_id_list'] = implode(',', $selected_amenity_ids);
+}
+
+// 편의시설 목록 조회
+$amenities_sql = " SELECT amenity_id, amenity_name, icon_url_enabled, icon_url_disabled 
+					FROM {$g5['amenities_table']} 
+					ORDER BY amenity_id ";
+$amenities_result = sql_query_pg($amenities_sql);
+$amenities_list = [];
+if ($amenities_result && is_object($amenities_result) && isset($amenities_result->result)) {
+	while ($row = sql_fetch_array_pg($amenities_result->result)) {
+		$amenities_list[] = $row;
 	}
-	// shop 테이블의 amenities_id_list가 없거나 비어있으면 shop_amenities 테이블에서 가져온 값으로 설정
-	if (empty($com['amenities_id_list']) && !empty($selected_amenity_ids)) {
-		$com['amenities_id_list'] = implode(',', $selected_amenity_ids);
-	}
-	
-	// 편의시설 목록 조회
-	$amenities_sql = " SELECT amenity_id, amenity_name, icon_url_enabled, icon_url_disabled 
-						FROM {$g5['amenities_table']} 
-						ORDER BY amenity_id ";
-	$amenities_result = sql_query_pg($amenities_sql);
-	$amenities_list = [];
-	if ($amenities_result && is_object($amenities_result) && isset($amenities_result->result)) {
-		while ($row = sql_fetch_array_pg($amenities_result->result)) {
-			$amenities_list[] = $row;
-		}
-	}
+}
 
 $html_title = '수정';
 $g5['title'] = '가맹점 '.$html_title;
@@ -427,11 +431,21 @@ include_once('./js/store_form.js.php');
 		<td>
 			<select name="status" id="status">
 				<option value="active">정상<?=(($is_dev_manager)?'(active)':'')?></option>
-				<option value="pending">대기<?=(($is_dev_manager)?'(pending)':'')?></option>
-				<option value="closed">폐업<?=(($is_dev_manager)?'(closed)':'')?></option>
-				<option value="shutdown">금지<?=(($is_dev_manager)?'(shutdown)':'')?></option>
+				<option value="stopped">일시휴업<?=(($is_dev_manager)?'(stopped)':'')?></option>
 			</select>
 			<script>$('select[name="status"]').val('<?=$com['status']?>');</script>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="reservation_mode">예약 모드</label></th>
+		<td colspan="3">
+			<?php echo help("예약 모드를 선택해 주세요. SERVICE_ONLY(공간 미사용), SPACE_ONLY(공간만 예약), SERVICE_AND_SPACE(서비스+공간 둘 다 사용)"); ?>
+			<select name="reservation_mode" id="reservation_mode" class="frm_input">
+				<option value="SERVICE_ONLY">공간 미사용 (SERVICE_ONLY)</option>
+				<option value="SPACE_ONLY">공간만 예약 (SPACE_ONLY)</option>
+				<option value="SERVICE_AND_SPACE">서비스+공간 (SERVICE_AND_SPACE)</option>
+			</select>
+			<script>$('select[name="reservation_mode"]').val('<?=($com['reservation_mode'] ?? 'SERVICE_ONLY')?>');</script>
 		</td>
 	</tr>
 	<tr>
@@ -516,6 +530,15 @@ include_once('./js/store_form.js.php');
 			<input type="text" name="latitude" value="<?=$com['latitude']??''?>" placeholder="위도" id="latitude" class="frm_input">&nbsp;&nbsp;/&nbsp;
 			<input type="text" name="longitude" value="<?=$com['longitude']??''?>" placeholder="경도" id="longitude" class="frm_input">
 		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="prep_period_for_reservation">예약 준비시간</label></th>
+		<td>
+			<?php echo help("예약과 예약 사이에 필요한 준비시간을 분 단위로 설정합니다. (예: 청소, 세팅 등의 준비시간)"); ?>
+			<input type="number" name="prep_period_for_reservation" value="<?=$com['prep_period_for_reservation']??''?>" id="prep_period_for_reservation" class="frm_input text-center w-[100px]" min="0">
+			<span>분</span>
+		</td>
+		<td colspan="2"></td>
 	</tr>
 	<tr>
 		<th scope="row"><label for="notice">공지 및 알림</label></th>

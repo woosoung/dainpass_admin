@@ -1,0 +1,243 @@
+<?php
+$sub_menu = "930800";
+include_once('./_common.php');
+
+@auth_check($auth[$sub_menu], 'w');
+
+// 가맹점 접근 권한 체크
+$has_access = false;
+$shop_id = 0;
+
+if ($is_member && $member['mb_id']) {
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
+                FROM {$g5['member_table']} 
+                WHERE mb_id = '{$member['mb_id']}' 
+                AND mb_level >= 4 
+                AND (
+                    mb_level >= 6 
+                    OR (mb_level < 6 AND mb_2 = 'Y')
+                )
+                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
+                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+    $mb_row = sql_fetch($mb_sql, 1);
+    
+    if ($mb_row && $mb_row['mb_id']) {
+        $mb_1_value = trim($mb_row['mb_1']);
+        
+        if ($mb_1_value === '0' || $mb_1_value === '') {
+            alert('업체 데이터가 없습니다.', './holiday_rules_list.php');
+            exit;
+        }
+        
+        if (!empty($mb_1_value)) {
+            $shop_id_check = (int)$mb_1_value;
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_row = sql_fetch_pg($shop_sql);
+            
+            if ($shop_row && $shop_row['shop_id']) {
+                if ($shop_row['status'] == 'pending')
+                    alert('아직 승인이 되지 않았습니다.');
+                if ($shop_row['status'] == 'closed')
+                    alert('폐업되었습니다.');
+                if ($shop_row['status'] == 'shutdown')
+                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
+                $has_access = true;
+                $shop_id = (int)$shop_row['shop_id'];
+            } else {
+                alert('업체 데이터가 없습니다.', './holiday_rules_list.php');
+                exit;
+            }
+        }
+    }
+}
+
+if (!$has_access) {
+    alert('접속할 수 없는 페이지 입니다.', './holiday_rules_list.php');
+    exit;
+}
+
+// 토큰 체크
+check_admin_token();
+
+$action = isset($_POST['action']) ? clean_xss_tags($_POST['action']) : '';
+
+// qstr 생성
+$qstr = '';
+if (isset($_POST['page']) && $_POST['page']) {
+    $qstr .= '&page=' . (int)$_POST['page'];
+}
+if (isset($_POST['sst']) && $_POST['sst']) {
+    $qstr .= '&sst=' . urlencode($_POST['sst']);
+}
+if (isset($_POST['sod']) && $_POST['sod']) {
+    $qstr .= '&sod=' . urlencode($_POST['sod']);
+}
+if (isset($_POST['sfl']) && $_POST['sfl']) {
+    $qstr .= '&sfl=' . urlencode($_POST['sfl']);
+}
+if (isset($_POST['stx']) && $_POST['stx']) {
+    $qstr .= '&stx=' . urlencode($_POST['stx']);
+}
+if (isset($_POST['sfl2']) && $_POST['sfl2']) {
+    $qstr .= '&sfl2=' . urlencode($_POST['sfl2']);
+}
+
+if ($action == 'add' || $action == 'edit') {
+    $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
+    $post_holiday_type = isset($_POST['holiday_type']) ? clean_xss_tags($_POST['holiday_type']) : '';
+    $post_weekday = isset($_POST['weekday']) ? (int)$_POST['weekday'] : null;
+    $post_week_of_month = isset($_POST['week_of_month']) && $_POST['week_of_month'] !== '' ? (int)$_POST['week_of_month'] : null;
+    $post_description = isset($_POST['description']) ? clean_xss_tags($_POST['description']) : '';
+    
+    // shop_id 검증
+    if ($post_shop_id != $shop_id) {
+        alert('잘못된 가맹점 정보입니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    // 필수값 검증
+    if (!$post_holiday_type || !in_array($post_holiday_type, array('weekly', 'monthly'))) {
+        alert('휴무유형을 올바르게 선택해주세요.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    if ($post_weekday === null || $post_weekday < 0 || $post_weekday > 6) {
+        alert('요일을 올바르게 선택해주세요.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    // week_of_month 검증 (NULL 가능, 값이 있으면 1~6 사이여야 함)
+    if ($post_week_of_month !== null && ($post_week_of_month < 1 || $post_week_of_month > 6)) {
+        alert('주차는 1~6 사이의 값이어야 합니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    if ($action == 'add') {
+        // 중복 체크 (UNIQUE 제약조건: shop_id, holiday_type, weekday, week_of_month)
+        $check_sql = " SELECT holiday_rule_id FROM holiday_rules 
+                       WHERE shop_id = {$post_shop_id} 
+                       AND holiday_type = '{$post_holiday_type}' 
+                       AND weekday = {$post_weekday} ";
+        if ($post_week_of_month !== null) {
+            $check_sql .= " AND week_of_month = {$post_week_of_month} ";
+        } else {
+            $check_sql .= " AND week_of_month IS NULL ";
+        }
+        $check_row = sql_fetch_pg($check_sql);
+        
+        if ($check_row && $check_row['holiday_rule_id']) {
+            alert('이미 등록된 정기휴무 규칙입니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+            exit;
+        }
+        
+        // INSERT
+        $insert_sql = " INSERT INTO holiday_rules (shop_id, holiday_type, weekday, week_of_month, description) 
+                        VALUES ({$post_shop_id}, '{$post_holiday_type}', {$post_weekday}, ";
+        if ($post_week_of_month !== null) {
+            $insert_sql .= "{$post_week_of_month}";
+        } else {
+            $insert_sql .= "NULL";
+        }
+        $insert_sql .= ", " . ($post_description ? "'" . addslashes($post_description) . "'" : "NULL") . ") ";
+        
+        sql_query_pg($insert_sql);
+        
+        alert('정기휴무 규칙이 등록되었습니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        
+    } else if ($action == 'edit') {
+        $post_holiday_rule_id = isset($_POST['holiday_rule_id']) ? (int)$_POST['holiday_rule_id'] : 0;
+        
+        if (!$post_holiday_rule_id) {
+            alert('규칙 ID가 올바르지 않습니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+            exit;
+        }
+        
+        // 기존 데이터 확인
+        $exist_sql = " SELECT * FROM holiday_rules 
+                       WHERE holiday_rule_id = {$post_holiday_rule_id} 
+                       AND shop_id = {$post_shop_id} ";
+        $exist_row = sql_fetch_pg($exist_sql);
+        
+        if (!$exist_row || !$exist_row['holiday_rule_id']) {
+            alert('존재하지 않는 규칙입니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+            exit;
+        }
+        
+        // 중복 체크 (자기 자신 제외)
+        $check_sql = " SELECT holiday_rule_id FROM holiday_rules 
+                       WHERE shop_id = {$post_shop_id} 
+                       AND holiday_type = '{$post_holiday_type}' 
+                       AND weekday = {$post_weekday} ";
+        if ($post_week_of_month !== null) {
+            $check_sql .= " AND week_of_month = {$post_week_of_month} ";
+        } else {
+            $check_sql .= " AND week_of_month IS NULL ";
+        }
+        $check_sql .= " AND holiday_rule_id != {$post_holiday_rule_id} ";
+        $check_row = sql_fetch_pg($check_sql);
+        
+        if ($check_row && $check_row['holiday_rule_id']) {
+            alert('이미 등록된 정기휴무 규칙입니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+            exit;
+        }
+        
+        // UPDATE
+        $update_sql = " UPDATE holiday_rules 
+                        SET holiday_type = '{$post_holiday_type}', 
+                            weekday = {$post_weekday}, 
+                            week_of_month = ";
+        if ($post_week_of_month !== null) {
+            $update_sql .= "{$post_week_of_month}";
+        } else {
+            $update_sql .= "NULL";
+        }
+        $update_sql .= ", description = " . ($post_description ? "'" . addslashes($post_description) . "'" : "NULL") . " 
+                        WHERE holiday_rule_id = {$post_holiday_rule_id} 
+                        AND shop_id = {$post_shop_id} ";
+        
+        sql_query_pg($update_sql);
+        
+        alert('정기휴무 규칙이 수정되었습니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+    }
+    
+} else if ($action == 'delete') {
+    $chk = isset($_POST['chk']) ? $_POST['chk'] : array();
+    
+    if (empty($chk) || !is_array($chk)) {
+        alert('선택된 항목이 없습니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    $chk_count = count($chk);
+    $chk_ids = array();
+    
+    foreach ($chk as $id) {
+        $id = (int)$id;
+        if ($id > 0) {
+            $chk_ids[] = $id;
+        }
+    }
+    
+    if (empty($chk_ids)) {
+        alert('선택된 항목이 없습니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    $ids_str = implode(',', $chk_ids);
+    
+    // shop_id 검증 후 삭제
+    $delete_sql = " DELETE FROM holiday_rules 
+                    WHERE holiday_rule_id IN ({$ids_str}) 
+                    AND shop_id = {$shop_id} ";
+    
+    sql_query_pg($delete_sql);
+    
+    alert('선택한 ' . $chk_count . '개의 정기휴무 규칙이 삭제되었습니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+    
+} else {
+    alert('잘못된 요청입니다.', './holiday_rules_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+}
+
+exit;
+?>
+

@@ -538,10 +538,23 @@ let cats = <?=json_encode($cats)?>;
 			<select name="status" id="status">
 				<option value="active">정상<?=(($is_dev_manager)?'(active)':'')?></option>
 				<option value="pending">대기<?=(($is_dev_manager)?'(pending)':'')?></option>
+				<option value="stopped">휴업<?=(($is_dev_manager)?'(stopped)':'')?></option>
 				<option value="closed">폐업<?=(($is_dev_manager)?'(closed)':'')?></option>
 				<option value="shutdown">금지<?=(($is_dev_manager)?'(shutdown)':'')?></option>
 			</select>
 			<script>$('select[name="status"]').val('<?=($w == '' ? 'active' : $com['status'])?>');</script>
+		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="reservation_mode">예약 모드</label></th>
+		<td colspan="3">
+			<?php echo help("예약 모드를 선택해 주세요. SERVICE_ONLY(공간 미사용), SPACE_ONLY(공간만 예약), SERVICE_AND_SPACE(서비스+공간 둘 다 사용)"); ?>
+			<select name="reservation_mode" id="reservation_mode" class="frm_input">
+				<option value="SERVICE_ONLY">공간 미사용 (SERVICE_ONLY)</option>
+				<option value="SPACE_ONLY">공간만 예약 (SPACE_ONLY)</option>
+				<option value="SERVICE_AND_SPACE">서비스+공간 (SERVICE_AND_SPACE)</option>
+			</select>
+			<script>$('select[name="reservation_mode"]').val('<?=($w == '' ? 'SERVICE_ONLY' : ($com['reservation_mode'] ?? 'SERVICE_ONLY'))?>');</script>
 		</td>
 	</tr>
 	<?php if($w == 'u') { ?>
@@ -637,6 +650,15 @@ let cats = <?=json_encode($cats)?>;
 			<input type="number" name="cancellation_period" value="<?=$com['cancellation_period']??1?>" id="cancellation_period" class="frm_input text-center w-[100px]" min="1">
 			<span>시간</span>
 		</td>
+	</tr>
+	<tr>
+		<th scope="row"><label for="prep_period_for_reservation">예약 준비시간</label></th>
+		<td>
+			<?php echo help("예약과 예약 사이에 필요한 준비시간을 분 단위로 설정합니다. (예: 청소, 세팅 등의 준비시간)"); ?>
+			<input type="number" name="prep_period_for_reservation" value="<?=$com['prep_period_for_reservation']??''?>" id="prep_period_for_reservation" class="frm_input text-center w-[100px]" min="0">
+			<span>분</span>
+		</td>
+		<td colspan="2"></td>
 	</tr>
 	<tr>
 		<th scope="row"><label for="notice">공지 및 알림</label></th>

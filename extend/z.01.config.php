@@ -57,14 +57,19 @@ $g5['service_terms_table']               = 'service_terms'; //서비스약관 �
 $g5['shop_table']                        = 'shop'; //가맹점
 $g5['shop_categories_table']             = 'shop_categories'; //업종(분류)
 $g5['shop_category_relation_table']      = 'shop_category_relation'; //업종-가맹점 크로스 테이블
+$g5['category_default_table']            = 'category_default'; //업종별 기본값(예약준비시간 등)
 $g5['shop_keyword_table']                = 'shop_keyword'; //가맹점별 키워드 테이블
 $g5['shop_search_refresh_queue_table']   = 'shop_search_refresh_queue'; //가맹점 검색색인 갱신 큐 테이블
 $g5['shop_amenities_table']             = 'shop_amenities'; //가맹점-편의시설 크로스 테이블
 $g5['shop_qna_table']                   = 'shop_qna'; //고객회원이 가맹점 및 플랫폼에 문의
 $g5['shop_admin_inquiry_table']         = 'shop_admin_inquiry'; //가맹점이 플랫폼에 문의
+$g5['shop_services_table']              = 'shop_services'; //가맹점 서비스
+$g5['shop_space_group_table']           = 'shop_space_group'; //공간 그룹 (층/홀/존)
+$g5['shop_space_unit_table']            = 'shop_space_unit'; //공간 유닛 (룸/테이블/좌석)
+
+$g5['business_exceptions_table']          = 'business_exceptions'; //가맹점별특별휴무/영업
+$g5['default_business_exceptions_table']  = 'default_business_exceptions'; //업종별특별휴무/영업
 
 $g5['keywords_table']                    = 'keywords'; //키워드 테이블
 $g5['amenities_table']                  = 'amenities'; //편의시설
 $g5['customers_table']                  = 'customers'; //고객(사용자)회원
-
-
