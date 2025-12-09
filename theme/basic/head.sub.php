@@ -15,13 +15,29 @@ if($is_member && $member['mb_level'] == 2 ){ // 회원 레벨이 2인 경우
     && $g5['dir_name'] != '_shop_admin') { // 회원 레벨이 2보다 큰 경우
     goto_url(G5_ZADM_URL);
 } else { // 비회원의 경우
-    if (isset($g5['dir_name'], $g5['file_name'], $set_conf['set_nomb_accessiblepages_arr'])){
-        if (defined('_INDEX_') || $g5['dir_name'] === 'bbs' && !in_array($g5['file_name'], $set_conf['set_nomb_accessiblepages_arr'])){
-            goto_url(G5_BBS_URL.'/login.php');
+    // alert.php 또는 alert_close.php 실행 중인지 call stack으로 확인
+    $is_alert_context = false;
+    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+    foreach ($backtrace as $trace) {
+        if (isset($trace['file'])) {
+            $filename = basename($trace['file']);
+            if ($filename === 'alert.php' || $filename === 'alert_close.php') {
+                $is_alert_context = true;
+                break;
+            }
         }
     }
-    else {
-        goto_url(G5_BBS_URL.'/login.php');
+
+    // alert context가 아닐 때만 접근 제한 체크
+    if (!$is_alert_context) {
+        if (isset($g5['dir_name'], $g5['file_name'], $set_conf['set_nomb_accessiblepages_arr'])){
+            if (defined('_INDEX_') || $g5['dir_name'] === 'bbs' && !in_array($g5['file_name'], $set_conf['set_nomb_accessiblepages_arr'])){
+                goto_url(G5_BBS_URL.'/login.php');
+            }
+        }
+        else {
+            goto_url(G5_BBS_URL.'/login.php');
+        }
     }
 }
 $g5_debug['php']['begin_time'] = $begin_time = get_microtime();
