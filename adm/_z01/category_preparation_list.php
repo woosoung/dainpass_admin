@@ -187,7 +187,13 @@ include_once('./js/category_preparation_list.js.php');
 }
 
 </style>
-
+<!-- 상단 타이틀 및 버튼 -->
+<div class="local_ov01 local_ov">
+    <span class="btn_ov01">
+        <span class="ov_txt">전체목록</span>
+        <span class="ov_num">전체 <?php echo number_format($total_count); ?>건</span>
+    </span>
+</div>
 <div class="local_desc01 local_desc">
     <p>업종별로 예약 준비시간을 설정합니다. 예약과 예약 사이에 필요한 준비시간(청소, 세팅 등)을 분 단위로 설정할 수 있습니다.</p>
 </div>
@@ -258,13 +264,7 @@ include_once('./js/category_preparation_list.js.php');
     </div>
 </form>
 
-<!-- 상단 타이틀 및 버튼 -->
-<div class="local_ov01 local_ov">
-    <span class="btn_ov01">
-        <span class="ov_txt">전체목록</span>
-        <span class="ov_num">전체 <?php echo number_format($total_count); ?>건</span>
-    </span>
-</div>
+
 
 <div class="btn_fixed_top">
     <button type="button" id="btn_new_registration" class="btn btn_02">신규등록</button>

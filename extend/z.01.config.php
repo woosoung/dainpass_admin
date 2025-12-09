@@ -67,6 +67,9 @@ $g5['shop_services_table']              = 'shop_services'; //가맹점 서비스
 $g5['shop_space_group_table']           = 'shop_space_group'; //공간 그룹 (층/홀/존)
 $g5['shop_space_unit_table']            = 'shop_space_unit'; //공간 유닛 (룸/테이블/좌석)
 
+$g5['business_exceptions_table']          = 'business_exceptions'; //가맹점별특별휴무/영업
+$g5['default_business_exceptions_table']  = 'default_business_exceptions'; //업종별특별휴무/영업
+
 $g5['keywords_table']                    = 'keywords'; //키워드 테이블
 $g5['amenities_table']                  = 'amenities'; //편의시설
 $g5['customers_table']                  = 'customers'; //고객(사용자)회원

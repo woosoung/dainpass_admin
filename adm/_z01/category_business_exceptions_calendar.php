@@ -1,78 +1,27 @@
 <?php
-$sub_menu = "930900";
+$sub_menu = "920950";
 include_once('./_common.php');
 
-// 가맹점측 관리자 접근 권한 체크
+// 플랫폼 관리자 접근 권한 체크
 $has_access = false;
-$shop_id = 0;
-$shop_info = null;
 
 if ($is_member && $member['mb_id']) {
-    // MySQL에서 회원 정보 확인
-    // 플랫폼 관리자(mb_level >= 6)는 mb_2 = 'N'일 수 있으므로 mb_2 조건을 다르게 적용
     $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
                 FROM {$g5['member_table']} 
                 WHERE mb_id = '{$member['mb_id']}' 
-                AND mb_level >= 4 
-                AND (
-                    mb_level >= 6 
-                    OR (mb_level < 6 AND mb_2 = 'Y')
-                )
+                AND mb_level >= 6 
                 AND (mb_leave_date = '' OR mb_leave_date IS NULL)
                 AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
     $mb_row = sql_fetch($mb_sql, 1);
     
     if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        
-        // mb_1 = '0'인 경우: 플랫폼 관리자
-        if ($mb_1_value === '0' || $mb_1_value === '') {
-            // 플랫폼 관리자는 shop_id = 0에 해당하는 레코드가 없으므로 '업체 데이터가 없습니다.' 표시
-            $g5['title'] = '특별휴무/영업 (달력)';
-            include_once(G5_ADMIN_PATH.'/admin.head.php');
-            echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-            echo '<p>업체 데이터가 없습니다.</p>';
-            echo '</div>';
-            include_once(G5_ADMIN_PATH.'/admin.tail.php');
-            exit;
-        }
-        
-        // mb_1에 shop_id 값이 있는 경우: 해당 shop_id로 shop 테이블 조회
-        if (!empty($mb_1_value)) {
-            // PostgreSQL에서 shop_id 확인 (shop_id는 bigint이므로 정수로 비교)
-            $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id, shop_name, name, status 
-                         FROM {$g5['shop_table']} 
-                         WHERE shop_id = {$shop_id_check} ";
-            $shop_row = sql_fetch_pg($shop_sql);
-            
-            if ($shop_row && $shop_row['shop_id']) {
-                if ($shop_row['status'] == 'pending')
-                    alert('아직 승인이 되지 않았습니다.');
-                if ($shop_row['status'] == 'closed')
-                    alert('폐업되었습니다.');
-                if ($shop_row['status'] == 'shutdown')
-                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
-                $shop_info = $shop_row;
-            } else {
-                // shop_id에 해당하는 레코드가 없는 경우
-                $g5['title'] = '특별휴무/영업 (달력)';
-                include_once(G5_ADMIN_PATH.'/admin.head.php');
-                echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-                echo '<p>업체 데이터가 없습니다.</p>';
-                echo '</div>';
-                include_once(G5_ADMIN_PATH.'/admin.tail.php');
-                exit;
-            }
-        }
+        $has_access = true;
     }
 }
 
 // 접근 권한이 없으면 메시지 표시
 if (!$has_access) {
-    $g5['title'] = '특별휴무/영업 (달력)';
+    $g5['title'] = '업종별 특별휴무/영업일시 (달력)';
     include_once(G5_ADMIN_PATH.'/admin.head.php');
     echo '<div class="local_desc01 local_desc text-center py-[200px]">';
     echo '<p>접속할 수 없는 페이지 입니다.</p>';
@@ -82,6 +31,55 @@ if (!$has_access) {
 }
 
 @auth_check($auth[$sub_menu], 'r');
+
+// 검색 파라미터
+$sca = isset($_GET['sca']) ? trim($_GET['sca']) : '0'; // category_id (초기 접근 시 '0')
+
+// 모든 업종 목록 가져오기 (0 포함, 계층 구조로 정렬)
+$categories = array();
+$categories['0'] = '업종공통';
+
+// 1차 분류(2자리) 가져오기
+$sql_primary = " SELECT category_id, name 
+                  FROM {$g5['shop_categories_table']} 
+                  WHERE use_yn = 'Y' 
+                  AND char_length(category_id) = 2
+                  ORDER BY category_id ASC ";
+$result_primary = sql_query_pg($sql_primary);
+
+if ($result_primary && $result_primary->result) {
+    while ($row = sql_fetch_array_pg($result_primary->result)) {
+        $primary_id = isset($row['category_id']) ? $row['category_id'] : '';
+        $primary_name = isset($row['name']) ? $row['name'] : '';
+        
+        if ($primary_id) {
+            // 1차 분류 추가
+            $categories[$primary_id] = $primary_name;
+            
+            // 해당 1차 분류의 2차 분류(4자리) 가져오기
+            $primary_id_escaped = sql_real_escape_string($primary_id);
+            $sql_secondary = " SELECT category_id, name 
+                               FROM {$g5['shop_categories_table']} 
+                               WHERE use_yn = 'Y' 
+                               AND char_length(category_id) = 4
+                               AND left(category_id, 2) = '{$primary_id_escaped}'
+                               ORDER BY category_id ASC ";
+            $result_secondary = sql_query_pg($sql_secondary);
+            
+            if ($result_secondary && $result_secondary->result) {
+                while ($row_sec = sql_fetch_array_pg($result_secondary->result)) {
+                    $secondary_id = isset($row_sec['category_id']) ? $row_sec['category_id'] : '';
+                    $secondary_name = isset($row_sec['name']) ? $row_sec['name'] : '';
+                    
+                    if ($secondary_id) {
+                        // 2차 분류 추가 (부모명 포함)
+                        $categories[$secondary_id] = $primary_name . ' > ' . $secondary_name;
+                    }
+                }
+            }
+        }
+    }
+}
 
 // 현재 년월 가져오기
 $current_year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
@@ -106,21 +104,46 @@ $first_weekday = date('w', $first_day); // 0(일) ~ 6(토)
 $start_date = date('Y-m-01', $first_day);
 $end_date = date('Y-m-t', $first_day);
 
+// WHERE 조건 구성
+$where = array();
+$where[] = "e.date >= '{$start_date}'";
+$where[] = "e.date <= '{$end_date}'";
+
+if ($sca !== '' && $sca !== 'all') {
+    // 특정 업종 선택
+    $sca_escaped = sql_real_escape_string($sca);
+    $where[] = "e.category_id = '{$sca_escaped}'";
+} else if ($sca === 'all') {
+    // 전체 선택 - category_id 조건 없음 (모든 레코드 표시)
+} else {
+    // 초기 접근 시 category_id = 0만 표시
+    $where[] = "e.category_id = '0'";
+}
+
+$where_sql = "WHERE " . implode(" AND ", $where);
+
 $exceptions_sql = "
     SELECT 
-        shop_id,
-        date,
-        is_open,
-        open_time,
-        close_time,
-        reason
-    FROM business_exceptions
-    WHERE shop_id = {$shop_id}
-    AND date >= '{$start_date}'
-    AND date <= '{$end_date}'
-    ORDER BY date
+        e.category_id,
+        e.date,
+        e.is_open,
+        e.open_time,
+        e.close_time,
+        e.reason,
+        COALESCE(c.name, '업종공통') AS category_name,
+        CASE 
+            WHEN e.category_id = '0' THEN '업종공통'
+            WHEN char_length(e.category_id) = 2 THEN c.name
+            WHEN char_length(e.category_id) = 4 THEN 
+                COALESCE(p.name || ' > ' || c.name, c.name)
+            ELSE c.name
+        END AS display_name
+    FROM default_business_exceptions AS e
+    LEFT JOIN {$g5['shop_categories_table']} AS c ON e.category_id = c.category_id
+    LEFT JOIN {$g5['shop_categories_table']} AS p ON char_length(e.category_id) = 4 AND p.category_id = left(e.category_id, 2)
+    {$where_sql}
+    ORDER BY e.date, e.category_id
 ";
-
 $exceptions_result = sql_query_pg($exceptions_sql);
 $exceptions = array();
 
@@ -130,16 +153,20 @@ if ($exceptions_result && is_object($exceptions_result) && isset($exceptions_res
         // PostgreSQL boolean 값 처리
         $is_open = isset($row['is_open']) && ($row['is_open'] == 't' || $row['is_open'] === true || $row['is_open'] == '1' || $row['is_open'] === 'true');
         $row['is_open_bool'] = $is_open;
-        $exceptions[$date_key] = $row;
+        $row['display_name'] = isset($row['display_name']) && $row['display_name'] ? $row['display_name'] : '업종공통';
+        
+        // 같은 날짜에 여러 업종의 예외일이 있을 수 있으므로 배열로 저장
+        if (!isset($exceptions[$date_key])) {
+            $exceptions[$date_key] = array();
+        }
+        $exceptions[$date_key][] = $row;
     }
 }
 
-$g5['title'] = '특별휴무/영업 (달력)';
+$g5['title'] = '업종별 특별휴무/영업일시 (달력)';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-include_once('./js/shop_business_exceptions_calendar.js.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
+include_once('./js/category_business_exceptions_calendar.js.php');
 ?>
 
 <style>
@@ -275,7 +302,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
     justify-content: space-between;
     border-radius: 4px;
     padding: 4px 8px;
-    font-size: 12px;
+    font-size: 11px;
     cursor: pointer;
     transition: all 0.2s;
     margin-bottom: 4px;
@@ -300,6 +327,12 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.exception-category {
+    font-size: 10px;
+    color: #666;
+    margin-right: 4px;
 }
 
 .exception-delete {
@@ -346,15 +379,30 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 
 <div class="local_desc01 local_desc">
     <p>
-        가맹점의 특별휴무/영업일을 달력에서 확인하고 관리할 수 있습니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
+        업종별 특별휴무/영업일시를 달력에서 확인하고 관리할 수 있습니다.
     </p>
+</div>
+
+<div class="local_sch01 local_sch mb-3">
+    <form name="fsearch" method="get" class="sch_last">
+        <label for="sca" class="sound_only">업종 선택</label>
+        <select name="sca" id="sca" onchange="this.form.submit();" class="frm_input">
+            <option value="all"<?php echo ($sca == 'all') ? ' selected' : ''; ?>>::전체보기::</option>
+            <?php foreach ($categories as $cat_id => $cat_name) { ?>
+                <option value="<?php echo $cat_id; ?>" <?php echo ($sca == $cat_id) ? 'selected' : ''; ?>>
+                    <?php echo get_text($cat_name); ?>
+                </option>
+            <?php } ?>
+        </select>
+        <input type="hidden" name="year" value="<?php echo $current_year; ?>">
+        <input type="hidden" name="month" value="<?php echo $current_month; ?>">
+    </form>
 </div>
 
 <div class="calendar-container">
     <div class="calendar-header">
         <div>
-            <a href="./shop_business_exceptions_list.php" class="btn-list">목록으로</a>
+            <a href="./category_business_exceptions_list.php?sca=<?php echo $sca; ?>" class="btn-list">목록으로</a>
             <a href="javascript:void(0);" onclick="addException();" class="btn-add-exception">신규등록</a>
         </div>
         <div class="calendar-nav">
@@ -407,31 +455,34 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             elseif ($weekday == 6) $day_class = 'saturday';
             
             echo '<div class="calendar-cell" data-date="'.$date.'">';
-            echo '<button class="btn-add-exception-cell" onclick="addExceptionForDate(\''.$date.'\')" title="이 날짜에 특별휴무/영업일 추가">+</button>';
+            echo '<button class="btn-add-exception-cell" onclick="addExceptionForDate(\''.$date.'\')" title="이 날짜에 특별휴무/영업일시 추가">+</button>';
             echo '<div class="calendar-date '.$day_class.'">'.$day.'</div>';
             
             // 해당 날짜의 예외일 출력
             if (isset($exceptions[$date])) {
-                $exception = $exceptions[$date];
-                $is_open = $exception['is_open_bool'];
-                $class_name = $is_open ? 'open' : 'close';
-                $status_text = $is_open ? '영업' : '휴무';
-                $time_text = '';
-                
-                if ($is_open && $exception['open_time'] && $exception['close_time']) {
-                    $open_time = substr($exception['open_time'], 0, 5);
-                    $close_time = substr($exception['close_time'], 0, 5);
-                    $time_text = ' ('.$open_time.'~'.$close_time.')';
+                foreach ($exceptions[$date] as $exception) {
+                    $is_open = $exception['is_open_bool'];
+                    $class_name = $is_open ? 'open' : 'close';
+                    $status_text = $is_open ? '영업' : '휴무';
+                    $time_text = '';
+                    
+                    if ($is_open && $exception['open_time'] && $exception['close_time']) {
+                        $open_time = substr($exception['open_time'], 0, 5);
+                        $close_time = substr($exception['close_time'], 0, 5);
+                        $time_text = ' ('.$open_time.'~'.$close_time.')';
+                    }
+                    
+                    $reason_text = $exception['reason'] ? ' - '.htmlspecialchars($exception['reason']) : '';
+                    $display_name = $exception['display_name'];
+                    
+                    echo '<div class="exception-label '.$class_name.'" data-category-id="'.htmlspecialchars($exception['category_id']).'" data-date="'.$date.'" onclick="editException(\''.htmlspecialchars($exception['category_id']).'\', \''.$date.'\')">';
+                    echo '<span class="exception-info">';
+                    echo '<span class="exception-category">['.htmlspecialchars($display_name).']</span>';
+                    echo $status_text.$time_text.$reason_text;
+                    echo '</span>';
+                    echo '<span class="exception-delete" onclick="deleteException(event, \''.htmlspecialchars($exception['category_id']).'\', \''.$date.'\')">✕</span>';
+                    echo '</div>';
                 }
-                
-                $reason_text = $exception['reason'] ? ' - '.htmlspecialchars($exception['reason']) : '';
-                
-                echo '<div class="exception-label '.$class_name.'" data-date="'.$date.'" onclick="editException(\''.$date.'\')">';
-                echo '<span class="exception-info">';
-                echo $status_text.$time_text.$reason_text;
-                echo '</span>';
-                echo '<span class="exception-delete" onclick="deleteException(event, \''.$date.'\')">✕</span>';
-                echo '</div>';
             }
             
             echo '</div>';
@@ -448,7 +499,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 
 <input type="hidden" id="current-year" value="<?php echo $current_year; ?>">
 <input type="hidden" id="current-month" value="<?php echo $current_month; ?>">
-<input type="hidden" id="shop-id" value="<?php echo $shop_id; ?>">
+<input type="hidden" id="category-id" value="<?php echo $sca == 'all' ? '' : $sca; ?>">
 <input type="hidden" name="token" value="<?php echo get_admin_token(); ?>">
 
 <style>
@@ -519,10 +570,10 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         <div class="modal_content">
             <div class="modal_bg" onclick="closeModal();"></div>
             <div class="modal_box">
-                <h2 id="modalTitle">특별휴무/영업일 등록</h2>
+                <h2 id="modalTitle">특별휴무/영업일시 등록</h2>
             <form name="frmException" id="frmException">
                 <input type="hidden" name="action" id="action" value="add">
-                <input type="hidden" name="shop_id" id="modal_shop_id" value="<?php echo $shop_id; ?>">
+                <input type="hidden" name="original_category_id" id="modal_original_category_id" value="">
                 <input type="hidden" name="original_date" id="modal_original_date" value="">
                 
                 <div class="tbl_frm01 tbl_wrap">
@@ -532,6 +583,19 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
                         <col>
                     </colgroup>
                     <tbody>
+                    <tr>
+                        <th scope="row"><label for="modal_category_id_select">업종<strong class="sound_only">필수</strong></label></th>
+                        <td>
+                            <select name="category_id" id="modal_category_id_select" class="frm_input required" required>
+                                <option value="">선택하세요</option>
+                                <?php foreach ($categories as $cat_id => $cat_name) { ?>
+                                    <option value="<?php echo $cat_id; ?>" <?php echo ($sca == $cat_id && $sca != 'all') ? 'selected' : ''; ?>>
+                                        <?php echo get_text($cat_name); ?>
+                                    </option>
+                                <?php } ?>
+                            </select>
+                        </td>
+                    </tr>
                     <tr>
                         <th scope="row"><label for="modal_date">날짜<strong class="sound_only">필수</strong></label></th>
                         <td>
@@ -583,4 +647,3 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <?php
 include_once(G5_ADMIN_PATH.'/admin.tail.php');
 ?>
-

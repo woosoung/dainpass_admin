@@ -1,0 +1,155 @@
+<?php
+$sub_menu = "940100";
+include_once('./_common.php');
+
+@auth_check($auth[$sub_menu], 'w');
+
+// 가맹점 접근 권한 체크
+$has_access = false;
+$shop_id = 0;
+
+if ($is_member && $member['mb_id']) {
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
+                FROM {$g5['member_table']} 
+                WHERE mb_id = '{$member['mb_id']}' 
+                AND mb_level >= 4 
+                AND (
+                    mb_level >= 6 
+                    OR (mb_level < 6 AND mb_2 = 'Y')
+                )
+                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
+                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+    $mb_row = sql_fetch($mb_sql, 1);
+    
+    if ($mb_row && $mb_row['mb_id']) {
+        $mb_1_value = trim($mb_row['mb_1']);
+        
+        if ($mb_1_value === '0' || $mb_1_value === '') {
+            alert('업체 데이터가 없습니다.', './shop_coupons_list.php');
+            exit;
+        }
+        
+        if (!empty($mb_1_value)) {
+            $shop_id_check = (int)$mb_1_value;
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_row = sql_fetch_pg($shop_sql);
+            
+            if ($shop_row && $shop_row['shop_id']) {
+                if ($shop_row['status'] == 'pending')
+                    alert('아직 승인이 되지 않았습니다.');
+                if ($shop_row['status'] == 'closed')
+                    alert('폐업되었습니다.');
+                if ($shop_row['status'] == 'shutdown')
+                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
+                $has_access = true;
+                $shop_id = (int)$shop_row['shop_id'];
+            } else {
+                alert('업체 데이터가 없습니다.', './shop_coupons_list.php');
+                exit;
+            }
+        }
+    }
+}
+
+if (!$has_access) {
+    alert('접속할 수 없는 페이지 입니다.', './shop_coupons_list.php');
+    exit;
+}
+
+// 토큰 체크
+check_admin_token();
+
+// action 또는 act 필드 확인 (flist 폼에서는 act 사용)
+$action = isset($_POST['action']) ? clean_xss_tags($_POST['action']) : (isset($_POST['act']) ? clean_xss_tags($_POST['act']) : '');
+
+// qstr 생성
+$qstr = '';
+if (isset($_POST['page']) && $_POST['page']) {
+    $qstr .= '&page=' . (int)$_POST['page'];
+}
+if (isset($_POST['sst']) && $_POST['sst']) {
+    $qstr .= '&sst=' . urlencode($_POST['sst']);
+}
+if (isset($_POST['sod']) && $_POST['sod']) {
+    $qstr .= '&sod=' . urlencode($_POST['sod']);
+}
+if (isset($_POST['sfl']) && $_POST['sfl']) {
+    $qstr .= '&sfl=' . urlencode($_POST['sfl']);
+}
+if (isset($_POST['stx']) && $_POST['stx']) {
+    $qstr .= '&stx=' . urlencode($_POST['stx']);
+}
+if (isset($_POST['sfl2']) && $_POST['sfl2']) {
+    $qstr .= '&sfl2=' . urlencode($_POST['sfl2']);
+}
+
+if ($action == 'delete') {
+    $chk = isset($_POST['chk']) ? $_POST['chk'] : array();
+    
+    if (empty($chk) || !is_array($chk)) {
+        alert('선택된 항목이 없습니다.', './shop_coupons_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    $chk_count = count($chk);
+    $chk_ids = array();
+    $used_coupon_ids = array();
+    $used_coupon_codes = array();
+    
+    foreach ($chk as $coupon_id) {
+        $coupon_id = (int)$coupon_id;
+        if ($coupon_id > 0) {
+            // shop_id 검증
+            $check_sql = " SELECT shop_id, coupon_code FROM shop_coupons WHERE coupon_id = {$coupon_id} ";
+            $check_row = sql_fetch_pg($check_sql);
+            
+            if ($check_row && $check_row['shop_id'] == $shop_id) {
+                // customer_coupons 테이블에서 해당 coupon_id가 사용 중인지 확인
+                $used_check_sql = " SELECT COUNT(*) as cnt FROM customer_coupons WHERE coupon_id = {$coupon_id} ";
+                $used_check_row = sql_fetch_pg($used_check_sql);
+                
+                if ($used_check_row && $used_check_row['cnt'] > 0) {
+                    // 사용 중인 쿠폰
+                    $used_coupon_ids[] = $coupon_id;
+                    $used_coupon_codes[] = $check_row['coupon_code'];
+                } else {
+                    // 사용되지 않은 쿠폰만 삭제 가능
+                    $chk_ids[] = $coupon_id;
+                }
+            }
+        }
+    }
+    
+    // 사용 중인 쿠폰이 하나라도 있으면 전체 삭제 불가
+    if (!empty($used_coupon_ids)) {
+        $used_count = count($used_coupon_ids);
+        $used_codes_str = implode(', ', array_slice($used_coupon_codes, 0, 5)); // 최대 5개만 표시
+        if ($used_count > 5) {
+            $used_codes_str .= ' 외 ' . ($used_count - 5) . '개';
+        }
+        alert('고객이 발급받은 쿠폰은 삭제할 수 없습니다.\n\n사용 중인 쿠폰: ' . $used_codes_str . '\n\n총 ' . $used_count . '개의 쿠폰이 고객에게 발급되어 있어 삭제할 수 없습니다.', './shop_coupons_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    if (empty($chk_ids)) {
+        alert('선택된 항목이 없습니다.', './shop_coupons_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    $ids_str = implode(',', $chk_ids);
+    
+    // shop_id 검증 후 삭제
+    $delete_sql = " DELETE FROM shop_coupons 
+                    WHERE shop_id = {$shop_id} 
+                    AND coupon_id IN ({$ids_str}) ";
+    
+    sql_query_pg($delete_sql);
+    
+    alert('선택한 ' . count($chk_ids) . '개의 쿠폰이 삭제되었습니다.', './shop_coupons_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+    
+} else {
+    alert('잘못된 요청입니다.', './shop_coupons_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+}
+
+exit;
+?>

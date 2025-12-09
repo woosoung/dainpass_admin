@@ -135,7 +135,7 @@ include_once('./js/staff_schedule_calendar.js.php');
 .calendar-container {
     width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 0px;
 }
 
 .calendar-header {

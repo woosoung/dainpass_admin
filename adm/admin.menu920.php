@@ -11,6 +11,6 @@ $menu["menu920"] = array(
     array('920700', '가맹점문의관리', '' . G5_Z_URL . '/shop_qa_list.php', 'shop_qa_list'),
     array('920800', '업종별요일별운영시간', '' . G5_Z_URL . '/default_slot_list.php', 'default_slot_list'),
     array('920900', '업종별예약준비시간', '' . G5_Z_URL . '/category_preparation_list.php', 'category_preparation_list'),
-    array('920950', '업종별특별휴무/영업', '' . G5_Z_URL . '/category_business_exceptions_list.php', 'category_business_exceptions_list'),
+    array('920950', '업종별특별휴무/영업', '' . G5_Z_URL . '/category_business_exceptions_calendar.php', 'category_business_exceptions_calendar'),
     // array('920600', '가맹점광고요청관리', '' . G5_Z_URL . '/shop_qa_list.php', 'shop_qa_list'),
 );
