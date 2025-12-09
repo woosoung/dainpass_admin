@@ -182,7 +182,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     <th scope="col">답변수</th>
                     <th scope="col">상태</th>
                     <th scope="col">등록일</th>
-                    <th scope="col" id="mb_list_mng">관리</th>
+                    <th scope="col" id="mb_list_mng" class="w-[100px]">관리</th>
                 </tr>
             </thead>
             <tbody>
