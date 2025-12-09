@@ -2,6 +2,7 @@
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
 if (is_file(G5_Z_PATH . '/js/tailwind.min.js')) add_javascript('<script src="' . G5_Z_URL . '/js/tailwind.min.js"></script>', 0);
+include_once(G5_THEME_PATH . '/head.php');
 ?>
 
 <!-- 로그인 시작 { -->

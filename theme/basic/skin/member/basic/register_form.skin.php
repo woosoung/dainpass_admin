@@ -6,6 +6,12 @@ if (is_file(G5_Z_PATH . '/js/tailwind.min.js')) add_javascript('<script src="' .
 
 add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form.js"></script>', 0);
 add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></script>', 0);
+
+// 사업자등록증 파일 업로드 설정
+$business_license_max_size = 5; // MB 단위
+$business_license_max_size_bytes = $business_license_max_size * 1024 * 1024; // bytes 변환
+$business_license_extensions = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'pdf'];
+$business_license_accept = '.' . implode(',.', $business_license_extensions); // HTML accept 형식
 ?>
 
 <!-- 회원정보 입력/수정 시작 -->
@@ -40,7 +46,7 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 
 		<section class="mb-8">
 			<h2 class="pb-2 mb-4 text-xl font-bold text-gray-800 border-b-2 border-gray-200">
-				로그인 정보
+				기본 정보
 			</h2>
 
 			<!-- 아이디 -->
@@ -74,6 +80,27 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 						minlength="8" maxlength="20" placeholder="비밀번호 확인">
 					<span id="msg_mb_password_re" class="block mt-1 text-sm"></span>
 				</div>
+			</div>
+
+			<!-- 이메일 -->
+			<div class="mb-4">
+				<label for="reg_mb_email" class="block mb-2 text-sm font-semibold text-gray-700">
+					이메일
+				</label>
+				<input type="email" name="mb_email" id="reg_mb_email" value="<?php echo isset($member['mb_email']) ? $member['mb_email'] : ''; ?>"
+					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					placeholder="이메일" required>
+				<input type="hidden" name="old_email" value="<?php echo $member['mb_email'] ?>">
+			</div>
+
+			<!-- 휴대폰번호 -->
+			<div class="mb-4">
+				<label for="reg_mb_hp" class="block mb-2 text-sm font-semibold text-gray-700">
+					휴대폰번호
+				</label>
+				<input type="text" name="mb_hp" id="reg_mb_hp" value="<?php echo get_text($member['mb_hp']) ?>"
+					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+					placeholder="휴대폰번호" required>
 			</div>
 		</section>
 
@@ -179,32 +206,55 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 					</div>
 				</div>
 			</div>
-		</section>
 
-		<section class="mb-8">
-			<h2 class="pb-2 mb-4 text-xl font-bold text-gray-800 border-b-2 border-gray-200">
-				담당자 정보
-			</h2>
-
-			<!-- 이메일 -->
+			<!-- 사업자등록증 -->
 			<div class="mb-4">
-				<label for="reg_mb_email" class="block mb-2 text-sm font-semibold text-gray-700">
-					이메일
+				<label class="block mb-2 text-sm font-semibold text-gray-700">
+					사업자등록증
 				</label>
-				<input type="email" name="mb_email" id="reg_mb_email" value="<?php echo isset($member['mb_email']) ? $member['mb_email'] : ''; ?>"
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="이메일" required>
-				<input type="hidden" name="old_email" value="<?php echo $member['mb_email'] ?>">
-			</div>
 
-			<!-- 휴대폰번호 -->
-			<div class="mb-4">
-				<label for="reg_mb_hp" class="block mb-2 text-sm font-semibold text-gray-700">
-					휴대폰번호
-				</label>
-				<input type="text" name="mb_hp" id="reg_mb_hp" value="<?php echo get_text($member['mb_hp']) ?>"
-					class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-					placeholder="휴대폰번호" required>
+				<p class="mb-3 text-xs text-gray-500">
+					사업자등록증을 업로드해주세요 (최대 <?php echo $business_license_max_size; ?>MB)
+				</p>
+
+				<div id="file_upload_area">
+					<!-- 파일 미선택 상태 -->
+					<div id="file_select_button" class="flex items-center gap-3">
+						<label for="business_license_file"
+							class="px-6 py-3 text-sm font-semibold text-white transition duration-200 bg-blue-600 rounded-lg cursor-pointer hover:bg-blue-700">
+							파일 선택
+						</label>
+						<input type="file"
+							id="business_license_file"
+							name="business_license_file[]"
+							accept="<?php echo $business_license_accept; ?>"
+							class="hidden">
+						<span id="file_name_display" class="text-sm text-gray-500">
+							선택된 파일 없음
+						</span>
+					</div>
+
+					<!-- 파일 선택 상태 -->
+					<div id="file_preview" class="hidden">
+						<div class="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+							<div class="flex items-center flex-1 min-w-0 gap-3">
+								<svg class="flex-shrink-0 w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+										d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+								</svg>
+								<div class="flex-1 min-w-0">
+									<p id="selected_file_name" class="text-sm font-medium text-gray-800 truncate"></p>
+									<p id="selected_file_size" class="text-xs text-gray-500"></p>
+								</div>
+							</div>
+							<button type="button"
+								id="file_remove_btn"
+								class="flex-shrink-0 px-4 py-2 text-sm font-semibold text-red-600 transition border border-red-300 rounded-lg hover:bg-red-50">
+								삭제
+							</button>
+						</div>
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -448,6 +498,57 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 				}
 			});
 		}
+
+		// PHP 변수를 JavaScript로 전달
+		const BUSINESS_LICENSE_MAX_SIZE = <?php echo $business_license_max_size_bytes; ?>;
+		const BUSINESS_LICENSE_EXTENSIONS = <?php echo json_encode($business_license_extensions); ?>;
+
+		// 사업자등록증 파일 업로드 처리
+		$('#business_license_file').on('change', function(e) {
+			const file = this.files[0];
+
+			if (!file) {
+				return;
+			}
+
+			const maxSize = BUSINESS_LICENSE_MAX_SIZE;
+
+			// 파일 확장자 검증
+			const fileName = file.name.toLowerCase();
+			const fileExt = fileName.substring(fileName.lastIndexOf('.') + 1);
+
+			if (!BUSINESS_LICENSE_EXTENSIONS.includes(fileExt)) {
+				alert(`허용되지 않는 파일 형식입니다.\n허용 형식: ${BUSINESS_LICENSE_EXTENSIONS.join(', ')}`);
+				this.value = '';
+				return;
+			}
+
+			// 파일 크기 검증
+			if (file.size > maxSize) {
+				alert(`${(maxSize / 1024 / 1024)}MB 미만의 파일만 업로드 가능합니다.`);
+				this.value = '';
+				return;
+			}
+
+			// 파일 정보 표시
+			const fileSize = (file.size / 1024).toFixed(1);
+			$('#selected_file_name').text(file.name);
+			$('#selected_file_size').text(`${fileSize} KB`);
+
+			// UI 전환: 선택 버튼 숨김, 미리보기 표시
+			$('#file_select_button').addClass('hidden');
+			$('#file_preview').removeClass('hidden');
+		});
+
+		// 파일 삭제 버튼
+		$('#file_remove_btn').on('click', function() {
+			// 파일 input 초기화
+			$('#business_license_file').val('');
+
+			// UI 전환: 미리보기 숨김, 선택 버튼 표시
+			$('#file_preview').addClass('hidden');
+			$('#file_select_button').removeClass('hidden');
+		});
 	});
 
 	// Form Submit 검증
@@ -560,6 +661,12 @@ add_javascript('<script src="' . G5_JS_URL . '/jquery.register_form_sub.js"></sc
 		if (msg) {
 			alert(msg);
 			f.mb_hp.select();
+			return false;
+		}
+
+		// 사업자등록증 파일 검증
+		if (!$('#business_license_file')[0].files[0]) {
+			alert("사업자등록증을 업로드해주세요.");
 			return false;
 		}
 
