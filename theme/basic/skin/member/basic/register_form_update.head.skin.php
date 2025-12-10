@@ -90,7 +90,7 @@ if ($w == '') {
             ) VALUES (
                 '{$pg_shop_name}', '{$pg_business_no}', '{$pg_owner_name}', '{$pg_contact_email}', '{$pg_contact_phone}',
                 '{$pg_zipcode}', '{$pg_addr1}', '{$pg_addr2}', '{$pg_addr3}', '{$pg_max_capacity}',
-                'active', '{$pg_shop_description}', '{$pg_settlement_memo}', '{$pg_shop_name}', '{$pg_cancel_policy}', '{$pg_names}', '{$pg_shop_names}'
+                '{$pg_status}', '{$pg_shop_description}', '{$pg_settlement_memo}', '{$pg_shop_name}', '{$pg_cancel_policy}', '{$pg_names}', '{$pg_shop_names}'
             ) ";
 
     sql_query_pg($sql);
