@@ -2,7 +2,13 @@
 // 이 파일은 새로운 파일 생성시 반드시 포함되어야 함
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 // 아래의 조건문의 의미는 관리자가 아닌 사용자가 특정 디렉토리에 접근할 수 없도록 제한하는 것입니다.
-if($is_member && $member['mb_level'] == 2 ){ // 회원 레벨이 2인 경우
+if($is_member && $member['mb_level'] == 1 ){ // 회원 레벨이 1인 경우 (탈퇴 회원)
+    echo "<script>
+        alert('탈퇴한 회원입니다.');
+        location.href = '/bbs/logout.php';
+    </script>";
+    exit;
+} else if($is_member && $member['mb_level'] == 2 ){ // 회원 레벨이 2인 경우
     echo "<script>
         alert('관리자 승인심사중입니다.');
         location.href = '/bbs/logout.php';
