@@ -148,8 +148,8 @@ for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 	$is_s3file_yn = is_s3file($row2['fle_path']);
 	$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comf_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 	$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-	'<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-	<br><span><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+	'<br><span><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+	<br><span><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
 	$comf['fle_db_idx'] = $row2['fle_db_idx'];
 	@array_push($comf['comf_f_arr'], array('file'=>$row2['down_del']));
 	@array_push($comf['comf_fidxs'], $row2['fle_idx']);
@@ -171,9 +171,9 @@ if ($rs && is_object($rs) && isset($rs->result)) {
 		$row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$comi_wd.'px;height:'.$comi_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
 		$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="comi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 		$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-		'<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-		<br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
-		<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+		'<br><span class="sp_sql"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+		<br><span class="sp_orig_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+		<br><span class="sp_thumb_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
 		$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
 		$comi['fle_db_idx'] = $row2['fle_db_idx'];
 		@array_push($comi['comi_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
@@ -487,14 +487,14 @@ include_once('./js/store_form.js.php');
 			?>
 			<input type="text" id="input_keyword" placeholder="" class="frm_input w-[200px]">
 			<a href="javascript:" id="add_keyword" class="mm-blue-btn">키워드추가</a>
-			<input type="hidden" name="shop_keywords" id="shop_keywords" value="<?=$com['shop_keywords']??''?>" class="border w-full">
+			<input type="hidden" name="shop_keywords" id="shop_keywords" value="<?=$com['shop_keywords']??''?>" class="w-full border">
 			<div id="keyword_box" class="border border-4 border-gray-200 pl-2 pt-2 mt-2 min-h-[40px]">
 				<?php 
 				if(!empty($kwds)){
 					$kn = 0;
 					foreach($kwds as $kwd){ 
 				?>
-					<span class="keyword-chip inline-flex items-center bg-gray-200 rounded px-2 py-1 mr-2 mb-2" data-index="<?=$kn?>">
+					<span class="inline-flex items-center px-2 py-1 mb-2 mr-2 bg-gray-200 rounded keyword-chip" data-index="<?=$kn?>">
 						<span class="sp_cont"><?=$kwd?></span>	
 						<button type="button" class="ml-2 text-red-500" aria-label="키워드 삭제">x</button>
 					</span>
@@ -554,17 +554,17 @@ include_once('./js/store_form.js.php');
 				<div>
 					<label for="blog_url">블로그 URL</label>
 					<?php echo help("대표 블로그 URL을 입력해 주세요."); ?>
-					<input type="text" name="blog_url" value="<?=$com['blog_url']??''?>" id="blog_url" class="frm_input w-full" placeholder="https://blog.example.com">
+					<input type="text" name="blog_url" value="<?=$com['blog_url']??''?>" id="blog_url" class="w-full frm_input" placeholder="https://blog.example.com">
 				</div>
 				<div>
 					<label for="instagram_url">인스타그램 URL</label>
 					<?php echo help("인스타그램 URL을 입력해 주세요."); ?>
-					<input type="text" name="instagram_url" value="<?=$com['instagram_url']??''?>" id="instagram_url" class="frm_input w-full" placeholder="https://instagram.com/example">
+					<input type="text" name="instagram_url" value="<?=$com['instagram_url']??''?>" id="instagram_url" class="w-full frm_input" placeholder="https://instagram.com/example">
 				</div>
 				<div>
 					<label for="kakaotalk_url">카카오톡 채널 URL</label>
 					<?php echo help("카카오톡 채널 URL을 입력해 주세요. (자사홈피가 없으면 KEY값 발급을 받을 수 없습니다.)"); ?>
-					<input type="text" name="kakaotalk_url" value="<?=$com['kakaotalk_url']??''?>" id="kakaotalk_url" class="frm_input w-full" placeholder="https://pf.kakao.com/example">
+					<input type="text" name="kakaotalk_url" value="<?=$com['kakaotalk_url']??''?>" id="kakaotalk_url" class="w-full frm_input" placeholder="https://pf.kakao.com/example">
 				</div>
 			</div>
 		</td>
@@ -573,8 +573,8 @@ include_once('./js/store_form.js.php');
 		<th scope="row"><label for="amenities_id_list">편의시설 ID 목록</label></th>
 		<td colspan="3">
 			<?php echo help("편의시설을 선택해 주세요. 버튼을 클릭하여 활성/비활성 상태를 전환할 수 있습니다."); ?>
-			<input type="hidden" name="amenities_id_list" value="<?=$com['amenities_id_list']??''?>" id="amenities_id_list" class="frm_input w-full" placeholder="23,34,543">
-			<div id="amenities_button_container" class="mt-3 flex flex-wrap gap-2">
+			<input type="hidden" name="amenities_id_list" value="<?=$com['amenities_id_list']??''?>" id="amenities_id_list" class="w-full frm_input" placeholder="23,34,543">
+			<div id="amenities_button_container" class="flex flex-wrap gap-2 mt-3">
 				<?php 
 				$selected_amenities = isset($com['amenities_id_list']) && $com['amenities_id_list'] ? explode(',', $com['amenities_id_list']) : [];
 				$selected_amenities = array_map('trim', $selected_amenities);
@@ -591,9 +591,9 @@ include_once('./js/store_form.js.php');
 							data-icon-enabled="<?=htmlspecialchars($amenity['icon_url_enabled'] ?? '')?>"
 							data-icon-disabled="<?=htmlspecialchars($amenity['icon_url_disabled'] ?? '')?>">
 						<?php if ($icon_url): ?>
-							<img src="<?=$icon_url?>" alt="<?=htmlspecialchars($amenity['amenity_name'])?>" class="amenity-icon inline-block w-5 h-5 mr-2" onerror="this.style.display='none'">
+							<img src="<?=$icon_url?>" alt="<?=htmlspecialchars($amenity['amenity_name'])?>" class="inline-block w-5 h-5 mr-2 amenity-icon" onerror="this.style.display='none'">
 						<?php else: ?>
-							<img src="" alt="<?=htmlspecialchars($amenity['amenity_name'])?>" class="amenity-icon inline-block w-5 h-5 mr-2" style="display:none;">
+							<img src="" alt="<?=htmlspecialchars($amenity['amenity_name'])?>" class="inline-block w-5 h-5 mr-2 amenity-icon" style="display:none;">
 						<?php endif; ?>
 						<?=htmlspecialchars($amenity['amenity_name'])?>
 					</button>
@@ -657,6 +657,32 @@ include_once('./js/store_form.js.php');
 
 <div class="btn_fixed_top">
     <input type="submit" value="확인" class="btn_submit btn" accesskey='s'>
+</div>
+</form>
+
+<form name="form_close" id="form_close" action="./store_close.php" method="post" onsubmit="return confirm_close(this);">
+<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
+<input type="hidden" name="token" value="">
+<div class="tbl_frm01 tbl_wrap" style="margin-top:50px;">
+	<table>
+	<caption>가맹점 탈퇴</caption>
+	<colgroup>
+		<col class="grid_4" style="width:10%;">
+		<col style="width:90%;">
+	</colgroup>
+	<tbody>
+	<tr>
+		<th scope="row">가맹점 탈퇴</th>
+		<td>
+			<?php echo help("탈퇴 시 가맹점 정보 및 관리자 계정이 비활성화됩니다."); ?>
+			<?php echo help("탈퇴 즉시 모든 서비스가 중단되며, 동일한 아이디로 재가입이 불가능합니다."); ?>
+			<div style="margin-top:10px;">
+				<input type="submit" value="탈퇴 신청" class="btn_frmline" style="padding:5px 15px; color:#999; font-size:12px;">
+			</div>
+		</td>
+	</tr>
+	</tbody>
+	</table>
 </div>
 </form>
 

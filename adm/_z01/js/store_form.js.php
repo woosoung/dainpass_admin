@@ -540,5 +540,14 @@ function form01_submit(f) {
 
     return true;
 }
+
+// 가맹점 탈퇴 확인
+function confirm_close(f) {
+    var msg = '정말 탈퇴하시겠습니까?\n\n';
+    msg += '탈퇴 시 가맹점 정보 및 관리자 계정이 비활성화되며,\n';
+    msg += '모든 서비스가 즉시 중단됩니다.';
+
+    return confirm(msg);
+}
 </script>
 
