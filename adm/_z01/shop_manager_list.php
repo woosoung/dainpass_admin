@@ -4,18 +4,20 @@ include_once("./_common.php");
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 
 // mb_level에 따라 $sub_menu 재정의
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_level, mb_1 
-                FROM {$g5['member_table']} 
-                WHERE mb_id = '{$member['mb_id']}' ";
-    $mb_row = sql_fetch($mb_sql, 1);
+$is_store_owner = false; // 가맹점 오너 여부
+$is_store_manager = false; // 가맹점 관리자 여부
 
-    if ($mb_row && $mb_row['mb_level'] >= 4 && $mb_row['mb_level'] <= 5) {
+if ($is_member && $member['mb_id']) {
+    if ($member['mb_level'] >= 4 && $member['mb_level'] <= 5) {
         // 가맹점 오너/관리자는 930100 권한으로 체크
         $sub_menu = "930100";
 
+        // 오너/관리자 플래그 설정
+        $is_store_owner = ($member['mb_level'] == 5);
+        $is_store_manager = ($member['mb_level'] == 4);
+
         // shop_id 소유권 검증 (필수!)
-        $user_shop_id = (int)trim($mb_row['mb_1']);
+        $user_shop_id = (int)trim($member['mb_1']);
         $requested_shop_id = (int)$shop_id;
 
         if ($requested_shop_id > 0 && $user_shop_id > 0 && $requested_shop_id != $user_shop_id) {
@@ -107,7 +109,19 @@ $colspan = 6;
             <?php
             for ($i=0; $row=sql_fetch_array($result); $i++) {
                 // print_r2($row);
-                $s_mod = '<a href="./shop_manager_form.php?'.$qstr.'&amp;w=u&amp;mb_id='.$row['mb_id'].'&amp;shop_id='.$shop_id.'" class="btn btn_01" style="background:#ddd;">수정</a>';
+
+                // 수정 버튼 표시 조건
+                $s_mod = '';
+                if ($is_store_manager) {
+                    // 가맹점 관리자(mb_level=4)는 본인 계정만 수정 가능
+                    if ($row['mb_id'] == $member['mb_id']) {
+                        $s_mod = '<a href="./shop_manager_form.php?'.$qstr.'&amp;w=u&amp;mb_id='.$row['mb_id'].'&amp;shop_id='.$shop_id.'" class="btn btn_01">수정</a>';
+                    }
+                } else {
+                    // 가맹점 오너(mb_level=5) 또는 플랫폼 관리자는 모든 계정 수정 가능
+                    $s_mod = '<a href="./shop_manager_form.php?'.$qstr.'&amp;w=u&amp;mb_id='.$row['mb_id'].'&amp;shop_id='.$shop_id.'" class="btn btn_01">수정</a>';
+                }
+
                 $mbt = get_gmeta('member',$row['mb_id']);
                 // print_r2($mbt);
                 if(count($mbt)){
@@ -146,7 +160,9 @@ $colspan = 6;
             <a href="javascript:opener.location.reload();window.close();" id="member_add" class="btn btn_02">창닫기</a>
             <!-- <a href="javascript:window.close();" id="member_add" class="btn btn_02">창닫기</a> -->
             <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn btn_02" style="display:none;">
+            <?php if (!$is_store_manager) { ?>
             <a href="./shop_manager_form.php?shop_id=<?=$shop_id?>" id="btn_add" class="btn btn_01">담당자추가</a>
+            <?php } ?>
         </div>
 
     </div>

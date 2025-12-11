@@ -4,18 +4,20 @@ include_once("./_common.php");
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 
 // mb_level에 따라 $sub_menu 재정의
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_level, mb_1 
-                FROM {$g5['member_table']} 
-                WHERE mb_id = '{$member['mb_id']}' ";
-    $mb_row = sql_fetch($mb_sql, 1);
+$is_store_owner = false; // 가맹점 오너 여부
+$is_store_manager = false; // 가맹점 관리자 여부
 
-    if ($mb_row && $mb_row['mb_level'] >= 4 && $mb_row['mb_level'] <= 5) {
+if ($is_member && $member['mb_id']) {
+    if ($member['mb_level'] >= 4 && $member['mb_level'] <= 5) {
         // 가맹점 오너/관리자는 930100 권한으로 체크
         $sub_menu = "930100";
 
+        // 오너/관리자 플래그 설정
+        $is_store_owner = ($member['mb_level'] == 5);
+        $is_store_manager = ($member['mb_level'] == 4);
+
         // shop_id 소유권 검증 (필수!)
-        $user_shop_id = (int)trim($mb_row['mb_1']);
+        $user_shop_id = (int)trim($member['mb_1']);
         $requested_shop_id = (int)$shop_id;
 
         if ($requested_shop_id > 0 && $user_shop_id > 0 && $requested_shop_id != $user_shop_id) {
@@ -26,14 +28,22 @@ if ($is_member && $member['mb_id']) {
 
 @auth_check($auth[$sub_menu], 'w');
 
+// 가맹점 관리자는 담당자 추가 불가
+if ($w == '' && $is_store_manager) {
+    alert_close('담당자 추가 권한이 없습니다.');
+}
+
 if ($w == 'u') {
     $mb = get_table_meta('member','mb_id',$mb_id);
     $mbt = get_gmeta('member',$mb_id);
     if(count($mbt)){
         $mb = array_merge($mb,$mbt);
     }
-    // print_r2($mb);
-    // exit;
+
+    // 가맹점 관리자(mb_level=4)는 본인 계정만 수정 가능
+    if ($is_store_manager && $mb_id != $member['mb_id']) {
+        alert_close('본인 계정만 수정할 수 있습니다.');
+    }
 }
 
 
@@ -165,7 +175,11 @@ include_once(G5_PATH.'/head.sub.php');
     </div>
 	<div class="win_btn ">
         <?php if($w == 'u') { ?>
-        <input type="button" class="btn_delete btn btn_02" value="삭제" style="display:<?=(!$mb['mb_id'])?'none':'';?>;">
+        <?php
+        // 삭제 버튼: 가맹점 오너 또는 플랫폼 관리자만 표시
+        $show_delete = ($is_store_owner || $member['mb_level'] >= 6);
+        ?>
+        <input type="button" class="btn_delete btn btn_02" value="삭제" style="display:<?=(!$mb['mb_id'] || !$show_delete)?'none':'';?>;">
         <?php } ?>
         <input type="submit" value="확인" class="btn_submit btn" accesskey='s'>
     </div>
