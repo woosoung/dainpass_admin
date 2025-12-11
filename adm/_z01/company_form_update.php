@@ -54,8 +54,8 @@ $settlement_memo = isset($_POST['settlement_memo']) ? conv_unescape_nl(stripslas
 $is_active = (isset($_POST['is_active']) && $_POST['is_active'] != '') ? $_POST['is_active'] : 'N'; //활성화여부
 $cancel_policy = isset($_POST['cancel_policy']) ? conv_unescape_nl(stripslashes($_POST['cancel_policy'])) : '';
 // point_rate는 소수점 2자리까지만
-$point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
-$point_rate = number_format($point_rate,2,'.','');
+// $point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
+// $point_rate = number_format($point_rate,2,'.','');
 // names 업체명 히스토리
 $branch = trim($_POST['branch']);
 // shop_parent_id 본사가맹점 id
@@ -233,7 +233,6 @@ $sql_common = "	name = '".addslashes($name)."'
                 , branch = '".addslashes($branch)."'
                 , mng_menus = '".$mng_menus."'
                 , settlement_memo = '".addslashes($settlement_memo)."'
-                , point_rate = {$point_rate}
                 , notice = '".addslashes($notice)."'
                 , cancellation_period = {$cancellation_period}
                 , shop_names = '".addslashes($shop_names)."'
@@ -245,11 +244,11 @@ $sql_common = "	name = '".addslashes($name)."'
                 , prep_period_for_reservation = ".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL')."
 ";
 
-$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,cancel_policy,names,tax_type,branch,mng_menus,settlement_memo,point_rate,notice,cancellation_period,shop_names,blog_url,instagram_url,kakaotalk_url,amenities_id_list,reservation_mode,prep_period_for_reservation";
+$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,cancel_policy,names,tax_type,branch,mng_menus,settlement_memo,notice,cancellation_period,shop_names,blog_url,instagram_url,kakaotalk_url,amenities_id_list,reservation_mode,prep_period_for_reservation";
 
 $sql_common_i_col = $sql_common_col.",created_at,updated_at";
 
-$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo)."',".$point_rate.",'".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."',".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL');
+$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo).",'".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."',".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL');
 
 $sql_common_i_val = $sql_common_val.",'".G5_TIME_YMDHIS."','".G5_TIME_YMDHIS."'";
 
