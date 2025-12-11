@@ -174,7 +174,8 @@ if ($w=='u'){
     $settlement_day = $com['settlement_day'] ?? 25;
     $settlement_memo = $com['settlement_memo'] ?? '';
     $is_active = $com['is_active'] ?? 'N';
-    $point_rate = $com['point_rate'] ?? 0;
+    // shop table에 존재하지 않는 column
+    // $point_rate = $com['point_rate'] ?? 0;
     
     // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
     // 이전 mng_menus 정보가져와서 새로 넘어온 mng_menus와 비교
@@ -288,7 +289,6 @@ $sql_common = "	name = '".addslashes($name)."'
                 , settlement_cycle = '{$settlement_cycle}'
                 , settlement_day = {$settlement_day}
                 , settlement_memo = '".addslashes($settlement_memo)."'
-                , point_rate = {$point_rate}
                 , is_active = '{$is_active}'
                 , notice = '".addslashes($notice)."'
                 , cancellation_period = {$cancellation_period}
