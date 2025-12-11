@@ -3,6 +3,27 @@ $sub_menu = "920200";
 include_once("./_common.php");
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 
+// mb_level에 따라 $sub_menu 재정의
+if ($is_member && $member['mb_id']) {
+    $mb_sql = " SELECT mb_level, mb_1 
+                FROM {$g5['member_table']} 
+                WHERE mb_id = '{$member['mb_id']}' ";
+    $mb_row = sql_fetch($mb_sql, 1);
+
+    if ($mb_row && $mb_row['mb_level'] >= 4 && $mb_row['mb_level'] <= 5) {
+        // 가맹점 오너/관리자는 930100 권한으로 체크
+        $sub_menu = "930100";
+
+        // shop_id 소유권 검증 (필수!)
+        $user_shop_id = (int)trim($mb_row['mb_1']);
+        $requested_shop_id = (int)$shop_id;
+
+        if ($requested_shop_id > 0 && $user_shop_id > 0 && $requested_shop_id != $user_shop_id) {
+            alert_close('자신의 가맹점만 관리할 수 있습니다.');
+        }
+    }
+}
+
 @auth_check($auth[$sub_menu], 'w');
 
 if ($w == 'u') {
@@ -120,7 +141,7 @@ include_once(G5_PATH.'/head.sub.php');
                     <?php echo help('숫자만 입력하세요.') ?>
                     <input type="hidden" value="ok" id="mb_hp_flag" class="frm_input">
                     <input type="text" name="mb_hp" id="mb_hp" value="<?=$mb['mb_hp']??''?>" required class="frm_input required">
-                    <span id="hp_verfiy_msg" class="text-red-500 text-xs"></span>
+                    <span id="hp_verfiy_msg" class="text-xs text-red-500"></span>
 				</td>
 			</tr>
 			<tr>
