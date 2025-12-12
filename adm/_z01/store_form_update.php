@@ -38,8 +38,15 @@ if ($is_member && $member['mb_id']) {
         if (!empty($mb_1_value)) {
             // PostgreSQL에서 shop_id 확인 (shop_id는 bigint이므로 정수로 비교)
             $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
             $shop_row = sql_fetch_pg($shop_sql);
+
+            if ($shop_row && ($shop_row['status'] === 'closed')) {
+                alert('탈퇴된 가맹점입니다.');
+            } else if ($shop_row && $shop_row['status'] === 'shutdown') {
+                // 활성화된 업체인 경우
+                alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
+            }
             
             if ($shop_row && $shop_row['shop_id']) {
                 $has_access = true;
@@ -598,6 +605,8 @@ foreach($_REQUEST as $key => $value ) {
         }
     }
 }
+
+exit;
 
 if($w == 'u') {
     goto_url('./store_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
