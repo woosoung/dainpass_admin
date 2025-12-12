@@ -77,13 +77,28 @@ if(!trim($_POST['owner_name'])) alert('대표자명을 입력해 주세요.');
 if(!trim($_POST['contact_phone'])) alert('업체전화번호를 입력해 주세요.');
 
 $name = trim($_POST['name']);
+if (mb_strlen($name) > 30) {
+    alert('업체명은 최대 30자까지 입력 가능합니다.');
+}
 $shop_name = trim($_POST['shop_name']);
+if (mb_strlen($shop_name) > 50) {
+    alert('가맹점명은 최대 50자까지 입력 가능합니다.');
+}
 $business_no = trim($_POST['business_no']);
 $business_no = preg_replace('/[^0-9]/', '', $business_no); // 사업자번호 숫자만 추출
+if (strlen($business_no) > 20) {
+    alert('사업자등록번호가 너무 깁니다.');
+}
 $owner_name = trim($_POST['owner_name']);
+if (mb_strlen($owner_name) > 30) {
+    alert('대표자명은 최대 30자까지 입력 가능합니다.');
+}
 $contact_email = trim($_POST['contact_email']);
 $contact_phone = trim($_POST['contact_phone']);
 $contact_phone = preg_replace('/[^0-9]/', '', $contact_phone); // 전화번호 숫자만 추출
+if (strlen($contact_phone) > 20) {
+    alert('전화번호가 너무 깁니다.');
+}
 $zipcode = trim($_POST['zipcode']);
 $addr1 = trim($_POST['addr1']);
 $addr2 = trim($_POST['addr2']);
@@ -125,6 +140,9 @@ if (!in_array($status, $allowed_status)) {
 }
 // names 업체명 히스토리
 $branch = trim($_POST['branch']);
+if (mb_strlen($branch) > 30) {
+    alert('지점명은 최대 30자까지 입력 가능합니다.');
+}
 // shop_parent_id 본사가맹점 id
 // shop_names = 가맹점명 히스토리
 $mng_menus = ($w == 'u') ? addslashes(trim($_POST['mng_menus'])) : '';
@@ -155,8 +173,17 @@ if ($cancellation_period < 1 || $cancellation_period > 720) {
     $cancellation_period = 1;
 }
 $blog_url = isset($_POST['blog_url']) ? trim($_POST['blog_url']) : '';
+if (mb_strlen($blog_url) > 500) {
+    $blog_url = mb_substr($blog_url, 0, 500);
+}
 $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) : '';
+if (mb_strlen($instagram_url) > 500) {
+    $instagram_url = mb_substr($instagram_url, 0, 500);
+}
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
+if (mb_strlen($kakaotalk_url) > 500) {
+    $kakaotalk_url = mb_substr($kakaotalk_url, 0, 500);
+}
 $amenities_id_list = isset($_POST['amenities_id_list']) ? trim($_POST['amenities_id_list']) : '';
 $reservation_mode = isset($_POST['reservation_mode']) ? trim($_POST['reservation_mode']) : 'SERVICE_ONLY';
 $allowed_reservation_modes = ['SERVICE_ONLY', 'SPACE_ONLY', 'SERVICE_AND_SPACE'];
