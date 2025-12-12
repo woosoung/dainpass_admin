@@ -41,10 +41,10 @@ if ($is_member && $member['mb_id']) {
             $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
             $shop_row = sql_fetch_pg($shop_sql);
 
+            // 가맹점 상태에 따른 접근 제한
             if ($shop_row && ($shop_row['status'] === 'closed')) {
                 alert('탈퇴된 가맹점입니다.');
             } else if ($shop_row && $shop_row['status'] === 'shutdown') {
-                // 활성화된 업체인 경우
                 alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
             }
             
