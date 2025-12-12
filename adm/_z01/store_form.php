@@ -4,6 +4,8 @@ include_once('./_common.php');
 include_once(G5_ZSQL_PATH.'/shop_category.php');
 include_once(G5_ZSQL_PATH.'/term_rank.php');
 
+@auth_check($auth[$sub_menu], 'w');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
