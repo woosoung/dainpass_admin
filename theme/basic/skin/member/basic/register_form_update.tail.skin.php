@@ -17,55 +17,28 @@ if ($w == '') {
     // 가맹점 오너 권한 설정
     //----------------------------------------------------------
     // 신규 가입한 회원의 정보 조회
-    $new_member_sql = " SELECT mb_id, mb_level, mb_1 FROM {$g5['member_table']} WHERE mb_id = '{$mb_id}' ";
-    $new_member = sql_fetch($new_member_sql, 1);
 
-    if ($new_member && !empty($new_member['mb_1'])) {
-        $shop_id = (int)$new_member['mb_1'];
+    $mb = get_member($mb_id);
 
-        // shop 테이블에서 mng_menus 조회
-        $shop_auth_sql = " SELECT mng_menus FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ";
-        $shop_auth_res = sql_fetch_pg($shop_auth_sql);
-        $shop_auths = isset($shop_auth_res['mng_menus']) ? explode(',', $shop_auth_res['mng_menus']) : array();
+    // 정상적으로 가입체크, 가맹점 관리자 여부 체크
+    if ($mb && !empty($mb['mb_1']) && $mb['mb_2'] == 'Y') {
+        // 필수 메뉴 배열
+        $essential_menus = $set_conf['set_shopmanager_basic_menu_arr'];
 
-        // 메뉴 접근 권한 설정
-        if (count($shop_auths) > 0) {
-            // 필수 메뉴 배열
-            $essential_menus = $set_conf['set_shopmanager_basic_menu_arr'];
+        $sql = " INSERT INTO {$g5['auth_table']} (mb_id, au_menu, au_auth) VALUES ";
 
-            // 기존 정보 삭제(초기화)
-            $sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id = '{$mb_id}' ";
-            sql_query($sql, 1);
-
-            $sql = " INSERT INTO {$g5['auth_table']} (mb_id, au_menu, au_auth) VALUES ";
-
-            // 필수 메뉴 권한 추가
-            $en = 0;
-            foreach ($essential_menus as $essential_code => $essential_arr) {
-                $sql .= ($en == 0) ? "" : ",";
-                $sql .= "('{$mb_id}', '{$essential_code}', '{$essential_arr['auth']}')";
-                $en++;
-            }
-            sql_query($sql, 1);
-
-            // 선택 메뉴 권한 추가
-            if (count($shop_auths) > 0) {
-                $mmn = 0;
-                foreach ($shop_auths as $shop_auth) {
-                    $sql .= ",('{$mb_id}', '{$shop_auth}', 'r,w,d')";
-                    $mmn++;
-                }
-            }
-
-            $sql .= " ON DUPLICATE KEY UPDATE au_auth = VALUES(au_auth) ";
-            sql_query($sql, 1);
-        } else {
-            // 기존 권한정보 삭제(초기화)
-            $sql = " DELETE FROM {$g5['auth_table']} WHERE mb_id = '{$mb_id}' ";
-            sql_query($sql, 1);
+        // 필수 메뉴 권한 추가
+        $en = 0;
+        foreach ($essential_menus as $essential_code => $essential_arr) {
+            $sql .= ($en == 0) ? "" : ",";
+            $sql .= "('{$mb_id}', '{$essential_code}', '{$essential_arr['auth']}')";
+            $en++;
         }
+        $result = sql_query($sql, 1);
     }
 }
+
+exit;
 
 //----------------------------------------------------------
 // SMS 문자전송 시작
