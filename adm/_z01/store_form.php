@@ -51,7 +51,7 @@ if ($is_member && $member['mb_id']) {
 				if ($shop_row['status'] == 'pending')
 					alert('아직 승인이 되지 않았습니다.');
 				if ($shop_row['status'] == 'closed')
-					alert('폐업되었습니다.');
+					alert('탈퇴된 가맹점입니다.');
 				if ($shop_row['status'] == 'shutdown')
 					alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
                 $has_access = true;
