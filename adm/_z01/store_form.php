@@ -326,7 +326,7 @@ include_once('./js/store_form.js.php');
 		<th scope="row">업체명<strong class="sound_only">필수</strong></th>
 		<td>
 			<input type="hidden" name="shop_id" value="<?=$shop_id?>">
-			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="업체명" id="name" class="frm_input">
+			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="업체명" id="name" class="frm_input" maxlength="30">
 		</td>
 		<th scope="row">사업자등록번호<strong class="sound_only">필수</strong></th>
 		<td>
@@ -336,11 +336,11 @@ include_once('./js/store_form.js.php');
     <tr>
         <th scope="row">가맹점명<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input">
+			<input type="text" name="shop_name" value="<?=$com['shop_name']??''?>" id="shop_name" class="frm_input" maxlength="50">
 		</td>
         <th scope="row">지점명<strong class="sound_only">필수</strong></th>
         <td>
-			<input type="text" name="branch" value="<?=$com['branch']??''?>" placeholder="지점명" id="branch" class="frm_input"></td>
+			<input type="text" name="branch" value="<?=$com['branch']??''?>" placeholder="지점명" id="branch" class="frm_input" maxlength="30"></td>
         </td>
     </tr>
 	<tr> 
@@ -556,17 +556,17 @@ include_once('./js/store_form.js.php');
 				<div>
 					<label for="blog_url">블로그 URL</label>
 					<?php echo help("대표 블로그 URL을 입력해 주세요."); ?>
-					<input type="text" name="blog_url" value="<?=$com['blog_url']??''?>" id="blog_url" class="w-full frm_input" placeholder="https://blog.example.com">
+					<input type="text" name="blog_url" value="<?=$com['blog_url']??''?>" id="blog_url" class="w-full frm_input" placeholder="https://blog.example.com" maxlength="500">
 				</div>
 				<div>
 					<label for="instagram_url">인스타그램 URL</label>
 					<?php echo help("인스타그램 URL을 입력해 주세요."); ?>
-					<input type="text" name="instagram_url" value="<?=$com['instagram_url']??''?>" id="instagram_url" class="w-full frm_input" placeholder="https://instagram.com/example">
+					<input type="text" name="instagram_url" value="<?=$com['instagram_url']??''?>" id="instagram_url" class="w-full frm_input" placeholder="https://instagram.com/example" maxlength="500">
 				</div>
 				<div>
 					<label for="kakaotalk_url">카카오톡 채널 URL</label>
 					<?php echo help("카카오톡 채널 URL을 입력해 주세요. (자사홈피가 없으면 KEY값 발급을 받을 수 없습니다.)"); ?>
-					<input type="text" name="kakaotalk_url" value="<?=$com['kakaotalk_url']??''?>" id="kakaotalk_url" class="w-full frm_input" placeholder="https://pf.kakao.com/example">
+					<input type="text" name="kakaotalk_url" value="<?=$com['kakaotalk_url']??''?>" id="kakaotalk_url" class="w-full frm_input" placeholder="https://pf.kakao.com/example" maxlength="500">
 				</div>
 			</div>
 		</td>
