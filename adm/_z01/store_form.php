@@ -384,7 +384,7 @@ include_once('./js/store_form.js.php');
 		<th scope="row">업체명 히스토리</th>
 		<td colspan="3" class="align-top">
 			<?php echo help("업체명이 바뀌면 자동으로 히스토리가 기록됩니다."); ?>
-			<textarea rows="10" name="names" readonly class="readonly frm_input w-[100%]"><?= $is_team_manager ? ($com['names'] ?? '') : '' ?></textarea>
+			<textarea rows="10" name="names" readonly class="readonly frm_input w-[100%]"><?= $com['names'] ? ($com['names'] ?? '') : '' ?></textarea>
 		</td>
 	</tr>
 	<tr>
@@ -650,7 +650,7 @@ include_once('./js/store_form.js.php');
 		<th scope="row">가맹점명 히스토리</th>
 		<td colspan="3">
 			<?php echo help("가맹점명이 변경되면 자동으로 히스토리가 기록됩니다."); ?>
-			<textarea rows="10" name="shop_names" readonly class="readonly frm_input w-[100%]"><?= $is_team_manager ? ($com['shop_names'] ?? '') : '' ?></textarea>
+			<textarea rows="10" name="shop_names" readonly class="readonly frm_input w-[100%]"><?= $com['shop_names'] ? ($com['shop_names'] ?? '') : '' ?></textarea>
 		</td>
 	</tr>
 	</tbody>
