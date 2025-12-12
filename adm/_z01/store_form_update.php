@@ -105,11 +105,20 @@ $bank_holder = isset($_POST['bank_holder']) ? trim($_POST['bank_holder']) : ''; 
 // $settlement_cycle = isset($_POST['settlement_cycle']) ? trim($_POST['settlement_cycle']) : ''; //정산주기(monthly, weekly, 2monthly)
 // $settlement_day = isset($_POST['settlement_day']) ? (int)$_POST['settlement_day'] : 0; //정산일(25 | 01 ...)
 $tax_type = isset($_POST['tax_type']) ? trim($_POST['tax_type']) : ''; //과세유형
+$allowed_tax_types = ['normal', 'simple', 'exempt', 'freelancer'];
+if (!in_array($tax_type, $allowed_tax_types)) {
+    $tax_type = 'normal'; // shop 테이블 기본값으로 fallback
+}
 // $settlement_memo = isset($_POST['settlement_memo']) ? conv_unescape_nl(stripslashes($_POST['settlement_memo'])) : ''; //정산메모
 // $is_active = (isset($_POST['is_active']) && $_POST['is_active'] != '') ? $_POST['is_active'] : 'N'; //활성화여부
 $cancel_policy = isset($_POST['cancel_policy']) ? conv_unescape_nl(stripslashes($_POST['cancel_policy'])) : '';
 // $point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
 // $point_rate = number_format($point_rate,2,'.','');
+$status = isset($_POST['status']) ? trim($_POST['status']) : '';
+$allowed_status = ['active', 'stopped'];
+if (!in_array($status, $allowed_status)) {
+    alert('유효하지 않은 상태값입니다.');
+}
 // names 업체명 히스토리
 $branch = trim($_POST['branch']);
 // shop_parent_id 본사가맹점 id
@@ -142,6 +151,10 @@ $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) 
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
 $amenities_id_list = isset($_POST['amenities_id_list']) ? trim($_POST['amenities_id_list']) : '';
 $reservation_mode = isset($_POST['reservation_mode']) ? trim($_POST['reservation_mode']) : 'SERVICE_ONLY';
+$allowed_reservation_modes = ['SERVICE_ONLY', 'SPACE_ONLY', 'SERVICE_AND_SPACE'];
+if (!in_array($reservation_mode, $allowed_reservation_modes)) {
+    $reservation_mode = 'SERVICE_ONLY';
+}
 $prep_period_for_reservation = isset($_POST['prep_period_for_reservation']) && $_POST['prep_period_for_reservation'] !== '' ? (int)$_POST['prep_period_for_reservation'] : null;
 
 // 이메일 형식 체크
@@ -277,7 +290,7 @@ $sql_common = "	name = '".addslashes($name)."'
                 , longitude = '{$longitude}'
                 , url = '{$url}'
                 , max_capacity = {$max_capacity}
-                , status = '{$_POST['status']}'
+                , status = '{$status}'
                 , reservelink_yn = '{$reservelink_yn}'
                 , reservelink = '{$reservelink}'
                 , reserve_tel = '{$reserve_tel}'
