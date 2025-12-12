@@ -325,8 +325,8 @@ $sql_common = "	name = '".addslashes($name)."'
                 , addr1 = '{$addr1}'
                 , addr2 = '{$addr2}'
                 , addr3 = '{$addr3}'
-                , latitude = '{$latitude}'
-                , longitude = '{$longitude}'
+                , latitude = {$latitude}
+                , longitude = {$longitude}
                 , url = '{$url}'
                 , max_capacity = {$max_capacity}
                 , status = '{$status}'
