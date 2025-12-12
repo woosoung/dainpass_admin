@@ -92,6 +92,10 @@ $latitude = trim($_POST['latitude']);
 $longitude = trim($_POST['longitude']);
 $url = trim($_POST['url']);
 $max_capacity = isset($_POST['max_capacity']) ? (int)$_POST['max_capacity'] : 0;
+// 음수 방지, 현실적인 최대값 설정
+if ($max_capacity < 0 || $max_capacity > 100000) {
+    $max_capacity = 0;
+}
 $reservelink_yn = (isset($_POST['reservelink_yn']) && $_POST['reservelink_yn'] == '') ? $_POST['reservelink_yn'] : '';
 $reservelink = isset($_POST['reservelink']) ? trim($_POST['reservelink']) : '';
 $reserve_tel = isset($_POST['reserve_tel']) ? trim($_POST['reserve_tel']) : '';
@@ -146,6 +150,10 @@ if ($w == 'u' && $mng_menus) {
 // 추가 필드 처리
 $notice = isset($_POST['notice']) ? conv_unescape_nl(stripslashes($_POST['notice'])) : '';
 $cancellation_period = isset($_POST['cancellation_period']) ? (int)$_POST['cancellation_period'] : 1;
+// 최소 1시간, 최대 720시간(30일)
+if ($cancellation_period < 1 || $cancellation_period > 720) {
+    $cancellation_period = 1;
+}
 $blog_url = isset($_POST['blog_url']) ? trim($_POST['blog_url']) : '';
 $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) : '';
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
@@ -156,6 +164,10 @@ if (!in_array($reservation_mode, $allowed_reservation_modes)) {
     $reservation_mode = 'SERVICE_ONLY';
 }
 $prep_period_for_reservation = isset($_POST['prep_period_for_reservation']) && $_POST['prep_period_for_reservation'] !== '' ? (int)$_POST['prep_period_for_reservation'] : null;
+// 음수 방지, 최대 1440분(24시간)
+if ($prep_period_for_reservation !== null && ($prep_period_for_reservation < 0 || $prep_period_for_reservation > 1440)) {
+    $prep_period_for_reservation = 0;
+}
 
 // 이메일 형식 체크
 if(!preg_match("/^[a-z0-9_+.-]+@([a-z0-9-]+\.)+[a-z0-9]{2,4}$/",$contact_email)) {
