@@ -68,27 +68,21 @@ $row = sql_fetch_pg($sql);
 if(!$row || !$row['personal_id'])
     alert_close('복사하시려는 개인결제 정보가 존재하지 않습니다.');
 
-// 주문번호 생성
-$order_id = isset($_POST['order_id']) && $_POST['order_id'] ? clean_xss_tags($_POST['order_id'], 1, 1) : 'PP' . date('YmdHis') . rand(1000, 9999);
-
-// order_id 중복 체크
-$order_check_sql = " SELECT personal_id FROM personal_payment WHERE order_id = '{$order_id}' ";
-$order_check_row = sql_fetch_pg($order_check_sql);
-
-if ($order_check_row && $order_check_row['personal_id']) {
-    alert_close('이미 사용 중인 주문번호입니다. 다시 시도해주세요.');
-}
-
 // PostgreSQL의 경우 문자열 이스케이프 처리
-$name_escaped = pg_escape_string($_POST['name']);
-$reason_escaped = pg_escape_string($row['reason']);
-$order_id_escaped = pg_escape_string($order_id);
-$user_id_escaped = $row['user_id'] ? pg_escape_string($row['user_id']) : 'NULL';
-$phone_escaped = $row['phone'] ? pg_escape_string($row['phone']) : 'NULL';
-$email_escaped = $row['email'] ? pg_escape_string($row['email']) : 'NULL';
+// 안전한 이스케이프 처리 (pg 연결 명시)
+$pg_link = isset($g5['connect_pg']) ? $g5['connect_pg'] : null;
+$esc = function($v) use ($pg_link) {
+    return $pg_link ? pg_escape_string($pg_link, (string)$v) : $v;
+};
 
+$name_escaped   = $esc($_POST['name']);
+$reason_escaped = $esc($row['reason']);
+$user_id_escaped = $row['user_id'] ? $esc($row['user_id']) : 'NULL';
+$phone_escaped   = $row['phone'] ? $esc($row['phone']) : 'NULL';
+$email_escaped   = $row['email'] ? $esc($row['email']) : 'NULL';
+
+// 주문번호는 DB에서 자동 생성되므로 INSERT 시 제외
 $sql = " INSERT INTO personal_payment (
-            order_id,
             shop_id,
             shopdetail_id,
             user_id,
@@ -102,7 +96,6 @@ $sql = " INSERT INTO personal_payment (
             created_at,
             updated_at
         ) VALUES (
-            '{$order_id_escaped}',
             {$shop_id},
             " . ($row['shopdetail_id'] ? $row['shopdetail_id'] : 'NULL') . ",
             " . ($row['user_id'] ? "'{$user_id_escaped}'" : 'NULL') . ",

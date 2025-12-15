@@ -71,12 +71,6 @@ if(!$row || !$row['personal_id'])
             <td><input type="text" name="name" value="<?php echo get_text($row['name']); ?>" id="name" required class="required frm_input"></td>
         </tr>
         <tr>
-            <th scope="row"><label for="order_id">주문번호</label></th>
-            <td><input type="text" name="order_id" value="" id="order_id" class="frm_input" size="30">
-                <small style="color: #666;">자동 생성됩니다.</small>
-            </td>
-        </tr>
-        <tr>
             <th scope="row"><label for="amount">청구금액</label></th>
             <td><input type="text" name="amount" value="" id="amount" required class="required frm_input" size="20"> 원</td>
         </tr>

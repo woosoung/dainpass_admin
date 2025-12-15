@@ -167,7 +167,10 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         <?php if ($w == 'u') { ?>
         <tr>
             <th scope="row">주문번호</th>
-            <td><?php echo htmlspecialchars($pp['order_id']); ?></td>
+            <td>
+                <?php echo htmlspecialchars($pp['order_id']); ?>
+                <input type="hidden" name="order_id" value="<?php echo htmlspecialchars($pp['order_id']); ?>">
+            </td>
         </tr>
         <?php } ?>
         <tr>
