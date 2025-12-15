@@ -80,6 +80,7 @@ $link_yn = isset($_POST['link_yn']) ? trim($_POST['link_yn']) : 'N';
 $option_yn = isset($_POST['option_yn']) ? trim($_POST['option_yn']) : 'N';
 $main_yn = isset($_POST['main_yn']) ? trim($_POST['main_yn']) : 'N';
 $signature_yn = isset($_POST['signature_yn']) ? trim($_POST['signature_yn']) : 'N';
+$onsite_payment_yn = isset($_POST['onsite_payment_yn']) ? trim($_POST['onsite_payment_yn']) : 'N';
 $service_time = isset($_POST['service_time']) ? (int)$_POST['service_time'] : 0;
 
 if ($w == '') {
@@ -95,6 +96,7 @@ if ($w == '') {
                 main_yn,
                 signature_yn,
                 service_time,
+                onsite_payment_yn,
                 created_at,
                 updated_at
             ) VALUES (
@@ -107,6 +109,7 @@ if ($w == '') {
                 '{$option_yn}',
                 '{$main_yn}',
                 '{$signature_yn}',
+                '{$onsite_payment_yn}',
                 {$service_time},
                 '".G5_TIME_YMDHIS."',
                 '".G5_TIME_YMDHIS."'
@@ -160,6 +163,7 @@ if ($w == '') {
                 option_yn = '{$option_yn}',
                 main_yn = '{$main_yn}',
                 signature_yn = '{$signature_yn}',
+                onsite_payment_yn = '{$onsite_payment_yn}',
                 service_time = {$service_time},
                 updated_at = '".G5_TIME_YMDHIS."'
             WHERE service_id = {$service_id} AND shop_id = {$shop_id} ";
