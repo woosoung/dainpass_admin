@@ -78,6 +78,34 @@ if ($w == 'u')
 
 //check_admin_token();
 if(!trim($_POST['category_ids'])) alert('업종(분류)을 반드시 선택해 주세요.');
+
+// category_ids 유효성 검증 - shop_categories 테이블에 존재하는지 확인
+$category_ids_str = trim($_POST['category_ids']);
+if ($category_ids_str) {
+    $category_ids_arr = explode(',', $category_ids_str);
+    $category_ids_arr = array_map('trim', $category_ids_arr);
+    $category_ids_arr = array_filter($category_ids_arr, function($id) {
+        return !empty($id) && is_numeric($id);
+    });
+
+    if (count($category_ids_arr) > 0) {
+        $category_ids_for_query = implode(',', array_map('intval', $category_ids_arr));
+        $cat_check_sql = " SELECT category_id FROM {$g5['shop_categories_table']} WHERE category_id IN ({$category_ids_for_query}) ";
+        $cat_check_result = sql_query_pg($cat_check_sql);
+
+        $existing_category_ids = array();
+        while ($cat_row = sql_fetch_array_pg($cat_check_result)) {
+            $existing_category_ids[] = (string)$cat_row['category_id'];
+        }
+
+        // 존재하지 않는 카테고리 ID 찾기
+        $invalid_category_ids = array_diff($category_ids_arr, $existing_category_ids);
+        if (count($invalid_category_ids) > 0) {
+            alert('유효하지 않은 업종(분류)이 선택되었습니다.');
+        }
+    }
+}
+
 if(!trim($_POST['name'])) alert('업체명을 입력해 주세요.');
 if(!trim($_POST['contact_email'])) alert('이메일을 입력해 주세요.');
 if(!trim($_POST['owner_name'])) alert('대표자명을 입력해 주세요.');
