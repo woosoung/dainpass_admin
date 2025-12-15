@@ -14,7 +14,8 @@ $set_type = 'conf';
 $pg_anchor = '<ul class="anchor">
     <li><a href="#anc_cf_default">기본환경설정</a></li>
     <li><a href="#anc_cf_amazon">Amazon</a></li>
-    <li><a href="#anc_cf_exapikeys">외부 API Keys</a></li>
+    <li><a href="#anc_cf_inapiinfo">내부 API관련정보</a></li>
+    <li><a href="#anc_cf_exapikeys">외부 API관련정보</a></li>
     <li><a href="#anc_cf_branchshop">가맹점관련</a></li>
 </ul>';
 
@@ -194,12 +195,43 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
         </table>
     </div><!-- // .tbl_frm01 -->
 </section><!-- // #anc_cf_amazon -->
-<section id="anc_cf_exapikeys">
-    <h2 class="h2_frm">외부 API Keys설정</h2>
+<section id="anc_cf_inapiinfo">
+    <h2 class="h2_frm">내부 API관련정보</h2>
     <?php echo $pg_anchor ?>
     <div class="tbl_frm01 tbl_wrap">
         <table>
-        <caption>외부 API Keys설정</caption>
+        <caption>내부 API관련정보</caption>
+        <colgroup>
+            <col class="grid_4" style="width:15%;">
+            <col style="width:35%;">
+            <col class="grid_4" style="width:15%;">
+            <col style="width:35%;">
+        </colgroup>
+        <tbody>
+        <tr>
+            <th>api통신 히든코드</th>
+            <td colspan="3" class="tms_help">
+                <?php echo tms_help("API통신을 위해 반드시 사용되는 히든코드 키워드입니다. 정기적으로 한 번씩 변경해 주세요. 무조건 6글자여야 합니다.(기본영문대소+숫자+특수문자)",1,'#f9fac6','#333333'); ?>
+                <div class="tms_hint flex gap-6">
+                    <input type="text" name="set_api_hidden_code" class="w-[400px]" value="<?=${'set_'.$set_type}['set_api_hidden_code']??''?>">
+                    <div class="tms_hbox">
+                        <div class="tms_hcon">
+                            <?=${'set_'.$set_type}['set_api_hidden_code_str']??''?>
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+        </table>
+    </div><!-- // .tbl_frm01 -->
+</section><!-- // #anc_cf_inapiinfo -->
+<section id="anc_cf_exapikeys">
+    <h2 class="h2_frm">외부 API관련정보</h2>
+    <?php echo $pg_anchor ?>
+    <div class="tbl_frm01 tbl_wrap">
+        <table>
+        <caption>외부 API관련정보</caption>
         <colgroup>
             <col class="grid_4" style="width:15%;">
             <col style="width:35%;">

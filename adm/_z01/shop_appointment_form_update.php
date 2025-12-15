@@ -1,0 +1,111 @@
+<?php
+$sub_menu = "950100";
+include_once('./_common.php');
+
+@auth_check($auth[$sub_menu], 'w');
+
+// 가맹점 접근 권한 체크
+$has_access = false;
+$shop_id = 0;
+
+if ($is_member && $member['mb_id']) {
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
+                FROM {$g5['member_table']} 
+                WHERE mb_id = '{$member['mb_id']}' 
+                AND mb_level >= 4 
+                AND (
+                    mb_level >= 6 
+                    OR (mb_level < 6 AND mb_2 = 'Y')
+                )
+                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
+                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+    $mb_row = sql_fetch($mb_sql, 1);
+    
+    if ($mb_row && $mb_row['mb_id']) {
+        $mb_1_value = trim($mb_row['mb_1']);
+        
+        if ($mb_1_value === '0' || $mb_1_value === '') {
+            alert('업체 데이터가 없습니다.', './shop_appointment_list.php');
+            exit;
+        }
+        
+        if (!empty($mb_1_value)) {
+            $shop_id_check = (int)$mb_1_value;
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_row = sql_fetch_pg($shop_sql);
+            
+            if ($shop_row && $shop_row['shop_id']) {
+                if ($shop_row['status'] == 'pending')
+                    alert('아직 승인이 되지 않았습니다.');
+                if ($shop_row['status'] == 'closed')
+                    alert('폐업되었습니다.');
+                if ($shop_row['status'] == 'shutdown')
+                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
+                $has_access = true;
+                $shop_id = (int)$shop_row['shop_id'];
+            } else {
+                alert('업체 데이터가 없습니다.', './shop_appointment_list.php');
+                exit;
+            }
+        }
+    }
+}
+
+if (!$has_access) {
+    alert('접속할 수 없는 페이지 입니다.', './shop_appointment_list.php');
+    exit;
+}
+
+// 토큰 체크
+check_admin_token();
+
+// 파라미터 수신
+$action = isset($_POST['action']) ? clean_xss_tags($_POST['action']) : '';
+$appointment_id = isset($_POST['appointment_id']) ? (int)$_POST['appointment_id'] : 0;
+$qstr = isset($_POST['qstr']) ? $_POST['qstr'] : '';
+
+if ($action == 'status_update' && $appointment_id > 0) {
+    $new_status = isset($_POST['new_status']) ? clean_xss_tags($_POST['new_status']) : '';
+    
+    // BOOKED 상태는 변경 불가
+    if (empty($new_status) || !in_array($new_status, array('COMPLETED', 'CANCELLED'))) {
+        alert('올바른 상태를 입력하세요. (COMPLETED, CANCELLED만 가능)', './shop_appointment_form.php?w=u&appointment_id=' . $appointment_id . ($qstr ? '&' . $qstr : ''));
+        exit;
+    }
+    
+    if ($new_status == 'BOOKED') {
+        alert('BOOKED 상태로는 변경할 수 없습니다.', './shop_appointment_form.php?w=u&appointment_id=' . $appointment_id . ($qstr ? '&' . $qstr : ''));
+        exit;
+    }
+    
+    // 예약이 해당 가맹점의 예약인지 확인 (BOOKED 상태 제외)
+    $check_sql = " SELECT sa.appointment_id 
+                   FROM shop_appointments sa
+                   INNER JOIN appointment_shop_detail asd ON sa.appointment_id = asd.appointment_id
+                   WHERE sa.appointment_id = {$appointment_id} 
+                   AND sa.status != 'BOOKED'
+                   AND asd.shop_id = {$shop_id}
+                   AND asd.status != 'BOOKED' ";
+    $check_row = sql_fetch_pg($check_sql);
+    
+    if (!$check_row || !$check_row['appointment_id']) {
+        alert('해당 가맹점의 예약이 아닙니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+    
+    // 상태 업데이트 (BOOKED 상태는 업데이트 불가)
+    $update_sql = " UPDATE shop_appointments 
+                    SET status = '{$new_status}', 
+                        updated_at = NOW() 
+                    WHERE appointment_id = {$appointment_id} 
+                    AND status != 'BOOKED' ";
+    sql_query_pg($update_sql);
+    
+    alert('상태가 변경되었습니다.', './shop_appointment_form.php?w=u&appointment_id=' . $appointment_id . ($qstr ? '&' . $qstr : ''));
+    
+} else {
+    alert('잘못된 요청입니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+}
+
+exit;
+?>

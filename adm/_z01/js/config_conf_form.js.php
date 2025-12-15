@@ -11,6 +11,16 @@ function fconfigform_submit(f) {
     <?php ;//echo get_editor_js("set_error_content"); ?>
     <?php ;//echo chk_editor_js("set_error_content"); ?>
 
+  const hiddenCodeField = f.elements['set_api_hidden_code'];
+  if (hiddenCodeField) {
+    const hiddenCodeValue = hiddenCodeField.value.trim();
+    if (hiddenCodeValue && hiddenCodeValue.length !== 6) {
+      alert('숨김 코드 값은 6글자로 입력해 주세요.');
+      hiddenCodeField.focus();
+      return false;
+    }
+  }
+
     f.action = update_file;
     return true;
 }
