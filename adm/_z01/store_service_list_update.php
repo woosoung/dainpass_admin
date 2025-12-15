@@ -124,6 +124,7 @@ if ($act_button == '선택수정') {
                 $option_yn = isset($_POST['option_yn'][$idx]) ? trim($_POST['option_yn'][$idx]) : 'N';
                 $main_yn = isset($_POST['main_yn'][$idx]) ? trim($_POST['main_yn'][$idx]) : 'N';
                 $signature_yn = isset($_POST['signature_yn'][$idx]) ? trim($_POST['signature_yn'][$idx]) : 'N';
+                $onsite_payment_yn = isset($_POST['onsite_payment_yn'][$idx]) ? trim($_POST['onsite_payment_yn'][$idx]) : 'N';
                 
                 $update_sql = " UPDATE shop_services SET 
                                 service_time = {$service_time},
@@ -132,6 +133,7 @@ if ($act_button == '선택수정') {
                                 option_yn = '{$option_yn}',
                                 main_yn = '{$main_yn}',
                                 signature_yn = '{$signature_yn}',
+                                onsite_payment_yn = '{$onsite_payment_yn}',
                                 updated_at = '".G5_TIME_YMDHIS."'
                             WHERE service_id = {$service_id_val} AND shop_id = {$shop_id} ";
                 sql_query_pg($update_sql);
