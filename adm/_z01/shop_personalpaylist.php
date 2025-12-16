@@ -250,6 +250,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             <input type="checkbox" name="chkall" id="chkall" onclick="check_all(this.form)">
         </th>
         <th scope="col"><?php echo subject_sort_link('personal_id', $qstr) ?>청구ID</a></th>
+        <th scope="col">예약번호</th>
         <th scope="col"><?php echo subject_sort_link('order_id', $qstr) ?>주문번호</a></th>
         <th scope="col">회원정보</th>
         <th scope="col">청구사유</th>
@@ -257,7 +258,6 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         <th scope="col"><?php echo subject_sort_link('status', $qstr) ?>상태</a></th>
         <th scope="col">결제정보</th>
         <th scope="col">결제일시</th>
-        <th scope="col">예약번호</th>
         <th scope="col">관리</th>
     </tr>
     </thead>
@@ -326,6 +326,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             <input type="checkbox" name="chk[]" value="<?php echo $personal_id ?>" id="chk_<?php echo $i ?>">
         </td>
         <td class="td_num"><?php echo $personal_id ?></td>
+        <td class="td_left"><?php echo $appointment_no ? htmlspecialchars($appointment_no) : '-' ?></td>
         <td class="td_left"><?php echo htmlspecialchars($order_id) ?></td>
         <td class="td_left"><?php echo $customer_info ?></td>
         <td class="td_left"><?php echo htmlspecialchars($reason) ?></td>
@@ -333,7 +334,6 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         <td class="td_left"><?php echo $status_text ?></td>
         <td class="td_left"><?php echo $payment_info ?></td>
         <td class="td_left"><?php echo $paid_at_text ?></td>
-        <td class="td_left"><?php echo $appointment_no ? htmlspecialchars($appointment_no) : '-' ?></td>
         <td class="td_mng">
             <a href="./shop_personalpayform.php?w=u&amp;personal_id=<?php echo $personal_id; ?>&amp;<?php echo $qstr; ?>" class="btn btn_03">수정</a>
             <a href="./shop_personalpaycopy.php?personal_id=<?php echo $personal_id; ?>" class="personalpaycopy btn btn_02">복사</a>

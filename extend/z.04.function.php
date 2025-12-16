@@ -2007,3 +2007,107 @@ function generateUserId(string $name): string {
     return $initials . '_' . time();
 }
 }
+
+/**
+ * API 통신 검증용 시크릿 토큰 생성
+ *
+ * @param string|null $keyword 6자리 고정 키워드 (NULL이면 'daipss') //SELECT set_value FROM setting WHERE set_name = 'set_api_hidden_code';
+ * @return string
+ * @throws InvalidArgumentException
+ * 
+ */
+if(!function_exists('generateSecretKey')){
+function generateSecretKey(?string $keyword = null): string
+{
+    // 1. 기본 키워드
+    if ($keyword === null || $keyword === '') {
+        $keyword = 'daipss';
+    }
+
+    if (strlen($keyword) !== 6) {
+        throw new InvalidArgumentException('Keyword must be exactly 6 characters.');
+    }
+
+    // 2. 문자셋
+    $charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+';
+    $length  = 64;
+
+    // 3. 난수 생성
+    $result = [];
+    for ($i = 0; $i < $length; $i++) {
+        $result[$i] = $charset[random_int(0, strlen($charset) - 1)];
+    }
+
+    // 4. 키워드 6글자 전부 삽입
+    $keywordPos = [7, 15, 23, 31, 47, 55];
+    for ($i = 0; $i < 6; $i++) {
+        $result[$keywordPos[$i]] = $keyword[$i];
+    }
+
+    // 5. YYMMDD (Asia/Seoul)
+    $dt = new DateTime('now', new DateTimeZone('Asia/Seoul'));
+    $yymmdd = $dt->format('ymd');
+
+    $datePos = [5, 12, 25, 38, 52, 61];
+    for ($i = 0; $i < 6; $i++) {
+        $result[$datePos[$i]] = $yymmdd[$i];
+    }
+
+    return implode('', $result);
+}
+}
+
+
+/**
+ * generateSecretKey()로 생성된 SecretKey 검증
+ *
+ * @param string      $secretKey 검증할 SecretKey
+ * @param string|null $keyword   생성 시 사용한 키워드 (NULL이면 'daipss')//SELECT set_value FROM setting WHERE set_name = 'set_api_hidden_code';
+ * @return bool
+ */
+if(!function_exists('validateSecretKey')){
+function validateSecretKey(string $secretKey, ?string $keyword = null): bool
+{
+    // 1. 키워드 기본값 처리
+    if ($keyword === null || $keyword === '') {
+        $keyword = 'daipss';
+    }
+
+    // 키워드 길이 검증
+    if (strlen($keyword) !== 6) {
+        return false;
+    }
+
+    // 2. 전체 길이 검증
+    if (strlen($secretKey) !== 64) {
+        return false;
+    }
+
+    // 3. 허용 문자셋 검증
+    if (!preg_match('/^[A-Za-z0-9!@#$%^&*()\-_+=]{64}$/', $secretKey)) {
+        return false;
+    }
+
+    // 4. 키워드 고정 위치 검증
+    $keywordPos = [7, 15, 23, 31, 47, 55];
+    for ($i = 0; $i < 6; $i++) {
+        if ($secretKey[$keywordPos[$i]] !== $keyword[$i]) {
+            return false;
+        }
+    }
+
+    // 5. 날짜 검증 (Asia/Seoul, YYMMDD)
+    $dt = new DateTime('now', new DateTimeZone('Asia/Seoul'));
+    $expectedDate = $dt->format('ymd'); // YYMMDD
+
+    $datePos = [5, 12, 25, 38, 52, 61];
+    for ($i = 0; $i < 6; $i++) {
+        if ($secretKey[$datePos[$i]] !== $expectedDate[$i]) {
+            return false;
+        }
+    }
+
+    // 모든 검증 통과
+    return true;
+}
+}

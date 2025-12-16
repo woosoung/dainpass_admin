@@ -45,4 +45,3 @@ if($is_member){
     }
 }
 unset($mta_mb_arr);
-
