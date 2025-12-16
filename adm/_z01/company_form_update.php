@@ -34,8 +34,8 @@ $zipcode = trim($_POST['zipcode']);
 $addr1 = trim($_POST['addr1']);
 $addr2 = trim($_POST['addr2']);
 $addr3 = trim($_POST['addr3']);
-$latitude = trim($_POST['latitude']);
-$longitude = trim($_POST['longitude']);
+$latitude = (isset($_POST['latitude']) && trim($_POST['latitude']) !== '') ? (float)trim($_POST['latitude']) : null;
+$longitude = (isset($_POST['longitude']) && trim($_POST['longitude']) !== '') ? (float)trim($_POST['longitude']) : null;
 $url = trim($_POST['url']);
 $max_capacity = isset($_POST['max_capacity']) ? (int)$_POST['max_capacity'] : 0;
 $reservelink_yn = (isset($_POST['reservelink_yn']) && $_POST['reservelink_yn'] == '') ? $_POST['reservelink_yn'] : '';
@@ -248,7 +248,7 @@ $sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_p
 
 $sql_common_i_col = $sql_common_col.",created_at,updated_at";
 
-$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo).",'".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."',".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL');
+$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."',".($latitude !== null ? $latitude : 'NULL').",".($longitude !== null ? $longitude : 'NULL').",'".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo)."','".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."',".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL');
 
 $sql_common_i_val = $sql_common_val.",'".G5_TIME_YMDHIS."','".G5_TIME_YMDHIS."'";
 
@@ -560,7 +560,6 @@ foreach($_REQUEST as $key => $value ) {
     }
 }
 
-// exit;
 if($w == 'u') {
 	//alert('업체 정보를 수정하였습니다.','./company_form.php?'.$qstr.'&amp;w=u&amp;com_idx='.$com_idx, false);
 	// alert('업체 정보를 수정하였습니다.','./company_list.php?'.$qstr, false);
