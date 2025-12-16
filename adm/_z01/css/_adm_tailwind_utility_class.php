@@ -104,7 +104,7 @@ tailwind.config = {
     }
     /* 가맹점관리 가맹점이미지리스트 */
     #branch_imgs {
-        @apply [&>li]:border [&>li]:border-gray-200 [&>li]:p-2 [&>li]:relative [&>li]:pl-[140px] [&>li]:bg-white;
+        @apply [&>li]:border [&>li]:border-gray-200 [&>li]:p-2 [&>li]:relative [&>li]:pl-[140px] [&>li]:bg-white [&>li]:min-h-[100px];
     }
     #branch_imgs > li > .sp_thumb {
         @apply absolute left-2 top-2 border border-gray-300;
