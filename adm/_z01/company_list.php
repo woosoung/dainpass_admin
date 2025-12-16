@@ -28,7 +28,7 @@ $sql_common = " FROM {$g5['shop_table']}
             ";
 
 $where = array();
-$where[] = " status != 'trash' ";
+// $where[] = " status != 'closed' "; // 폐업 처리된 가맹점도 표시
 
 $_GET['sfl'] = !empty($_GET['sfl']) ? $_GET['sfl'] : '';
 $ser_com_type = isset($_GET['ser_com_type']) ? trim($_GET['ser_com_type']) : '';
@@ -61,6 +61,7 @@ if ($stx) {
 }
 
 // 최종 WHERE 생성
+$sql_search = '';
 if ($where)
     $sql_search = ' WHERE '.implode(' AND ', $where);
 
@@ -240,12 +241,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     // default company class name
                     // $row['default_com_class'] = ($_SESSION['ss_shop_id']==$row['shop_id']&&$member['mb_manager_yn']) ? 'b_default_company' : '';
                     // 삭제인 경우 그레이 표현
-                    $row['com_status_trash_class']	= ($row['status'] == 'trash') ? " tr_trash" : "";
+                    $status_closed	= ($row['status'] == 'closed') ? " !bg-gray-200 text-gray-500 opacity-60" : "";
                     $row['default_com_class'] = $row['default_com_class'] ?? '';
                     $bg = 'bg'.($i%2);
 
                 ?>
-                <tr class="<?=$bg?><?=$row['com_status_trash_class']?>" tr_id="<?=$row['shop_id']?>">
+                <tr class="<?=$bg?><?=$status_closed?>" tr_id="<?=$row['shop_id']?>">
                     <td class="td_chk">
                         <input type="hidden" name="shop_id[<?=$i?>]" value="<?=$row['shop_id']?>" id="shop_id_<?=$i?>">
                         <label for="chk_<?=$i?>" class="sound_only"><?=get_text($row['name'])?></label>
