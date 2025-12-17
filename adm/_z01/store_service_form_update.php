@@ -75,13 +75,45 @@ if(!trim($_POST['service_time']) || (int)$_POST['service_time'] < 0) alert('소�
 $service_name = trim($_POST['service_name']);
 $description = isset($_POST['description']) ? conv_unescape_nl(stripslashes($_POST['description'])) : '';
 $price = isset($_POST['price']) ? (int)$_POST['price'] : 0;
-$status = isset($_POST['status']) ? trim($_POST['status']) : 'active';
-$link_yn = isset($_POST['link_yn']) ? trim($_POST['link_yn']) : 'N';
-$option_yn = isset($_POST['option_yn']) ? trim($_POST['option_yn']) : 'N';
-$main_yn = isset($_POST['main_yn']) ? trim($_POST['main_yn']) : 'N';
-$signature_yn = isset($_POST['signature_yn']) ? trim($_POST['signature_yn']) : 'N';
-$onsite_payment_yn = isset($_POST['onsite_payment_yn']) ? trim($_POST['onsite_payment_yn']) : 'N';
 $service_time = isset($_POST['service_time']) ? (int)$_POST['service_time'] : 0;
+
+// 입력값 길이 및 범위 검증
+if (mb_strlen($service_name, 'UTF-8') > 50) {
+    alert('서비스명은 최대 50자까지 입력 가능합니다.');
+}
+
+if (mb_strlen($description, 'UTF-8') > 500) {
+    alert('서비스 설명은 최대 500자까지 입력 가능합니다.');
+}
+
+if ($price < 0 || $price > 100000000) {
+    alert('가격은 0원 이상 1억원 이하로 입력해 주세요.');
+}
+
+if ($service_time < 0 || $service_time > 1440) {
+    alert('소요시간은 0분 이상 1440분(24시간) 이하로 입력해 주세요.');
+}
+
+// select 값들의 화이트리스트 검증 및 기본값 처리
+$status_whitelist = ['active', 'inactive'];
+$status = isset($_POST['status']) ? trim($_POST['status']) : 'active';
+$status = in_array($status, $status_whitelist) ? $status : 'active';
+
+$yn_whitelist = ['Y', 'N'];
+$link_yn = isset($_POST['link_yn']) ? trim($_POST['link_yn']) : 'N';
+$link_yn = in_array($link_yn, $yn_whitelist) ? $link_yn : 'N';
+
+$option_yn = isset($_POST['option_yn']) ? trim($_POST['option_yn']) : 'N';
+$option_yn = in_array($option_yn, $yn_whitelist) ? $option_yn : 'N';
+
+$main_yn = isset($_POST['main_yn']) ? trim($_POST['main_yn']) : 'N';
+$main_yn = in_array($main_yn, $yn_whitelist) ? $main_yn : 'N';
+
+$signature_yn = isset($_POST['signature_yn']) ? trim($_POST['signature_yn']) : 'N';
+$signature_yn = in_array($signature_yn, $yn_whitelist) ? $signature_yn : 'N';
+
+$onsite_payment_yn = isset($_POST['onsite_payment_yn']) ? trim($_POST['onsite_payment_yn']) : 'N';
+$onsite_payment_yn = in_array($onsite_payment_yn, $yn_whitelist) ? $onsite_payment_yn : 'N';
 
 if ($w == '') {
     // 추가
@@ -109,8 +141,8 @@ if ($w == '') {
                 '{$option_yn}',
                 '{$main_yn}',
                 '{$signature_yn}',
-                '{$onsite_payment_yn}',
                 {$service_time},
+                '{$onsite_payment_yn}',
                 '".G5_TIME_YMDHIS."',
                 '".G5_TIME_YMDHIS."'
             ) RETURNING service_id ";
