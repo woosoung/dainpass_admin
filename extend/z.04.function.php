@@ -2111,3 +2111,1565 @@ function validateSecretKey(string $secretKey, ?string $keyword = null): bool
     return true;
 }
 }
+
+// shop_notice 에디터 이미지를 S3에 업로드하는 함수
+if (!function_exists('shop_notice_editor_upload_to_s3')) {
+function shop_notice_editor_upload_to_s3($file_url, $savefile, $fileInfo) {
+    global $set_conf;
+    
+    // 세션이 시작되지 않았으면 시작
+    if (session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
+    
+    // ===== FAQ 체크 (공지사항 함수는 FAQ를 처리하지 않음) =====
+    // FAQ 관련 세션이나 referer가 있으면 공지사항 함수는 실행하지 않음
+    $is_shop_faq = false;
+    if (isset($_SESSION['shop_faq_upload']) && $_SESSION['shop_faq_upload'] === true) {
+        $is_shop_faq = true;
+    }
+    if (!$is_shop_faq && (isset($_SESSION['shop_faq_shop_id']) || isset($_SESSION['shop_faq_fm_id']) || isset($_SESSION['shop_faq_fa_id']))) {
+        $is_shop_faq = true;
+    }
+    if (!$is_shop_faq && isset($_SERVER['HTTP_REFERER'])) {
+        $referer = $_SERVER['HTTP_REFERER'];
+        if (strpos($referer, 'shop_faqform') !== false || 
+            strpos($referer, 'shop_faqlist') !== false ||
+            strpos($referer, 'shop_faqmaster') !== false ||
+            strpos($referer, 'shop_faqformupdate') !== false ||
+            (strpos($referer, 'shop_faq') !== false && strpos($referer, 'shop_notice') === false)) {
+            $is_shop_faq = true;
+        }
+    }
+    
+    // FAQ 페이지면 공지사항 함수는 실행하지 않음 (FAQ 함수가 처리)
+    if ($is_shop_faq) {
+        return $file_url;
+    }
+    
+    // ===== shop_notice 관련 페이지인지 확인 =====
+    // 방법 1: 세션 확인
+    $is_shop_notice = (isset($_SESSION['shop_notice_upload']) && $_SESSION['shop_notice_upload'] === true);
+    
+    // 방법 2: Referer 확인 (더 안전하고 확실함)
+    if (!$is_shop_notice && isset($_SERVER['HTTP_REFERER'])) {
+        $referer = $_SERVER['HTTP_REFERER'];
+        $is_shop_notice = (strpos($referer, 'shop_notice_form') !== false || 
+                           strpos($referer, 'shop_notice_formupdate') !== false ||
+                           strpos($referer, 'shop_notice_list') !== false ||
+                           (strpos($referer, 'shop_notice') !== false && strpos($referer, 'shop_faq') === false)); // FAQ가 아닌 shop_notice만
+    }
+    
+    // 방법 3: POST 파라미터로 shop_notice 페이지인지 확인
+    if (!$is_shop_notice && isset($_POST['shop_notice_upload'])) {
+        $is_shop_notice = true;
+    }
+    
+    // 방법 4: opener window 확인 (팝업 창인 경우)
+    // photo_uploader는 팝업 창이므로 opener를 통해 확인
+    if (!$is_shop_notice) {
+        // 세션에 shop_notice_id가 있으면 shop_notice 페이지에서 열린 것으로 간주
+        if (isset($_SESSION['shop_notice_id']) && $_SESSION['shop_notice_id'] > 0) {
+            $is_shop_notice = true;
+        }
+    }
+    
+    // shop_notice가 아니면 원본 URL 반환
+    if (!$is_shop_notice) {
+        return $file_url;
+    }
+    
+    // AWS SDK가 준비되지 않았으면 원본 URL 반환
+    if (!AWS_SDK_READY) {
+        return $file_url;
+    }
+    
+    // 파일이 실제로 존재하는지 확인
+    if (!file_exists($savefile)) {
+        return $file_url;
+    }
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    
+    // 파일명 추출
+    $filename = basename($savefile);
+    $ext = pathinfo($filename, PATHINFO_EXTENSION);
+    $name = pathinfo($filename, PATHINFO_FILENAME);
+    
+    // shopnotice_id 확인 (세션이나 POST에서)
+    $shopnotice_id = 0;
+    if (isset($_SESSION['shop_notice_id']) && $_SESSION['shop_notice_id'] > 0) {
+        $shopnotice_id = (int)$_SESSION['shop_notice_id'];
+    } else if (isset($_POST['shopnotice_id']) && $_POST['shopnotice_id'] > 0) {
+        $shopnotice_id = (int)$_POST['shopnotice_id'];
+    }
+    
+    // unique ID 생성
+    $unique = uniqid();
+    
+    // shopnotice_id가 있으면 게시물별 디렉토리 사용, 없으면 임시로 년월 디렉토리 사용 (디렉토리 생성 없이)
+    if ($shopnotice_id > 0) {
+        $key = "data/shop/notice/{$shopnotice_id}/{$name}_{$unique}.{$ext}";
+        $dirs_to_create = [
+            "data/shop/notice/",                    // 기본 notice 폴더
+            "data/shop/notice/{$shopnotice_id}/",  // 게시물별 폴더
+        ];
+    } else {
+        // 신규 등록 시 임시로 년월 디렉토리 사용 (나중에 이동)
+        // 디렉토리는 생성하지 않음 (파일만 업로드, 나중에 이동 시 게시물별 디렉토리 생성)
+        $ym = date('ym', G5_SERVER_TIME);
+        $key = "data/shop/notice/{$ym}/{$name}_{$unique}.{$ext}";
+        $dirs_to_create = [
+            "data/shop/notice/",           // 기본 notice 폴더만 생성 (년월 폴더는 생성하지 않음)
+        ];
+    }
+    
+    // S3에서 폴더처럼 보이게 하려면 빈 객체를 "/"로 끝나는 키로 업로드해야 합니다.
+    // 필요한 디렉토리 경로 생성
+    
+    // 디렉토리가 존재하는지 확인하고 없으면 생성
+    foreach ($dirs_to_create as $dir_key) {
+        try {
+            // 디렉토리 키는 "/"로 끝나야 함
+            $dir_key = rtrim($dir_key, '/') . '/';
+            
+            // 이미 존재하는지 확인
+            $exists = $s3->doesObjectExist($bucket, $dir_key);
+            
+            if (!$exists) {
+                // 빈 객체를 업로드하여 폴더 생성
+                $s3->putObject([
+                    'Bucket' => $bucket,
+                    'Key'    => $dir_key,
+                    'Body'   => '',
+                ]);
+            }
+        } catch (\Exception $e) {
+            // 디렉토리 생성 실패는 무시 (파일 업로드는 계속 진행)
+        }
+    }
+    
+    // MIME 타입 확인
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $savefile);
+    finfo_close($finfo);
+    
+    // S3에 파일 업로드 (버킷이 ACL을 허용하지 않으므로 ACL 옵션 제거)
+    try {
+        $res = $s3->putObject([
+            'Bucket'      => $bucket,
+            'Key'         => $key,
+            'SourceFile'  => $savefile,
+            'ContentType' => $mime_type,
+        ]);
+        
+        // S3 URL 반환
+        // ObjectURL 형식: https://bucket-name.s3.region.amazonaws.com/key
+        $s3_url = $res['ObjectURL'];
+        
+        // CloudFront를 사용하는 경우 아래 주석을 해제하고 수정
+        // $s3_url = "https://your-cloudfront-domain.com/{$key}";
+        
+        return $s3_url;
+        
+    } catch (\Exception $e) {
+        // 업로드 실패 시 원본 URL 반환
+        return $file_url;
+    }
+}
+}
+
+// content 내의 로컬 이미지 URL을 S3 URL로 변환하는 함수
+if (!function_exists('convert_shop_notice_content_images_to_s3')) {
+function convert_shop_notice_content_images_to_s3($content, $shopnotice_id = 0) {
+    global $set_conf;
+    
+    if (empty($content)) {
+        return $content;
+    }
+    
+    // HTML 엔티티 디코딩 (이중 인코딩 방지)
+    // 에디터에서 전달된 content가 이미 인코딩되어 있을 수 있음
+    $content = stripslashes($content); // 백슬래시 제거
+    $content = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // HTML 엔티티 디코딩
+    
+    // shopnotice_id 확인 (POST나 세션에서)
+    if ($shopnotice_id <= 0) {
+        if (isset($_POST['shopnotice_id']) && $_POST['shopnotice_id'] > 0) {
+            $shopnotice_id = (int)$_POST['shopnotice_id'];
+        } else if (isset($_SESSION['shop_notice_id']) && $_SESSION['shop_notice_id'] > 0) {
+            $shopnotice_id = (int)$_SESSION['shop_notice_id'];
+        }
+    }
+    
+    // AWS SDK가 준비되지 않았으면 원본 반환
+    if (!AWS_SDK_READY) {
+        return $content;
+    }
+    
+    // img 태그 추출
+    if (!function_exists('get_editor_image')) {
+        return $content;
+    }
+    
+    $matches = get_editor_image($content, true);
+    if (empty($matches) || empty($matches[0])) {
+        return $content;
+    }
+    
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    
+    // 각 img 태그 처리
+    foreach ($matches[0] as $img_tag) {
+        // src 속성 추출
+        preg_match('/src=["\']?([^"\'>]+)["\']?/i', $img_tag, $src_match);
+        if (empty($src_match[1])) {
+            continue;
+        }
+        
+        $img_url = $src_match[1];
+        
+        // 이미 S3 URL이면 스킵
+        if (strpos($img_url, 's3.') !== false || strpos($img_url, 'amazonaws.com') !== false) {
+            continue;
+        }
+        
+        // 로컬 editor 경로인지 확인
+        $editor_path = G5_DATA_DIR . '/' . G5_EDITOR_DIR;
+        if (strpos($img_url, $editor_path) === false && strpos($img_url, '/editor/') === false) {
+            continue;
+        }
+        
+        // 로컬 파일 경로 추출
+        $local_path = '';
+        if (strpos($img_url, G5_DATA_URL) !== false) {
+            // G5_DATA_URL 포함된 경우
+            $local_path = str_replace(G5_DATA_URL, G5_DATA_PATH, $img_url);
+        } else if (strpos($img_url, '/editor/') !== false) {
+            // 상대 경로인 경우
+            $path_part = strstr($img_url, '/editor/');
+            $local_path = G5_DATA_PATH . $path_part;
+        } else {
+            // 절대 경로 추출 시도
+            $parsed = parse_url($img_url);
+            if (isset($parsed['path'])) {
+                $path = $parsed['path'];
+                if (strpos($path, '/editor/') !== false) {
+                    $path_part = strstr($path, '/editor/');
+                    $local_path = G5_DATA_PATH . $path_part;
+                }
+            }
+        }
+        
+        if (empty($local_path) || !file_exists($local_path)) {
+            continue;
+        }
+        
+        // 파일명 추출
+        $filename = basename($local_path);
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $name = pathinfo($filename, PATHINFO_FILENAME);
+        
+        // shopnotice_id 확인 (함수 파라미터 또는 POST/세션에서)
+        if ($shopnotice_id <= 0) {
+            if (isset($_POST['shopnotice_id']) && $_POST['shopnotice_id'] > 0) {
+                $shopnotice_id = (int)$_POST['shopnotice_id'];
+            } else if (isset($_SESSION['shop_notice_id']) && $_SESSION['shop_notice_id'] > 0) {
+                $shopnotice_id = (int)$_SESSION['shop_notice_id'];
+            }
+        }
+        
+        // S3 키 경로: shopnotice_id가 있으면 게시물별, 없으면 년월별
+        if ($shopnotice_id > 0) {
+            $unique = uniqid();
+            $key = "data/shop/notice/{$shopnotice_id}/{$name}_{$unique}.{$ext}";
+        } else {
+            // 신규 등록 시 임시로 년월 디렉토리 사용
+            $ym = date('ym', G5_SERVER_TIME);
+            $unique = uniqid();
+            $key = "data/shop/notice/{$ym}/{$name}_{$unique}.{$ext}";
+        }
+        
+        // MIME 타입 확인
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $local_path);
+        finfo_close($finfo);
+        
+        // S3에 업로드
+        try {
+            $res = $s3->putObject([
+                'Bucket'      => $bucket,
+                'Key'         => $key,
+                'SourceFile'  => $local_path,
+                'ContentType' => $mime_type,
+            ]);
+            
+            $s3_url = $res['ObjectURL'];
+            
+            // content에서 URL 교체
+            $content = str_replace($img_url, $s3_url, $content);
+            
+        } catch (\Exception $e) {
+            // 업로드 실패 시 원본 URL 유지
+        }
+    }
+    
+    return $content;
+}
+}
+
+// shop_notice 전용 HTML 필터 함수 - S3 URL 보존
+if (!function_exists('shop_notice_html_purifier')) {
+function shop_notice_html_purifier($html) {
+    if (empty($html)) {
+        return $html;
+    }
+    
+    // img 태그 전체를 찾아서 S3 URL이 포함된 것만 보호
+    $img_tags = array();
+    $placeholder_prefix = '___S3_IMG_TAG_PLACEHOLDER_';
+    $placeholder_count = 0;
+    
+    // img 태그 전체 추출 (src 속성에 S3 URL이 포함된 경우)
+    // 더 정확한 패턴: <img ... src="https://...amazonaws.com/..." ...>
+    preg_match_all('/<img[^>]*src=["\']?([^"\'>\s]*(?:amazonaws\.com|s3\.[^"\'>\s]*)[^"\'>\s]*)["\']?[^>]*>/i', $html, $img_matches, PREG_OFFSET_CAPTURE);
+    
+    // 역순으로 교체 (offset이 변경되지 않도록)
+    if (!empty($img_matches[0])) {
+        // 역순 정렬 (뒤에서부터 교체)
+        $replacements = array();
+        foreach ($img_matches[0] as $match) {
+            $full_tag = $match[0];
+            $offset = $match[1];
+            $placeholder = $placeholder_prefix . $placeholder_count;
+            $img_tags[$placeholder] = $full_tag;
+            $replacements[] = array('offset' => $offset, 'length' => strlen($full_tag), 'placeholder' => $placeholder, 'original' => $full_tag);
+            $placeholder_count++;
+        }
+        
+        // 역순으로 정렬 (뒤에서부터 교체)
+        usort($replacements, function($a, $b) {
+            return $b['offset'] - $a['offset'];
+        });
+        
+        // 역순으로 교체
+        foreach ($replacements as $replacement) {
+            $html = substr_replace($html, $replacement['placeholder'], $replacement['offset'], $replacement['length']);
+        }
+    }
+    
+    // 추가로 src 속성만 있는 경우도 처리 (img 태그가 아닌 경우)
+    preg_match_all('/(https?:\/\/[^"\'>\s]*(?:amazonaws\.com|s3\.[^"\'>\s]*)[^"\'>\s]*)/i', $html, $url_matches);
+    
+    $s3_urls = array();
+    $url_placeholder_prefix = '___S3_URL_PLACEHOLDER_';
+    $url_placeholder_count = 0;
+    
+    if (!empty($url_matches[0])) {
+        foreach ($url_matches[0] as $s3_url) {
+            // 이미 img 태그로 처리된 것은 제외
+            if (strpos($s3_url, $placeholder_prefix) === false) {
+                $placeholder = $url_placeholder_prefix . $url_placeholder_count;
+                $s3_urls[$placeholder] = $s3_url;
+                $html = str_replace($s3_url, $placeholder, $html);
+                $url_placeholder_count++;
+            }
+        }
+    }
+    
+    // html_purifier 적용 (S3 URL이 제거된 상태)
+    $purified = html_purifier($html);
+    
+    // img 태그 복원
+    foreach ($img_tags as $placeholder => $img_tag) {
+        $purified = str_replace($placeholder, $img_tag, $purified);
+    }
+    
+    // S3 URL 복원
+    foreach ($s3_urls as $placeholder => $s3_url) {
+        $purified = str_replace($placeholder, $s3_url, $purified);
+    }
+    
+    return $purified;
+}
+}
+
+// shop_notice에서 S3 이미지 URL을 허용하도록 html_purifier 설정 (백업용)
+if (!function_exists('shop_notice_allow_s3_images')) {
+function shop_notice_allow_s3_images($config, $args) {
+    // 외부 리소스 비활성화 해제 (이미지 URL 허용)
+    // HTMLPurifier는 기본적으로 외부 이미지 URL을 허용하지만, 명시적으로 설정
+    $config->set('URI.DisableExternalResources', false);
+    $config->set('URI.DisableExternal', false);
+    $config->set('URI.DisableResources', false);
+    
+    // URI.AllowedSchemes에 https가 이미 포함되어 있으므로 추가 설정 불필요
+    // 하지만 명시적으로 확인
+    $allowed_schemes = $config->get('URI.AllowedSchemes');
+    if (!isset($allowed_schemes['https']) || !$allowed_schemes['https']) {
+        $allowed_schemes['https'] = true;
+        $config->set('URI.AllowedSchemes', $allowed_schemes);
+    }
+}
+}
+
+// content에서 S3 이미지 URL 추출 함수
+if (!function_exists('extract_shop_notice_s3_images')) {
+function extract_shop_notice_s3_images($content) {
+    if (empty($content)) {
+        return array();
+    }
+    
+    $s3_images = array();
+    
+    // HTML 엔티티 디코딩 (이중 인코딩 방지)
+    $decoded_content = stripslashes($content);
+    $decoded_content = html_entity_decode($decoded_content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    
+    // img 태그에서 S3 URL 추출
+    preg_match_all('/<img[^>]*src=["\']?([^"\'>\s]*(?:amazonaws\.com|s3\.[^"\'>\s]*)[^"\'>\s]*)["\']?[^>]*>/i', $decoded_content, $matches);
+    
+    if (!empty($matches[1])) {
+        foreach ($matches[1] as $url) {
+            // S3 URL에서 키 추출
+            // URL 형식: https://bucket-name.s3.region.amazonaws.com/data/shop/notice/123/image.jpg
+            // 또는: https://bucket-name.s3.region.amazonaws.com/data/shop/notice/123/image.jpg?query
+            if (preg_match('/amazonaws\.com\/([^"\'>\s\?]+)/i', $url, $key_match)) {
+                $key = $key_match[1];
+                // URL 인코딩된 문자 디코딩
+                $key = urldecode($key);
+                $s3_images[] = $key;
+            }
+        }
+    }
+    
+    return array_unique($s3_images);
+}
+}
+
+// S3 이미지 삭제 함수
+if (!function_exists('delete_shop_notice_s3_images')) {
+function delete_shop_notice_s3_images($s3_keys) {
+    global $set_conf;
+    
+    if (empty($s3_keys) || !is_array($s3_keys)) {
+        return false;
+    }
+    
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+    
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    $deleted_count = 0;
+    $failed_count = 0;
+    $affected_dirs = array(); // 삭제된 이미지가 속한 디렉토리 추적
+    
+    foreach ($s3_keys as $key) {
+        try {
+            $s3->deleteObject([
+                'Bucket' => $bucket,
+                'Key'    => $key,
+            ]);
+            $deleted_count++;
+            
+            // 디렉토리 경로 추출 (data/shop/notice/{shopnotice_id}/)
+            if (preg_match('/^(data\/shop\/notice\/\d+\/)/', $key, $dir_match)) {
+                $dir_path = $dir_match[1];
+                if (!in_array($dir_path, $affected_dirs)) {
+                    $affected_dirs[] = $dir_path;
+                }
+            }
+        } catch (\Exception $e) {
+            $failed_count++;
+        }
+    }
+    
+    // 삭제된 이미지가 속한 디렉토리가 비어있는지 확인하고 삭제
+    foreach ($affected_dirs as $dir_path) {
+        try {
+            // 해당 디렉토리의 모든 객체 나열
+            $objects = $s3->listObjectsV2([
+                'Bucket' => $bucket,
+                'Prefix' => $dir_path,
+            ]);
+            
+            // 디렉토리 자체를 제외하고 실제 파일이 없으면 디렉토리 삭제
+            $has_files = false;
+            if (isset($objects['Contents'])) {
+                foreach ($objects['Contents'] as $object) {
+                    if ($object['Key'] !== $dir_path) {
+                        $has_files = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 파일이 없으면 디렉토리 삭제
+            if (!$has_files) {
+                $s3->deleteObject([
+                    'Bucket' => $bucket,
+                    'Key'    => $dir_path,
+                ]);
+            }
+        } catch (\Exception $e) {
+            // 디렉토리 삭제 실패는 무시
+        }
+    }
+    
+    return $deleted_count > 0;
+}
+}
+
+// 게시물의 content에 사용되지 않는 S3 이미지 삭제 함수
+if (!function_exists('delete_unused_shop_notice_s3_images')) {
+function delete_unused_shop_notice_s3_images($shopnotice_id, $content) {
+    global $set_conf;
+    
+    if (empty($shopnotice_id)) {
+        return false;
+    }
+    
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+    
+    // content에서 사용 중인 S3 이미지 키 추출
+    $used_images = array();
+    if (!empty($content) && function_exists('extract_shop_notice_s3_images')) {
+        $used_images = extract_shop_notice_s3_images($content);
+    }
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    
+    // 게시물별 디렉토리 경로
+    $prefix = "data/shop/notice/{$shopnotice_id}/";
+    
+    try {
+        // 해당 디렉토리의 모든 객체 나열
+        $objects = $s3->listObjectsV2([
+            'Bucket' => $bucket,
+            'Prefix' => $prefix,
+        ]);
+        
+        $deleted_count = 0;
+        $skipped_count = 0;
+        
+        if (isset($objects['Contents']) && !empty($objects['Contents'])) {
+            foreach ($objects['Contents'] as $object) {
+                $object_key = $object['Key'];
+                
+                // 디렉토리 자체는 건너뛰기
+                if (substr($object_key, -1) === '/') {
+                    continue;
+                }
+                
+                // content에 사용 중인 이미지인지 확인
+                $is_used = false;
+                $object_filename = basename($object_key);
+                
+                foreach ($used_images as $used_key) {
+                    // 키가 정확히 일치하는지 확인
+                    if ($object_key === $used_key) {
+                        $is_used = true;
+                        break;
+                    }
+                    
+                    // 파일명으로 비교 (경로가 다를 수 있음)
+                    $used_filename = basename($used_key);
+                    if ($object_filename === $used_filename) {
+                        $is_used = true;
+                        break;
+                    }
+                    
+                    // URL에 포함되어 있는지 확인 (부분 매칭)
+                    if (strpos($used_key, $object_filename) !== false || strpos($object_key, $used_filename) !== false) {
+                        $is_used = true;
+                        break;
+                    }
+                }
+                
+                // 사용되지 않는 이미지 삭제
+                if (!$is_used) {
+                    try {
+                        $s3->deleteObject([
+                            'Bucket' => $bucket,
+                            'Key'    => $object_key,
+                        ]);
+                        $deleted_count++;
+                    } catch (\Exception $e) {
+                        // 삭제 실패는 무시
+                    }
+                } else {
+                    $skipped_count++;
+                }
+            }
+        }
+        
+        // 이미지 삭제 후 디렉토리가 비어있는지 확인하고 삭제
+        try {
+            // 디렉토리의 모든 객체 다시 확인
+            $remaining_objects = $s3->listObjectsV2([
+                'Bucket' => $bucket,
+                'Prefix' => $prefix,
+            ]);
+            
+            // 디렉토리 자체를 제외하고 실제 파일이 없으면 디렉토리 삭제
+            $has_files = false;
+            if (isset($remaining_objects['Contents'])) {
+                foreach ($remaining_objects['Contents'] as $object) {
+                    if ($object['Key'] !== $prefix) {
+                        $has_files = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 파일이 없으면 디렉토리 삭제
+            if (!$has_files) {
+                    $s3->deleteObject([
+                        'Bucket' => $bucket,
+                        'Key'    => $prefix,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // 디렉토리 삭제 실패는 무시
+            }
+        
+        return $deleted_count > 0;
+        
+    } catch (\Exception $e) {
+        return false;
+    }
+}
+}
+
+// 게시물의 모든 S3 이미지 삭제 함수
+if (!function_exists('delete_shop_notice_all_s3_images')) {
+function delete_shop_notice_all_s3_images($shopnotice_id) {
+    global $set_conf;
+    
+    if (empty($shopnotice_id)) {
+        return false;
+    }
+    
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+    
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    
+    // 게시물별 디렉토리 경로
+    $prefix = "data/shop/notice/{$shopnotice_id}/";
+    
+    try {
+        // 해당 디렉토리의 모든 객체 나열
+        $objects = $s3->listObjectsV2([
+            'Bucket' => $bucket,
+            'Prefix' => $prefix,
+        ]);
+        
+        $deleted_count = 0;
+        
+        if (isset($objects['Contents']) && !empty($objects['Contents'])) {
+            foreach ($objects['Contents'] as $object) {
+                // 디렉토리 자체는 건너뛰기
+                if (substr($object['Key'], -1) === '/') {
+                    continue;
+                }
+                
+                try {
+                    $s3->deleteObject([
+                        'Bucket' => $bucket,
+                        'Key'    => $object['Key'],
+                    ]);
+                    $deleted_count++;
+                } catch (\Exception $e) {
+                    // 삭제 실패는 무시
+                }
+            }
+        }
+        
+        // 파일 삭제 후 디렉토리가 비어있는지 확인하고 삭제
+        try {
+            // 디렉토리의 모든 객체 다시 확인
+            $remaining_objects = $s3->listObjectsV2([
+                'Bucket' => $bucket,
+                'Prefix' => $prefix,
+            ]);
+            
+            // 디렉토리 자체를 제외하고 실제 파일이 없으면 디렉토리 삭제
+            $has_files = false;
+            if (isset($remaining_objects['Contents'])) {
+                foreach ($remaining_objects['Contents'] as $object) {
+                    if ($object['Key'] !== $prefix && substr($object['Key'], -1) !== '/') {
+                        $has_files = true;
+                        break;
+                    }
+                }
+            }
+            
+            // 파일이 없으면 디렉토리 삭제
+            if (!$has_files) {
+                    $s3->deleteObject([
+                        'Bucket' => $bucket,
+                        'Key'    => $prefix,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                // 디렉토리 삭제 실패는 무시
+            }
+        
+        return $deleted_count > 0;
+        
+    } catch (\Exception $e) {
+        return false;
+    }
+}
+}
+
+// 신규 등록 시 임시로 저장된 이미지를 shopnotice_id 기반 경로로 이동
+if (!function_exists('move_shop_notice_images_to_notice_id')) {
+function move_shop_notice_images_to_notice_id($content, $shopnotice_id) {
+    global $set_conf;
+    
+    if (empty($content) || empty($shopnotice_id)) {
+        return false;
+    }
+    
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+    
+    // content에서 S3 이미지 URL 추출
+    $s3_images = extract_shop_notice_s3_images($content);
+    
+    if (empty($s3_images)) {
+        return false;
+    }
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    $moved_count = 0;
+    
+    foreach ($s3_images as $old_key) {
+        // 년월 기반 경로인지 확인 (임시 저장된 이미지)
+        if (preg_match('/data\/shop\/notice\/(\d{4})\//', $old_key, $match)) {
+            $ym = $match[1];
+            
+            // 새 경로 생성 (게시물별 디렉토리)
+            $filename = basename($old_key);
+            $new_key = "data/shop/notice/{$shopnotice_id}/{$filename}";
+            
+            try {
+                // S3에서 객체 복사 (이동)
+                $s3->copyObject([
+                    'Bucket'     => $bucket,
+                    'CopySource' => "{$bucket}/{$old_key}",
+                    'Key'        => $new_key,
+                ]);
+                
+                // 원본 삭제
+                $s3->deleteObject([
+                    'Bucket' => $bucket,
+                    'Key'    => $old_key,
+                ]);
+                
+                // content에서 URL 업데이트
+                $old_url = preg_quote($old_key, '/');
+                $new_url = $new_key;
+                // URL 형식으로 변환 (bucket URL 포함)
+                $old_full_url = preg_match('/https?:\/\/[^\/]+\/(.+)/', $content, $url_match) ? $url_match[0] : '';
+                if ($old_full_url) {
+                    $new_full_url = str_replace($old_key, $new_key, $old_full_url);
+                    $content = str_replace($old_full_url, $new_full_url, $content);
+                }
+                
+                $moved_count++;
+                
+            } catch (\Exception $e) {
+                // 이동 실패는 무시
+            }
+        }
+    }
+    
+    return $moved_count > 0;
+}
+}
+
+// run_replace 훅 등록 - shop_notice 에디터 이미지 S3 업로드
+if (function_exists('add_replace')) {
+    add_replace('get_editor_upload_url', 'shop_notice_editor_upload_to_s3', 10, 3);
+}
+
+// ================================
+//  FAQ 에디터 이미지 S3 처리 함수
+//  - 경로: data/shop/faq/{shop_id}/{fm_id}/{fa_id}/ (질문/답변 구분 없이 통합)
+//  - shop_notice 처리 방식과 동일하게
+//    생성/수정 시 업로드, 수정 시 미사용 이미지 정리, 삭제 시 전체 제거
+// ================================
+
+// shop_faq 에디터 이미지를 S3에 업로드하는 함수 (에디터 업로드 시점에 바로 S3로)
+if (!function_exists('shop_faq_editor_upload_to_s3')) {
+function shop_faq_editor_upload_to_s3($file_url, $savefile, $fileInfo) {
+    global $set_conf;
+    
+    // 세션이 시작되지 않았으면 시작
+    if (session_status() === PHP_SESSION_NONE) {
+        @session_start();
+    }
+    
+    // ===== 공지사항 체크 (FAQ 함수는 공지사항을 처리하지 않음) =====
+    // 공지사항 관련 세션이나 referer가 있으면 FAQ 함수는 실행하지 않음
+    $is_shop_notice = false;
+    if (isset($_SESSION['shop_notice_upload']) && $_SESSION['shop_notice_upload'] === true) {
+        $is_shop_notice = true;
+    }
+    if (!$is_shop_notice && isset($_SESSION['shop_notice_id']) && $_SESSION['shop_notice_id'] > 0) {
+        $is_shop_notice = true;
+    }
+    if (!$is_shop_notice && isset($_SERVER['HTTP_REFERER'])) {
+        $referer = $_SERVER['HTTP_REFERER'];
+        if (strpos($referer, 'shop_notice_form') !== false || 
+            strpos($referer, 'shop_notice_formupdate') !== false ||
+            strpos($referer, 'shop_notice_list') !== false ||
+            (strpos($referer, 'shop_notice') !== false && strpos($referer, 'shop_faq') === false)) {
+            $is_shop_notice = true;
+        }
+    }
+    
+    // 공지사항 페이지면 FAQ 함수는 실행하지 않음 (공지사항 함수가 처리)
+    if ($is_shop_notice) {
+        return $file_url;
+    }
+    
+    // ===== FAQ 관련 페이지인지 확인 =====
+    // 방법 1: 세션 확인 (가장 확실함)
+    $is_shop_faq = false;
+    if (isset($_SESSION['shop_faq_upload']) && $_SESSION['shop_faq_upload'] === true) {
+        $is_shop_faq = true;
+    }
+    
+    // 방법 2: 세션에 FAQ 관련 정보가 있으면 shop_faq로 간주 (팝업 창에서 중요)
+    if (!$is_shop_faq) {
+        if (isset($_SESSION['shop_faq_shop_id']) || isset($_SESSION['shop_faq_fm_id']) || isset($_SESSION['shop_faq_fa_id'])) {
+            $is_shop_faq = true;
+        }
+    }
+    
+    // 방법 3: Referer 확인 (더 안전하고 확실함) - 팝업 창에서 업로드할 때 중요
+    if (!$is_shop_faq && isset($_SERVER['HTTP_REFERER'])) {
+        $referer = $_SERVER['HTTP_REFERER'];
+        // shop_faq 관련 URL인지 확인 (정확한 파일명으로 체크)
+        if (strpos($referer, 'shop_faqform') !== false || 
+            strpos($referer, 'shop_faqlist') !== false ||
+            strpos($referer, 'shop_faqmaster') !== false ||
+            strpos($referer, 'shop_faqformupdate') !== false) {
+            $is_shop_faq = true;
+        }
+        // shop_faq가 포함되어 있고 shop_notice는 아닌 경우
+        elseif (strpos($referer, 'shop_faq') !== false && strpos($referer, 'shop_notice') === false) {
+            $is_shop_faq = true;
+        }
+    }
+    
+    // 방법 4: POST 파라미터로 shop_faq 페이지인지 확인
+    if (!$is_shop_faq && isset($_POST['shop_faq_upload'])) {
+        $is_shop_faq = true;
+    }
+    
+    // 방법 5: GET 파라미터로 fm_id가 있으면 FAQ로 간주 (단, 공지사항이 아닌 경우만)
+    if (!$is_shop_faq && (isset($_GET['fm_id']) || isset($_POST['fm_id']) || isset($_REQUEST['fm_id']))) {
+        // referer에서도 확인
+        if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], 'shop_faq') !== false && strpos($_SERVER['HTTP_REFERER'], 'shop_notice') === false) {
+            $is_shop_faq = true;
+        }
+    }
+    
+    // shop_faq가 아니면 원본 URL 반환 (다음 훅으로 넘어감)
+    if (!$is_shop_faq) {
+        return $file_url;
+    }
+    
+    // AWS SDK가 준비되지 않았으면 원본 URL 반환
+    if (!AWS_SDK_READY) {
+        return $file_url;
+    }
+    
+    // 파일이 실제로 존재하는지 확인
+    if (!file_exists($savefile)) {
+        return $file_url;
+    }
+    
+    // 세션에서 FAQ 정보 가져오기
+    $shop_id = isset($_SESSION['shop_faq_shop_id']) ? (int)$_SESSION['shop_faq_shop_id'] : 0;
+    $fm_id   = isset($_SESSION['shop_faq_fm_id']) ? (int)$_SESSION['shop_faq_fm_id'] : 0;
+    $fa_id   = isset($_SESSION['shop_faq_fa_id']) ? (int)$_SESSION['shop_faq_fa_id'] : 0;
+    
+    // 세션에 없으면 referer에서 추출 시도 (팝업 창에서 업로드할 때 - 중요!)
+    if (!$shop_id || !$fm_id) {
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $referer = $_SERVER['HTTP_REFERER'];
+            // referer에서 fm_id, fa_id 추출 시도
+            // URL 예: .../shop_faqform.php?w=u&fm_id=1&fa_id=2
+            if (preg_match('/[?&]fm_id=(\d+)/', $referer, $m)) {
+                $fm_id = (int)$m[1];
+            }
+            if (preg_match('/[?&]fa_id=(\d+)/', $referer, $m)) {
+                $fa_id = (int)$m[1];
+            }
+            // shop_id는 referer에서 직접 추출하기 어려우므로, fm_id로부터 조회
+            if ($fm_id > 0 && !$shop_id) {
+                global $g5;
+                if (isset($g5['connect_pg']) && $g5['connect_pg']) {
+                    $fm_check = sql_fetch_pg(" SELECT shop_id FROM faq_master WHERE fm_id = {$fm_id} LIMIT 1 ");
+                    if ($fm_check && isset($fm_check['shop_id'])) {
+                        $shop_id = (int)$fm_check['shop_id'];
+                        // 추출한 정보를 세션에 저장 (다음 업로드 시 사용)
+                        $_SESSION['shop_faq_shop_id'] = $shop_id;
+                        $_SESSION['shop_faq_fm_id'] = $fm_id;
+                        if ($fa_id > 0) {
+                            $_SESSION['shop_faq_fa_id'] = $fa_id;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // shop_id와 fm_id가 없으면 원본 URL 반환
+    if (!$shop_id || !$fm_id) {
+        return $file_url;
+    }
+    
+    // 현재 업로드 중인 필드 확인 (에디터 필드명에서 추출)
+    // 우선순위: POST > GET > fileInfo > 세션 > referer
+    $field_key = 'fa_question'; // 기본값 (안전을 위해 질문으로 설정)
+    
+    // 방법 1: POST/GET 파라미터에서 필드명 확인
+    if (isset($_POST['editor_field']) && in_array($_POST['editor_field'], array('fa_question', 'fa_answer'))) {
+        $field_key = $_POST['editor_field'];
+    } elseif (isset($_GET['editor_field']) && in_array($_GET['editor_field'], array('fa_question', 'fa_answer'))) {
+        $field_key = $_GET['editor_field'];
+    }
+    // 방법 2: fileInfo에서 필드명 확인
+    elseif (isset($fileInfo) && is_array($fileInfo)) {
+        if (isset($fileInfo['field']) && in_array($fileInfo['field'], array('fa_question', 'fa_answer'))) {
+            $field_key = $fileInfo['field'];
+        }
+        // fileInfo의 name이나 다른 속성에서 필드명 추출 시도
+        elseif (isset($fileInfo['name']) && strpos($fileInfo['name'], 'fa_question') !== false) {
+            $field_key = 'fa_question';
+        } elseif (isset($fileInfo['name']) && strpos($fileInfo['name'], 'fa_answer') !== false) {
+            $field_key = 'fa_answer';
+        }
+    }
+    // 방법 3: 세션에서 필드명 확인 (가장 확실함 - 에디터 렌더링 시 저장됨)
+    elseif (isset($_SESSION['shop_faq_current_field']) && in_array($_SESSION['shop_faq_current_field'], array('fa_question', 'fa_answer'))) {
+        $field_key = $_SESSION['shop_faq_current_field'];
+    }
+    // 방법 4: referer에서 필드명 추출 시도
+    elseif (isset($_SERVER['HTTP_REFERER'])) {
+        $referer = $_SERVER['HTTP_REFERER'];
+        // URL에 필드명이 포함된 경우 (예: ...&field=fa_question)
+        if (preg_match('/[?&]field=(fa_question|fa_answer)/', $referer, $m)) {
+            $field_key = $m[1];
+        }
+        // 또는 referer 자체에 필드명이 포함된 경우
+        elseif (strpos($referer, 'fa_question') !== false && strpos($referer, 'fa_answer') === false) {
+            $field_key = 'fa_question';
+        } elseif (strpos($referer, 'fa_answer') !== false) {
+            $field_key = 'fa_answer';
+        }
+    }
+    
+    // 필드명이 확정되지 않았으면 기본값 사용 (fa_question)
+    // 실제로는 질문/답변 중 어느 것이든 상관없이 업로드는 되지만, 경로 구분을 위해 필요
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    
+    // 파일명 추출
+    $filename = basename($savefile);
+    $ext = pathinfo($filename, PATHINFO_EXTENSION);
+    $name = pathinfo($filename, PATHINFO_FILENAME);
+    
+    // unique ID 생성
+    $unique = uniqid();
+    
+    // fa_id가 있으면 확정 경로, 없으면 임시 경로 (신규 등록 시)
+    // 질문/답변 구분 없이 하나의 경로에 저장: data/shop/faq/{shop_id}/{fm_id}/{fa_id}/
+    if ($fa_id > 0) {
+        // 수정 모드: 확정 경로 사용
+        // data/shop/faq/{shop_id}/{fm_id}/{fa_id}/...
+        $key = "data/shop/faq/{$shop_id}/{$fm_id}/{$fa_id}/{$name}_{$unique}.{$ext}";
+        $dirs_to_create = [
+            "data/shop/faq/",
+            "data/shop/faq/{$shop_id}/",
+            "data/shop/faq/{$shop_id}/{$fm_id}/",
+            "data/shop/faq/{$shop_id}/{$fm_id}/{$fa_id}/",
+        ];
+    } else {
+        // 신규 등록 시: 임시 경로 사용 (나중에 fa_id를 얻은 후 이동)
+        $ym = date('ym', G5_SERVER_TIME);
+        $key = "data/shop/faq/{$shop_id}/{$fm_id}/temp/{$ym}/{$name}_{$unique}.{$ext}";
+        $dirs_to_create = [
+            "data/shop/faq/",
+            "data/shop/faq/{$shop_id}/",
+            "data/shop/faq/{$shop_id}/{$fm_id}/",
+            "data/shop/faq/{$shop_id}/{$fm_id}/temp/",
+        ];
+    }
+    
+    // 디렉토리 생성
+    foreach ($dirs_to_create as $dir_key) {
+        try {
+            $dir_key = rtrim($dir_key, '/') . '/';
+            $exists = $s3->doesObjectExist($bucket, $dir_key);
+            
+            if (!$exists) {
+                $s3->putObject([
+                    'Bucket' => $bucket,
+                    'Key'    => $dir_key,
+                    'Body'   => '',
+                ]);
+            }
+        } catch (\Exception $e) {
+            // 디렉토리 생성 실패는 무시
+        }
+    }
+    
+    // MIME 타입 확인
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mime_type = finfo_file($finfo, $savefile);
+    finfo_close($finfo);
+    
+    // S3에 파일 업로드
+    try {
+        $res = $s3->putObject([
+            'Bucket'      => $bucket,
+            'Key'         => $key,
+            'SourceFile'  => $savefile,
+            'ContentType' => $mime_type,
+        ]);
+        
+        // S3 URL 반환
+        $s3_url = $res['ObjectURL'];
+        
+        return $s3_url;
+        
+    } catch (\Exception $e) {
+        // 업로드 실패 시 원본 URL 반환
+        return $file_url;
+    }
+}
+}
+
+// run_replace 훅 등록 - shop_faq 에디터 이미지 S3 업로드 (shop_notice보다 우선순위 높게, 먼저 체크)
+if (function_exists('add_replace')) {
+    add_replace('get_editor_upload_url', 'shop_faq_editor_upload_to_s3', 3, 3);
+}
+
+// FAQ 임시 경로 이미지를 확정 경로로 이동 (신규 등록 시)
+if (!function_exists('move_shop_faq_temp_images_to_fa_id')) {
+function move_shop_faq_temp_images_to_fa_id($content, $shop_id, $fm_id, $fa_id, $field_key) {
+    global $set_conf;
+    
+    if (empty($content) || empty($shop_id) || empty($fm_id) || empty($fa_id) || empty($field_key)) {
+        return $content;
+    }
+    
+    if (!AWS_SDK_READY) {
+        return $content;
+    }
+    
+    // content에서 임시 경로 S3 이미지 URL 추출
+    $decoded = stripslashes($content);
+    $decoded = html_entity_decode($decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    
+    // 임시 경로 패턴: data/shop/faq/{shop_id}/{fm_id}/temp/{ym}/{field_key}/...
+    $temp_pattern = '/data\/shop\/faq\/'.preg_quote($shop_id, '/').'\/'.preg_quote($fm_id, '/').'\/temp\/[^"\'>\s]+/';
+    if (!preg_match_all($temp_pattern, $decoded, $temp_matches)) {
+        return $content;
+    }
+    
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    $bucket = trim($set_conf['set_aws_bucket']);
+    
+    $updated_content = $decoded;
+    $moved_count = 0;
+    
+    foreach ($temp_matches[0] as $temp_key) {
+        // 임시 경로에서 파일명 추출
+        $filename = basename($temp_key);
+        
+        // 확정 경로 생성 (질문/답변 구분 없이)
+        $new_key = "data/shop/faq/{$shop_id}/{$fm_id}/{$fa_id}/{$filename}";
+        
+        try {
+            // S3에서 객체 복사 (이동)
+            $s3->copyObject([
+                'Bucket'     => $bucket,
+                'CopySource' => "{$bucket}/{$temp_key}",
+                'Key'        => $new_key,
+            ]);
+            
+            // 원본 삭제
+            $s3->deleteObject([
+                'Bucket' => $bucket,
+                'Key'    => $temp_key,
+            ]);
+            
+            // content에서 URL 업데이트 (전체 URL에서 키 부분만 교체)
+            $old_url_pattern = preg_quote($temp_key, '/');
+            $updated_content = preg_replace('/'.str_replace('/', '\/', $old_url_pattern).'/', $new_key, $updated_content);
+            
+            // 전체 S3 URL 형식도 교체
+            if (preg_match('/https?:\/\/[^\/]+\/'.preg_quote($temp_key, '/').'/', $decoded, $full_url_match)) {
+                $old_full_url = $full_url_match[0];
+                $new_full_url = str_replace($temp_key, $new_key, $old_full_url);
+                $updated_content = str_replace($old_full_url, $new_full_url, $updated_content);
+            }
+            
+            $moved_count++;
+        } catch (\Exception $e) {
+            // 이동 실패는 무시
+            continue;
+        }
+    }
+    
+    return $moved_count > 0 ? $updated_content : $content;
+}
+}
+
+// content 내의 로컬 이미지 URL을 S3 URL로 변환 (FAQ용)
+if (!function_exists('convert_shop_faq_content_images_to_s3')) {
+function convert_shop_faq_content_images_to_s3($content, $shop_id, $fm_id, $fa_id, $field_key) {
+    global $set_conf;
+
+    /*
+     * $field_key: 'fa_question' 또는 'fa_answer' (호환성을 위해 유지하지만 경로에는 사용 안 함)
+     * 최종 S3 경로: data/shop/faq/{shop_id}/{fm_id}/{fa_id}/... (질문/답변 구분 없이 통합)
+     */
+
+    if (empty($content) || empty($shop_id) || empty($fm_id) || empty($fa_id) || empty($field_key)) {
+        return $content;
+    }
+
+    if (!AWS_SDK_READY) {
+        return $content;
+    }
+
+    // HTML 엔티티/슬래시 정리
+    $decoded = stripslashes($content);
+    $decoded = html_entity_decode($decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    // img 태그 추출
+    if (!function_exists('get_editor_image')) {
+        return $decoded;
+    }
+
+    $matches = get_editor_image($decoded, true);
+    if (empty($matches) || empty($matches[0])) {
+        return $decoded;
+    }
+
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    $bucket = trim($set_conf['set_aws_bucket']);
+
+    foreach ($matches[0] as $img_tag) {
+        // src 추출
+        if (!preg_match('/src=["\']?([^"\'>]+)["\']?/i', $img_tag, $src_match)) {
+            continue;
+        }
+
+        $img_url = $src_match[1];
+
+        // 이미 S3 URL 이면 스킵 (이 함수는 로컬 이미지만 처리)
+        if (strpos($img_url, 'amazonaws.com') !== false || strpos($img_url, 's3.') !== false) {
+            continue;
+        }
+
+        // 로컬 editor 경로인지 확인
+        $local_path = '';
+        if (defined('G5_DATA_URL') && strpos($img_url, G5_DATA_URL) !== false) {
+            $local_path = str_replace(G5_DATA_URL, G5_DATA_PATH, $img_url);
+        } else {
+            // 상대경로 형태 (/data/editor/...) 처리
+            $parsed = parse_url($img_url);
+            if (isset($parsed['path']) && strpos($parsed['path'], '/'.G5_DATA_DIR.'/') !== false) {
+                // 이미 /data/... 포함
+                $local_path = G5_PATH.$parsed['path'];
+            } elseif (isset($parsed['path']) && strpos($parsed['path'], '/editor/') !== false) {
+                $local_path = G5_DATA_PATH.$parsed['path'];
+            }
+        }
+
+        if (!$local_path || !file_exists($local_path)) {
+            continue;
+        }
+
+        // 파일명/확장자
+        $filename = basename($local_path);
+        $ext = pathinfo($filename, PATHINFO_EXTENSION);
+        $name = pathinfo($filename, PATHINFO_FILENAME);
+
+        $unique = uniqid();
+        // 질문/답변 구분 없이 하나의 경로에 저장
+        $key = "data/shop/faq/{$shop_id}/{$fm_id}/{$fa_id}/{$name}_{$unique}.{$ext}";
+
+        // MIME 타입
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $local_path);
+        finfo_close($finfo);
+
+        try {
+            $res = $s3->putObject([
+                'Bucket'      => $bucket,
+                'Key'         => $key,
+                'SourceFile'  => $local_path,
+                'ContentType' => $mime_type,
+            ]);
+
+            $s3_url = $res['ObjectURL'];
+
+            // content 내 URL 교체
+            $decoded = str_replace($img_url, $s3_url, $decoded);
+        } catch (\Exception $e) {
+            // 업로드 실패 시 원본 유지
+            continue;
+        }
+    }
+
+    return $decoded;
+}
+}
+
+// FAQ content에서 S3 이미지 키 추출 (공지사항과 동일한 방식)
+if (!function_exists('extract_shop_faq_s3_images')) {
+function extract_shop_faq_s3_images($content) {
+    if (empty($content)) {
+        return array();
+    }
+
+    $s3_images = array();
+
+    // HTML 엔티티 디코딩 (이중 인코딩 방지)
+    $decoded_content = stripslashes($content);
+    $decoded_content = html_entity_decode($decoded_content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+    // img 태그에서 S3 URL 추출
+    preg_match_all('/<img[^>]*src=["\']?([^"\'>\s]*(?:amazonaws\.com|s3\.[^"\'>\s]*)[^"\'>\s]*)["\']?[^>]*>/i', $decoded_content, $matches);
+
+    if (!empty($matches[1])) {
+        foreach ($matches[1] as $url) {
+            // S3 URL에서 키 추출
+            // URL 형식: https://bucket-name.s3.region.amazonaws.com/data/shop/faq/1/2/3/image.jpg
+            // 또는: https://bucket-name.s3.region.amazonaws.com/data/shop/faq/1/2/3/image.jpg?query
+            if (preg_match('/amazonaws\.com\/([^"\'>\s\?]+)/i', $url, $key_match)) {
+                $key = $key_match[1];
+                // URL 인코딩된 문자 디코딩
+                $key = urldecode($key);
+                // FAQ 관련 경로만 추출
+                if (strpos($key, 'data/shop/faq/') === 0) {
+                    $s3_images[] = $key;
+                }
+            }
+        }
+    }
+
+    return array_values(array_unique($s3_images));
+}
+}
+
+// 지정된 S3 FAQ 이미지 키 삭제
+if (!function_exists('delete_shop_faq_s3_images')) {
+function delete_shop_faq_s3_images($s3_keys) {
+    global $set_conf;
+
+    if (empty($s3_keys) || !is_array($s3_keys)) {
+        return false;
+    }
+
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    $bucket = trim($set_conf['set_aws_bucket']);
+
+    foreach ($s3_keys as $key) {
+        try {
+            $s3->deleteObject([
+                'Bucket' => $bucket,
+                'Key'    => $key,
+            ]);
+        } catch (\Exception $e) {
+            // 실패는 무시
+        }
+    }
+
+    return true;
+}
+}
+
+// FAQ 항목의 content에 사용되지 않는 S3 이미지 삭제 함수 (공지사항과 동일한 방식)
+if (!function_exists('delete_unused_shop_faq_s3_images')) {
+function delete_unused_shop_faq_s3_images($shop_id, $fm_id, $fa_id, $question_content, $answer_content) {
+    global $set_conf;
+    
+    if (empty($shop_id) || empty($fm_id) || empty($fa_id)) {
+        return false;
+    }
+    
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+    
+    // content에서 사용 중인 S3 이미지 키 추출 (질문 + 답변)
+    $used_images = array();
+    if (!empty($question_content) && function_exists('extract_shop_faq_s3_images')) {
+        $used_images = array_merge($used_images, extract_shop_faq_s3_images($question_content));
+    }
+    if (!empty($answer_content) && function_exists('extract_shop_faq_s3_images')) {
+        $used_images = array_merge($used_images, extract_shop_faq_s3_images($answer_content));
+    }
+    $used_images = array_unique($used_images);
+    
+    // AWS SDK 초기화
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    
+    $bucket = trim($set_conf['set_aws_bucket']);
+    
+    // FAQ 항목별 디렉토리 경로
+    $prefix = "data/shop/faq/{$shop_id}/{$fm_id}/{$fa_id}/";
+    
+    try {
+        // 해당 디렉토리의 모든 객체 나열
+        $objects = $s3->listObjectsV2([
+            'Bucket' => $bucket,
+            'Prefix' => $prefix,
+        ]);
+        
+        $deleted_count = 0;
+        $skipped_count = 0;
+        
+        if (isset($objects['Contents']) && !empty($objects['Contents'])) {
+            foreach ($objects['Contents'] as $object) {
+                $object_key = $object['Key'];
+                
+                // 디렉토리 자체는 건너뛰기
+                if (substr($object_key, -1) === '/') {
+                    continue;
+                }
+                
+                // content에 사용 중인 이미지인지 확인
+                $is_used = false;
+                
+                foreach ($used_images as $used_key) {
+                    // 1. 키가 정확히 일치하는지 확인 (가장 정확한 방법)
+                    if ($object_key === $used_key) {
+                        $is_used = true;
+                        break;
+                    }
+                    
+                    // 2. URL 디코딩된 키와 비교 (URL 인코딩 차이 대응)
+                    $decoded_used_key = urldecode($used_key);
+                    $decoded_object_key = urldecode($object_key);
+                    if ($decoded_object_key === $decoded_used_key || 
+                        $object_key === $decoded_used_key || 
+                        $decoded_object_key === $used_key) {
+                        $is_used = true;
+                        break;
+                    }
+                    
+                    // 3. 파일명으로 비교 (경로가 다를 수 있음 - 예: 임시 경로에서 확정 경로로 이동한 경우)
+                    // 단, 같은 FAQ 항목 경로 내에서만 비교 (다른 FAQ 항목의 같은 파일명과 혼동 방지)
+                    $object_filename = basename($object_key);
+                    $used_filename = basename($used_key);
+                    if (!empty($object_filename) && $object_filename === $used_filename) {
+                        // 둘 다 같은 FAQ 항목 경로에 있는 경우에만 매칭
+                        $faq_path_pattern = "data/shop/faq/{$shop_id}/{$fm_id}/{$fa_id}/";
+                        if (strpos($object_key, $faq_path_pattern) === 0 &&
+                            strpos($used_key, $faq_path_pattern) === 0) {
+                            $is_used = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // 사용되지 않는 이미지 삭제
+                if (!$is_used) {
+                    try {
+                        $s3->deleteObject([
+                            'Bucket' => $bucket,
+                            'Key'    => $object_key,
+                        ]);
+                        $deleted_count++;
+                    } catch (\Exception $e) {
+                        // 삭제 실패는 무시
+                    }
+                } else {
+                    $skipped_count++;
+                }
+            }
+        }
+        
+        return $deleted_count > 0;
+    } catch (\Exception $e) {
+        return false;
+    }
+}
+}
+
+// 특정 FAQ 레코드의 모든 S3 이미지 삭제
+if (!function_exists('delete_shop_faq_all_s3_images')) {
+function delete_shop_faq_all_s3_images($shop_id, $fm_id, $fa_id) {
+    global $set_conf;
+
+    if (empty($shop_id) || empty($fm_id) || empty($fa_id)) {
+        return false;
+    }
+
+    if (!AWS_SDK_READY) {
+        return false;
+    }
+
+    $s3 = new \Aws\S3\S3Client([
+        'version' => 'latest',
+        'region'  => trim($set_conf['set_aws_region']),
+        'credentials' => [
+            'key'    => trim($set_conf['set_s3_accesskey']),
+            'secret' => trim($set_conf['set_s3_secretaccesskey']),
+        ]
+    ]);
+    $bucket = trim($set_conf['set_aws_bucket']);
+
+    $prefix = "data/shop/faq/{$shop_id}/{$fm_id}/{$fa_id}/";
+
+    try {
+        $objects = $s3->listObjectsV2([
+            'Bucket' => $bucket,
+            'Prefix' => $prefix,
+        ]);
+
+        if (!isset($objects['Contents']) || !count($objects['Contents'])) {
+            return true;
+        }
+
+        foreach ($objects['Contents'] as $object) {
+            if (empty($object['Key'])) continue;
+
+            $s3->deleteObject([
+                'Bucket' => $bucket,
+                'Key'    => $object['Key'],
+            ]);
+        }
+    } catch (\Exception $e) {
+        return false;
+    }
+
+    return true;
+}
+}
+
