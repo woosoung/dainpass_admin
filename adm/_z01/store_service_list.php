@@ -253,7 +253,7 @@ include_once('./js/store_service_list.js.php');
                 <td class="td_right"><?=number_format($row['price'] ?? 0)?>원</td>
                 <td class="td_center">
                     <input type="hidden" name="service_id[<?=$i?>]" value="<?=$row['service_id']?>">
-                    <input type="number" name="service_time[<?=$i?>]" value="<?=$row['service_time']?>" class="text-center frm_input" style="width:70px;" min="0">
+                    <input type="number" name="service_time[<?=$i?>]" value="<?=$row['service_time']?>" class="text-center frm_input" style="width:70px;" min="0" max="1440" required>
                 </td>
                 <td class="td_center">
                     <select name="status[<?=$i?>]" class="frm_input">
