@@ -36,6 +36,9 @@ $addr2 = trim($_POST['addr2']);
 $addr3 = trim($_POST['addr3']);
 $latitude = (isset($_POST['latitude']) && trim($_POST['latitude']) !== '') ? (float)trim($_POST['latitude']) : null;
 $longitude = (isset($_POST['longitude']) && trim($_POST['longitude']) !== '') ? (float)trim($_POST['longitude']) : null;
+// SQL용 latitude, longitude 변수 (null일 경우 'NULL' 문자열로 변환)
+$latitude_sql = ($latitude !== null) ? $latitude : 'NULL';
+$longitude_sql = ($longitude !== null) ? $longitude : 'NULL';
 $url = trim($_POST['url']);
 $max_capacity = isset($_POST['max_capacity']) ? (int)$_POST['max_capacity'] : 0;
 $reservelink_yn = (isset($_POST['reservelink_yn']) && $_POST['reservelink_yn'] == '') ? $_POST['reservelink_yn'] : '';
@@ -218,8 +221,8 @@ $sql_common = "	name = '".addslashes($name)."'
                 , addr1 = '{$addr1}'
                 , addr2 = '{$addr2}'
                 , addr3 = '{$addr3}'
-                , latitude = '{$latitude}'
-                , longitude = '{$longitude}'
+                , latitude = {$latitude_sql}
+                , longitude = {$longitude_sql}
                 , url = '{$url}'
                 , max_capacity = {$max_capacity}
                 , status = '{$_POST['status']}'
@@ -290,7 +293,7 @@ else if ($w == 'u') {
 
 	if (!$com['shop_id'])
 		alert('존재하지 않는 업체자료입니다.');
- 
+
     $sql = "	UPDATE {$g5['shop_table']} SET 
 					{$sql_common}
 					, updated_at = '".G5_TIME_YMDHIS."'
