@@ -2,6 +2,8 @@
 $sub_menu = "930200";
 include_once("./_common.php");
 
+@auth_check($auth[$sub_menu], 'u');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
