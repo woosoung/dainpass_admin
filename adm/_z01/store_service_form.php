@@ -231,24 +231,24 @@ include_once('./js/store_service_form.js.php');
 	<tr>
 		<th scope="row">서비스명<strong class="sound_only">필수</strong></th>
 		<td colspan="3">
-			<input type="text" name="service_name" value="<?=$com['service_name']??''?>" placeholder="서비스명" id="service_name" class="frm_input">
+			<input type="text" name="service_name" value="<?=$com['service_name']??''?>" placeholder="서비스명" id="service_name" class="frm_input" maxlength="50" required>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">서비스 설명</th>
 		<td colspan="3">
-			<textarea name="description" id="description" class="w-[100%]" rows="5"><?=$com['description']??''?></textarea>
+			<textarea name="description" id="description" class="w-[100%]" rows="5" maxlength="500"><?=$com['description']??''?></textarea>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">가격</th>
 		<td>
-			<input type="number" name="price" value="<?=$com['price']??0?>" id="price" class="frm_input text-right w-[200px]" min="0">
+			<input type="number" name="price" value="<?=$com['price']??0?>" id="price" class="frm_input text-right w-[200px]" min="0" max="100000000">
 			<span>원</span>
 		</td>
 		<th scope="row">소요시간(분)<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="number" name="service_time" value="<?=$com['service_time']??0?>" id="service_time" class="frm_input text-right w-[100px]" min="0" required>
+			<input type="number" name="service_time" value="<?=$com['service_time']??0?>" id="service_time" class="frm_input text-right w-[100px]" min="0" max="1440" required>
 			<span>분</span>
 		</td>
 	</tr>
