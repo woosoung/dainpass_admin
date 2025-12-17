@@ -302,28 +302,143 @@ else if ($w == 'u') {
     // echo $sql.'<br>';exit;
     sql_query_pg($sql);
 }
-else if ($w=="d") {
+// 폐업처리 (논리적 삭제) - 단일 가맹점
+else if($w == 'd') {
+    auth_check($auth[$sub_menu], 'd');
 
-	if (!$com['shop_id']) {
-		alert('존재하지 않는 업체자료입니다.');
-	} else {
-		// 자료 삭제
-        if(!$set_conf['set_del_yn']){
-            // 완전삭제가 아닌 상태값만 '휴지통'으로 변경
-            $sql = " UPDATE {$g5['shop_table']} SET status = 'trash' WHERE shop_id = $shop_id ";
-        }
-        else{
-            // 관련파일 전부 삭제
-            delete_s3_file('shop', $shop_id);
-            $rd_sql = " DELETE FROM {$g5['shop_category_relation_table']} WHERE shop_id = $shop_id ";
-            sql_query_pg($rd_sql);
-            // 완전삭제
-            $sql = " DELETE FROM {$g5['shop_table']} WHERE shop_id = $shop_id ";
-        }
-		sql_query_pg($sql);
-	}
+    $com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ");
 
-    goto_url('./company_list.php?'.$qstr, false);
+    if (!$com || !$com["shop_id"]) {
+        alert('가맹점 자료가 존재하지 않습니다.');
+    }
+
+    $shop_name = $com["name"] ? $com["name"] : $com["shop_name"];
+    $original_status = $com["status"];
+
+    // 이미 폐업된 가맹점 체크
+    if ($original_status === 'closed') {
+        alert('이미 폐업 처리된 가맹점입니다.');
+    }
+
+    try {
+        // PostgreSQL 트랜잭션 시작
+        sql_query_pg("BEGIN");
+
+        // PostgreSQL shop 테이블 status 업데이트
+        $update_shop_sql = " UPDATE {$g5['shop_table']}
+                            SET status = 'closed',
+                                updated_at = '".G5_TIME_YMDHIS."'
+                            WHERE shop_id = '{$shop_id}' ";
+
+        if (!sql_query_pg($update_shop_sql)) {
+            throw new Exception('가맹점 상태 업데이트에 실패했습니다.');
+        }
+
+        sql_query_pg("COMMIT");
+
+        // MySQL 트랜잭션 시작
+        sql_query("START TRANSACTION", 1);
+
+        // 해당 shop_id 가진 모든 회원 업데이트
+        $current_datetime = date("Ymd", strtotime(G5_TIME_YMD));
+        $memo_text = "[{$current_datetime}] 플랫폼 관리자에 의한 가맹점 탈퇴 처리";
+
+        $update_member_sql = " UPDATE {$g5['member_table']}
+                                SET mb_leave_date = '{$current_datetime}',
+                                    mb_memo = CASE
+                                                WHEN mb_memo LIKE '%{$memo_text}%' THEN mb_memo
+                                                ELSE CONCAT(mb_memo, '\n', '{$memo_text}')
+                                            END
+                                WHERE mb_1 = '{$shop_id}'
+                                AND mb_level < 6 ";
+
+        if (!sql_query($update_member_sql, 1)) {
+            throw new Exception('회원 정보 업데이트에 실패했습니다.');
+        }
+
+        sql_query("COMMIT", 1);
+
+        $msg = '폐업 처리가 완료되었습니다.';
+
+    } catch (Exception $e) {
+        sql_query_pg("ROLLBACK");
+        sql_query("ROLLBACK", 1);
+        alert($e->getMessage());
+    }
+
+    // JavaScript용 메시지 이스케이프
+    $msg = str_replace(["\\", "'", '"'], ["\\\\", "\\'", '\\"'], $msg);
+    $msg = str_replace(["\r\n", "\r", "\n"], "\\n", $msg);
+    alert($msg, './company_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
+}
+// 복구 (폐업 상태 해제) - 단일 가맹점
+else if($w == 'restore') {
+    auth_check($auth[$sub_menu], 'd');
+
+    $com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ");
+
+    if (!$com || !$com["shop_id"]) {
+        alert('가맹점 자료가 존재하지 않습니다.');
+    }
+
+    $shop_name = $com["name"] ? $com["name"] : $com["shop_name"];
+    $original_status = $com["status"];
+
+    // 폐업 상태인 가맹점만 복구 가능
+    if ($original_status !== 'closed') {
+        alert('폐업 상태인 가맹점만 복구할 수 있습니다. (현재 상태: '.$original_status.')');
+    }
+
+    try {
+        // PostgreSQL 트랜잭션 시작
+        sql_query_pg("BEGIN");
+
+        // PostgreSQL shop 테이블 status 업데이트
+        $update_shop_sql = " UPDATE {$g5['shop_table']}
+                            SET status = 'active',
+                                updated_at = '".G5_TIME_YMDHIS."'
+                            WHERE shop_id = '{$shop_id}' ";
+
+        if (!sql_query_pg($update_shop_sql)) {
+            throw new Exception('가맹점 상태 업데이트에 실패했습니다.');
+        }
+
+        sql_query_pg("COMMIT");
+
+        // MySQL 트랜잭션 시작
+        sql_query("START TRANSACTION", 1);
+
+        // 해당 shop_id 가진 모든 회원의 탈퇴 처리 해제
+        $current_datetime = date("Ymd", strtotime(G5_TIME_YMD));
+        $memo_text = "[{$current_datetime}] 플랫폼 관리자에 의한 가맹점 복구 처리";
+
+        $update_member_sql = " UPDATE {$g5['member_table']}
+                                SET mb_leave_date = NULL,
+                                    mb_memo = CASE
+                                                WHEN mb_memo LIKE '%{$memo_text}%' THEN mb_memo
+                                                ELSE CONCAT(mb_memo, '\n', '{$memo_text}')
+                                            END
+                                WHERE mb_1 = '{$shop_id}'
+                                AND mb_level < 6 ";
+
+        if (!sql_query($update_member_sql, 1)) {
+            throw new Exception('회원 정보 업데이트에 실패했습니다.');
+        }
+
+        sql_query("COMMIT", 1);
+
+        $msg = '가맹점이 복구되었습니다.';
+
+    } catch (Exception $e) {
+        sql_query_pg("ROLLBACK");
+        sql_query("ROLLBACK", 1);
+        alert($e->getMessage());
+    }
+
+    // JavaScript용 메시지 이스케이프
+    $msg = str_replace(["\\", "'", '"'], ["\\\\", "\\'", '\\"'], $msg);
+    $msg = str_replace(["\r\n", "\r", "\n"], "\\n", $msg);
+    alert($msg, './company_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
 }
 
 // 먼저 shop 해당 업체(shop_id)와 관계되는 category_id들을 전부 삭제
