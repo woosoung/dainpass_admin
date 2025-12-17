@@ -75,9 +75,31 @@ if(!trim($_POST['max_customers_per_slot']) || (int)$_POST['max_customers_per_slo
 
 $name = trim($_POST['name']);
 $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
+$phone = preg_replace('/[^0-9]/', '', $phone); // 숫자만 추출
 $specialty = isset($_POST['specialty']) ? trim($_POST['specialty']) : '';
 $max_customers_per_slot = isset($_POST['max_customers_per_slot']) ? (int)$_POST['max_customers_per_slot'] : 1;
 $title = isset($_POST['title']) ? trim($_POST['title']) : '';
+
+// 입력값 길이 및 범위 검증
+if (mb_strlen($name, 'UTF-8') > 10) {
+    alert('이름은 최대 10자까지 입력 가능합니다.');
+}
+
+if (mb_strlen($phone, 'UTF-8') > 20) {
+    alert('전화번호는 최대 20자까지 입력 가능합니다.');
+}
+
+if (mb_strlen($title, 'UTF-8') > 30) {
+    alert('직책은 최대 30자까지 입력 가능합니다.');
+}
+
+if (mb_strlen($specialty, 'UTF-8') > 100) {
+    alert('전문분야는 최대 100자까지 입력 가능합니다.');
+}
+
+if ($max_customers_per_slot < 1 || $max_customers_per_slot > 100) {
+    alert('슬롯당 최대고객수는 1명 이상 100명 이하로 입력해 주세요.');
+}
 
 if ($max_customers_per_slot < 1) $max_customers_per_slot = 1;
 
