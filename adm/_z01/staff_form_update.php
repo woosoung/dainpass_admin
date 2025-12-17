@@ -3,6 +3,8 @@ $sub_menu = "930300";
 include_once("./_common.php");
 include_once(G5_LIB_PATH."/register.lib.php");
 
+@auth_check($auth[$sub_menu], 'w');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;

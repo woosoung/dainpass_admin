@@ -2,6 +2,8 @@
 $sub_menu = "930300";
 include_once('./_common.php');
 
+@auth_check($auth[$sub_menu], 'r');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -243,7 +245,7 @@ include_once('./js/staff_list.js.php');
                 <td class="td_left"><?=get_text($row['specialty'] ?? '')?></td>
                 <td class="td_center">
                     <input type="hidden" name="steps_id[<?=$i?>]" value="<?=$row['steps_id']?>">
-                    <input type="number" name="max_customers_per_slot[<?=$i?>]" value="<?=$row['max_customers_per_slot']?>" class="frm_input text-center" style="width:70px;" min="1">
+                    <input type="number" name="max_customers_per_slot[<?=$i?>]" value="<?=$row['max_customers_per_slot']?>" class="text-center frm_input" style="width:70px;" min="1">
                 </td>
                 <td class="td_mng"><?=$s_mod?></td>
             </tr>
