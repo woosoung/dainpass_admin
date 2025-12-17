@@ -181,9 +181,9 @@ if ($w == '') {
 			$row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$stfi_wd.'px;height:'.$stfi_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
 			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="stfi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-			'<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-			<br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
-			<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+			'<br><span class="sp_sql"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+			<br><span class="sp_orig_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+			<br><span class="sp_thumb_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
 			$stfi['fle_db_idx'] = $row2['fle_db_idx'];
 			@array_push($stfi['stfi_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
@@ -228,27 +228,27 @@ include_once('./js/staff_form.js.php');
 	<tr>
 		<th scope="row">이름<strong class="sound_only">필수</strong></th>
 		<td colspan="3">
-			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="이름" id="name" class="frm_input" required>
+			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="이름" id="name" class="frm_input" maxlength="10" required>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">전화번호</th>
 		<td>
-			<input type="text" name="phone" value="<?=$com['phone']??''?>" placeholder="010-1234-5678" id="phone" class="frm_input">
+			<input type="text" name="phone" value="<?=$com['phone']??''?>" placeholder="01012345678" id="phone" class="frm_input" maxlength="20" pattern="[0-9]*" inputmode="numeric">
 		</td>
 		<th scope="row">직책</th>
 		<td>
-			<input type="text" name="title" value="<?=$com['title']??''?>" placeholder="직책" id="title" class="frm_input">
+			<input type="text" name="title" value="<?=$com['title']??''?>" placeholder="직책" id="title" class="frm_input" maxlength="30">
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">전문분야</th>
 		<td>
-			<input type="text" name="specialty" value="<?=$com['specialty']??''?>" placeholder="전문분야" id="specialty" class="frm_input">
+			<input type="text" name="specialty" value="<?=$com['specialty']??''?>" placeholder="전문분야" id="specialty" class="frm_input" maxlength="100">
 		</td>
 		<th scope="row">슬롯당 최대고객수<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="number" name="max_customers_per_slot" value="<?=$com['max_customers_per_slot']??1?>" id="max_customers_per_slot" class="frm_input text-right w-[100px]" min="1" required>
+			<input type="number" name="max_customers_per_slot" value="<?=$com['max_customers_per_slot']??1?>" id="max_customers_per_slot" class="frm_input text-right w-[100px]" min="1" max="100" required>
 			<span>명</span>
 		</td>
 	</tr>

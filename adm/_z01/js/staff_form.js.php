@@ -33,6 +33,30 @@ document.addEventListener('DOMContentLoaded', function(){
 
     //########### 직원관련 멀티파일 ##############
     $('#multi_file_stfi').MultiFile();
+
+    // 전화번호 필드 숫자만 입력 가능하도록 처리
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            // 숫자가 아닌 문자 제거
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        phoneInput.addEventListener('keypress', function(e) {
+            // 숫자가 아닌 키 입력 차단
+            if (!/[0-9]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') {
+                e.preventDefault();
+            }
+        });
+
+        phoneInput.addEventListener('paste', function(e) {
+            // 붙여넣기 시 숫자만 추출
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const numericOnly = pastedText.replace(/[^0-9]/g, '');
+            document.execCommand('insertText', false, numericOnly);
+        });
+    }
 });
 
 // sortable .staff_li 요소를 순회하면서 .sp_sort안에 순서번호를 업데이트하는 함수
@@ -83,8 +107,48 @@ function form01_submit(f) {
         return false;
     }
 
+    if (f.name.value.trim().length > 10) {
+        alert('이름은 최대 10자까지 입력 가능합니다.');
+        f.name.focus();
+        return false;
+    }
+
+    if (f.phone.value.trim().length > 0) {
+        const phonePattern = /^[0-9]*$/;
+        if (!phonePattern.test(f.phone.value.trim())) {
+            alert('전화번호는 숫자만 입력 가능합니다.');
+            f.phone.focus();
+            return false;
+        }
+
+        if (f.phone.value.trim().length > 20) {
+            alert('전화번호는 최대 20자까지 입력 가능합니다.');
+            f.phone.focus();
+            return false;
+        }
+    }
+
+    if (f.title.value.trim().length > 30) {
+        alert('직책은 최대 30자까지 입력 가능합니다.');
+        f.title.focus();
+        return false;
+    }
+
+    if (f.specialty.value.trim().length > 100) {
+        alert('전문분야는 최대 100자까지 입력 가능합니다.');
+        f.specialty.focus();
+        return false;
+    }
+
     if (f.max_customers_per_slot.value.trim() === '' || parseInt(f.max_customers_per_slot.value) < 1) {
         alert('슬롯당 최대고객수를 입력해 주십시오.');
+        f.max_customers_per_slot.focus();
+        return false;
+    }
+
+    const maxCustomers = parseInt(f.max_customers_per_slot.value);
+    if (maxCustomers > 100) {
+        alert('슬롯당 최대고객수는 최대 100명까지 입력 가능합니다.');
         f.max_customers_per_slot.focus();
         return false;
     }
