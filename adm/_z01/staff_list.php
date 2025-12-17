@@ -245,7 +245,7 @@ include_once('./js/staff_list.js.php');
                 <td class="td_left"><?=get_text($row['specialty'] ?? '')?></td>
                 <td class="td_center">
                     <input type="hidden" name="steps_id[<?=$i?>]" value="<?=$row['steps_id']?>">
-                    <input type="number" name="max_customers_per_slot[<?=$i?>]" value="<?=$row['max_customers_per_slot']?>" class="text-center frm_input" style="width:70px;" min="1">
+                    <input type="number" name="max_customers_per_slot[<?=$i?>]" value="<?=$row['max_customers_per_slot']?>" class="text-center frm_input" style="width:70px;" min="1" max="100" required>
                 </td>
                 <td class="td_mng"><?=$s_mod?></td>
             </tr>
