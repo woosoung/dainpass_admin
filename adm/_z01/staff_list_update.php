@@ -2,7 +2,7 @@
 $sub_menu = "930300";
 include_once("./_common.php");
 
-@auth_check($auth[$sub_menu], 'u');
+@auth_check($auth[$sub_menu], 'w');
 
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
@@ -96,8 +96,14 @@ if ($act_button == '선택수정') {
             
             if ($check_row && $check_row['steps_id']) {
                 $max_customers_per_slot = isset($_POST['max_customers_per_slot'][$idx]) ? (int)$_POST['max_customers_per_slot'][$idx] : 1;
+
+                // 슬롯당 최대고객수 범위 검증
+                if ($max_customers_per_slot < 1 || $max_customers_per_slot > 100) {
+                    alert('슬롯당 최대고객수는 1명 이상 100명 이하로 입력해 주세요.');
+                }
+
                 if ($max_customers_per_slot < 1) $max_customers_per_slot = 1;
-                
+
                 $update_sql = " UPDATE staff SET 
                                 max_customers_per_slot = {$max_customers_per_slot},
                                 updated_at = '".G5_TIME_YMDHIS."'
