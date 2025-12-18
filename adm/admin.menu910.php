@@ -13,4 +13,5 @@ $menu["menu910"] = array(
     array('910400', '플랫폼직책관리', '' . G5_Z_URL . '/role_list.php', 'role_list'),
     array('910500', '플랫폼직급관리', '' . G5_Z_URL . '/rank_list.php', 'rank_list'),
     array('910600', '플랫폼사원관리', '' . G5_Z_URL . '/employee_list.php', 'employee_list'),
+    array('910900', '디비백업', '' . G5_Z_URL . '/db_backup.php', 'backup'),
 );

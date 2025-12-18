@@ -1,5 +1,7 @@
 data/
 extend/z.03.pgconfig.php
+adm/_z01/db_backup.php
+adm/_z01/db_backup_download.php
 .cursor/
 docs/
 .claude/
