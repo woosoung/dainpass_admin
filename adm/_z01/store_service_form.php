@@ -2,6 +2,8 @@
 $sub_menu = "930200";
 include_once('./_common.php');
 
+@auth_check($auth[$sub_menu], 'w');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -144,6 +146,7 @@ if ($w == '') {
     $com['option_yn'] = 'N';
     $com['main_yn'] = 'N';
     $com['signature_yn'] = 'N';
+    $com['onsite_payment_yn'] = 'N';
     $com['service_time'] = 0;
 } else if ($w == 'u') {
     $html_title = '수정';
@@ -183,9 +186,9 @@ if ($w == '') {
 			$row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$svci_wd.'px;height:'.$svci_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
 			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="svci_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-			'<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-			<br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
-			<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+			'<br><span class="sp_sql"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+			<br><span class="sp_orig_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+			<br><span class="sp_thumb_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
 			$svci['fle_db_idx'] = $row2['fle_db_idx'];
 			@array_push($svci['svci_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
@@ -230,24 +233,24 @@ include_once('./js/store_service_form.js.php');
 	<tr>
 		<th scope="row">서비스명<strong class="sound_only">필수</strong></th>
 		<td colspan="3">
-			<input type="text" name="service_name" value="<?=$com['service_name']??''?>" placeholder="서비스명" id="service_name" class="frm_input">
+			<input type="text" name="service_name" value="<?=$com['service_name']??''?>" placeholder="서비스명" id="service_name" class="frm_input" maxlength="50" required>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">서비스 설명</th>
 		<td colspan="3">
-			<textarea name="description" id="description" class="w-[100%]" rows="5"><?=$com['description']??''?></textarea>
+			<textarea name="description" id="description" class="w-[100%]" rows="5" maxlength="500"><?=$com['description']??''?></textarea>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">가격</th>
 		<td>
-			<input type="number" name="price" value="<?=$com['price']??0?>" id="price" class="frm_input text-right w-[200px]" min="0">
+			<input type="number" name="price" value="<?=$com['price']??0?>" id="price" class="frm_input text-right w-[200px]" min="0" max="100000000">
 			<span>원</span>
 		</td>
 		<th scope="row">소요시간(분)<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="number" name="service_time" value="<?=$com['service_time']??0?>" id="service_time" class="frm_input text-right w-[100px]" min="0" required>
+			<input type="number" name="service_time" value="<?=$com['service_time']??0?>" id="service_time" class="frm_input text-right w-[100px]" min="0" max="1440" required>
 			<span>분</span>
 		</td>
 	</tr>
@@ -290,12 +293,20 @@ include_once('./js/store_service_form.js.php');
 	</tr>
 	<tr>
 		<th scope="row">시그니처서비스여부</th>
-		<td colspan="3">
+		<td>
 			<select name="signature_yn" id="signature_yn">
 				<option value="N">::시그니처아님::</option>
 				<option value="Y">시그니처</option>
 			</select>
 			<script>$('select[name="signature_yn"]').val('<?=$com['signature_yn']??'N'?>');</script>
+		</td>
+		<th scope="row">결제방식</th>
+		<td>
+			<select name="onsite_payment_yn" id="onsite_payment_yn">
+				<option value="N">온라인결제</option>
+				<option value="Y">현장결제</option>
+			</select>
+			<script>$('select[name="onsite_payment_yn"]').val('<?=$com['onsite_payment_yn']??'N'?>');</script>
 		</td>
 	</tr>
 	<tr>

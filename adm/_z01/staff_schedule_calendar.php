@@ -105,7 +105,7 @@ $schedule_sql = "
         ss.end_time,
         s.name as staff_name
     FROM staff_schedules ss
-    INNER JOIN staff s ON ss.staff_id = s.steps_id
+    INNER JOIN staff s ON ss.staff_id = s.staff_id
     WHERE s.store_id = {$shop_id}
     AND ss.work_date >= '{$start_date}'
     AND ss.work_date <= '{$end_date}'

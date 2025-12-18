@@ -88,7 +88,7 @@ $where_conditions = array();
 $where_conditions[] = "s.store_id = {$shop_id}";
 
 if ($ser_staff_id) {
-    $where_conditions[] = "s.steps_id = {$ser_staff_id}";
+    $where_conditions[] = "s.staff_id = {$ser_staff_id}";
 }
 
 if ($ser_date_from) {
@@ -105,7 +105,7 @@ $where_sql = implode(' AND ', $where_conditions);
 $count_sql = "
     SELECT COUNT(*) as cnt
     FROM staff_schedules ss
-    INNER JOIN staff s ON ss.staff_id = s.steps_id
+    INNER JOIN staff s ON ss.staff_id = s.staff_id
     WHERE {$where_sql}
 ";
 
@@ -129,9 +129,9 @@ $list_sql = "
         ss.created_at,
         s.name as staff_name,
         s.phone as staff_phone,
-        s.steps_id
+        s.staff_id
     FROM staff_schedules ss
-    INNER JOIN staff s ON ss.staff_id = s.steps_id
+    INNER JOIN staff s ON ss.staff_id = s.staff_id
     WHERE {$where_sql}
     ORDER BY ss.work_date DESC, ss.start_time DESC
     LIMIT {$rows_per_page} OFFSET {$offset}
@@ -148,7 +148,7 @@ if ($list_result && is_object($list_result) && isset($list_result->result)) {
 
 // 검색용 직원 목록
 $staff_sql = "
-    SELECT steps_id, name 
+    SELECT staff_id, name 
     FROM staff 
     WHERE store_id = {$shop_id}
     ORDER BY name
@@ -195,7 +195,7 @@ include_once('./js/staff_schedule_list.js.php');
     <select name="ser_staff_id" id="ser_staff_id" class="frm_input" style="width:200px;">
         <option value="">전체 직원</option>
         <?php foreach ($staff_list as $staff): ?>
-        <option value="<?php echo $staff['steps_id']; ?>" <?php echo ($ser_staff_id == $staff['steps_id']) ? 'selected' : ''; ?>>
+        <option value="<?php echo $staff['staff_id']; ?>" <?php echo ($ser_staff_id == $staff['staff_id']) ? 'selected' : ''; ?>>
             <?php echo htmlspecialchars($staff['name']); ?>
         </option>
         <?php endforeach; ?>
@@ -264,7 +264,7 @@ include_once('./js/staff_schedule_list.js.php');
             
             echo '<tr>';
             echo '<td class="td_num">'.$num.'</td>';
-            echo '<td class="td_center">'.$row['steps_id'].'</td>';
+            echo '<td class="td_center">'.$row['staff_id'].'</td>';
             echo '<td class="td_left">'.htmlspecialchars($row['staff_name']).'</td>';
             echo '<td class="td_center">'.$row['work_date'].'</td>';
             echo '<td class="td_center">'.$start_time.' ~ '.$end_time.' ('.$work_time_text.')</td>';

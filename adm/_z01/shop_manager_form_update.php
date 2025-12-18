@@ -3,6 +3,29 @@ $sub_menu = "920200";
 include_once("./_common.php");
 include_once(G5_ZSQL_PATH."/set_conf.php");
 
+// mb_level에 따라 $sub_menu 재정의
+$is_store_owner = false; // 가맹점 오너 여부
+$is_store_manager = false; // 가맹점 관리자 여부
+
+if ($is_member && $member['mb_id']) {
+    if ($member['mb_level'] >= 4 && $member['mb_level'] <= 5) {
+        // 가맹점 오너/관리자는 930100 권한으로 체크
+        $sub_menu = "930100";
+
+        // 오너/관리자 플래그 설정
+        $is_store_owner = ($member['mb_level'] == 5);
+        $is_store_manager = ($member['mb_level'] == 4);
+
+        // shop_id 소유권 검증 (필수!)
+        $user_shop_id = (int)trim($member['mb_1']);
+        $requested_shop_id = (int)$shop_id;
+
+        if ($requested_shop_id > 0 && $user_shop_id > 0 && $requested_shop_id != $user_shop_id) {
+            alert('자신의 가맹점만 관리할 수 있습니다.');
+        }
+    }
+}
+
 @auth_check($auth[$sub_menu], 'w');
 
 //check_admin_token();
@@ -40,6 +63,11 @@ if($w == '' || $w == 'u'){
 }
 
 if ($w == '') {
+    // 가맹점 관리자는 담당자 추가 불가 (가맹점 오너 또는 플랫폼 관리자만 가능)
+    if ($is_store_manager) {
+        alert('담당자 추가 권한이 없습니다.');
+    }
+
     // 해당 가맹점에 휴대폰 번호로 중복회원 체크 (중복회원이 있으면 회원정보 생성 안함)
     // $msql = " SELECT mb_id FROM {$g5['member_table']} WHERE REGEXP_REPLACE(mb_hp,'-','') = '".preg_replace("/-/","",$_POST['mb_hp'])."' OR mb_email = '{$_POST['mb_email']}' ";
     // $mb1 = sql_fetch(" SELECT mb_id FROM {$g5['member_table']} WHERE REGEXP_REPLACE(mb_hp,'-'ㅌ,'') = '".$m_hp."' AND mb_leave_date = '' AND mb_intercept_date = '' LIMIT 1 ");
@@ -70,6 +98,11 @@ if ($w == '') {
     }
 }
 else if ($w == 'u') {
+    // 가맹점 관리자는 본인 계정만 수정 가능
+    if ($is_store_manager && $mb_id != $member['mb_id']) {
+        alert('본인 계정만 수정할 수 있습니다.');
+    }
+
     $sql_password = (isset($mb_password) && $mb_password) ? ", mb_password = '".get_encrypt_string($mb_password)."'" : '';
     $sql = "UPDATE {$g5['member_table']} SET
                 {$sql_common1}
@@ -78,6 +111,11 @@ else if ($w == 'u') {
     sql_query($sql,1);
 }
 else if ($w == 'd') {
+    // 삭제는 가맹점 오너 또는 플랫폼 관리자만 가능
+    if ($is_store_manager) {
+        alert('삭제 권한이 없습니다. (가맹점 오너만 삭제 가능)');
+    }
+
     // 담당자 메타정보 삭제
     $sql = " DELETE FROM {$g5['gmeta_table']}
             WHERE mta_db_table = 'member' AND mta_db_id = '{$mb_id}' ";

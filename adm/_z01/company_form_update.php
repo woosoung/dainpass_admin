@@ -34,8 +34,11 @@ $zipcode = trim($_POST['zipcode']);
 $addr1 = trim($_POST['addr1']);
 $addr2 = trim($_POST['addr2']);
 $addr3 = trim($_POST['addr3']);
-$latitude = trim($_POST['latitude']);
-$longitude = trim($_POST['longitude']);
+$latitude = (isset($_POST['latitude']) && trim($_POST['latitude']) !== '') ? (float)trim($_POST['latitude']) : null;
+$longitude = (isset($_POST['longitude']) && trim($_POST['longitude']) !== '') ? (float)trim($_POST['longitude']) : null;
+// SQL용 latitude, longitude 변수 (null일 경우 'NULL' 문자열로 변환)
+$latitude_sql = ($latitude !== null) ? $latitude : 'NULL';
+$longitude_sql = ($longitude !== null) ? $longitude : 'NULL';
 $url = trim($_POST['url']);
 $max_capacity = isset($_POST['max_capacity']) ? (int)$_POST['max_capacity'] : 0;
 $reservelink_yn = (isset($_POST['reservelink_yn']) && $_POST['reservelink_yn'] == '') ? $_POST['reservelink_yn'] : '';
@@ -54,8 +57,8 @@ $settlement_memo = isset($_POST['settlement_memo']) ? conv_unescape_nl(stripslas
 $is_active = (isset($_POST['is_active']) && $_POST['is_active'] != '') ? $_POST['is_active'] : 'N'; //활성화여부
 $cancel_policy = isset($_POST['cancel_policy']) ? conv_unescape_nl(stripslashes($_POST['cancel_policy'])) : '';
 // point_rate는 소수점 2자리까지만
-$point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
-$point_rate = number_format($point_rate,2,'.','');
+// $point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
+// $point_rate = number_format($point_rate,2,'.','');
 // names 업체명 히스토리
 $branch = trim($_POST['branch']);
 // shop_parent_id 본사가맹점 id
@@ -218,8 +221,8 @@ $sql_common = "	name = '".addslashes($name)."'
                 , addr1 = '{$addr1}'
                 , addr2 = '{$addr2}'
                 , addr3 = '{$addr3}'
-                , latitude = '{$latitude}'
-                , longitude = '{$longitude}'
+                , latitude = {$latitude_sql}
+                , longitude = {$longitude_sql}
                 , url = '{$url}'
                 , max_capacity = {$max_capacity}
                 , status = '{$_POST['status']}'
@@ -233,7 +236,6 @@ $sql_common = "	name = '".addslashes($name)."'
                 , branch = '".addslashes($branch)."'
                 , mng_menus = '".$mng_menus."'
                 , settlement_memo = '".addslashes($settlement_memo)."'
-                , point_rate = {$point_rate}
                 , notice = '".addslashes($notice)."'
                 , cancellation_period = {$cancellation_period}
                 , shop_names = '".addslashes($shop_names)."'
@@ -245,11 +247,11 @@ $sql_common = "	name = '".addslashes($name)."'
                 , prep_period_for_reservation = ".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL')."
 ";
 
-$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,cancel_policy,names,tax_type,branch,mng_menus,settlement_memo,point_rate,notice,cancellation_period,shop_names,blog_url,instagram_url,kakaotalk_url,amenities_id_list,reservation_mode,prep_period_for_reservation";
+$sql_common_col = "name,shop_name,business_no,owner_name,contact_email,contact_phone,zipcode,addr1,addr2,addr3,latitude,longitude,url,max_capacity,status,reservelink_yn,reservelink,reserve_tel,shop_description,cancel_policy,names,tax_type,branch,mng_menus,settlement_memo,notice,cancellation_period,shop_names,blog_url,instagram_url,kakaotalk_url,amenities_id_list,reservation_mode,prep_period_for_reservation";
 
 $sql_common_i_col = $sql_common_col.",created_at,updated_at";
 
-$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."','".$latitude."','".$longitude."','".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo)."',".$point_rate.",'".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."',".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL');
+$sql_common_val = "'".addslashes($name)."','".addslashes($shop_name)."','".$business_no."','".$owner_name."','".$contact_email."','".$contact_phone."','".$zipcode."','".$addr1."','".$addr2."','".$addr3."',".($latitude !== null ? $latitude : 'NULL').",".($longitude !== null ? $longitude : 'NULL').",'".$url."',".$max_capacity.",'".$_POST['status']."','".($reservelink_yn??'N')."','".($reservelink??'')."','".$reserve_tel."','".addslashes($shop_description)."','".addslashes($cancel_policy)."','".addslashes($names)."','".( $tax_type ?? 'tax' )."','".addslashes($branch)."','".addslashes($mng_menus)."','".addslashes($settlement_memo)."','".addslashes($notice)."',".$cancellation_period.",'".addslashes($shop_names)."','".addslashes($blog_url)."','".addslashes($instagram_url)."','".addslashes($kakaotalk_url)."','".addslashes($amenities_id_list)."','".addslashes($reservation_mode)."',".($prep_period_for_reservation !== null ? $prep_period_for_reservation : 'NULL');
 
 $sql_common_i_val = $sql_common_val.",'".G5_TIME_YMDHIS."','".G5_TIME_YMDHIS."'";
 
@@ -291,7 +293,7 @@ else if ($w == 'u') {
 
 	if (!$com['shop_id'])
 		alert('존재하지 않는 업체자료입니다.');
- 
+
     $sql = "	UPDATE {$g5['shop_table']} SET 
 					{$sql_common}
 					, updated_at = '".G5_TIME_YMDHIS."'
@@ -300,28 +302,143 @@ else if ($w == 'u') {
     // echo $sql.'<br>';exit;
     sql_query_pg($sql);
 }
-else if ($w=="d") {
+// 폐업처리 (논리적 삭제) - 단일 가맹점
+else if($w == 'd') {
+    auth_check($auth[$sub_menu], 'd');
 
-	if (!$com['shop_id']) {
-		alert('존재하지 않는 업체자료입니다.');
-	} else {
-		// 자료 삭제
-        if(!$set_conf['set_del_yn']){
-            // 완전삭제가 아닌 상태값만 '휴지통'으로 변경
-            $sql = " UPDATE {$g5['shop_table']} SET status = 'trash' WHERE shop_id = $shop_id ";
-        }
-        else{
-            // 관련파일 전부 삭제
-            delete_s3_file('shop', $shop_id);
-            $rd_sql = " DELETE FROM {$g5['shop_category_relation_table']} WHERE shop_id = $shop_id ";
-            sql_query_pg($rd_sql);
-            // 완전삭제
-            $sql = " DELETE FROM {$g5['shop_table']} WHERE shop_id = $shop_id ";
-        }
-		sql_query_pg($sql);
-	}
+    $com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ");
 
-    goto_url('./company_list.php?'.$qstr, false);
+    if (!$com || !$com["shop_id"]) {
+        alert('가맹점 자료가 존재하지 않습니다.');
+    }
+
+    $shop_name = $com["name"] ? $com["name"] : $com["shop_name"];
+    $original_status = $com["status"];
+
+    // 이미 폐업된 가맹점 체크
+    if ($original_status === 'closed') {
+        alert('이미 폐업 처리된 가맹점입니다.');
+    }
+
+    try {
+        // PostgreSQL 트랜잭션 시작
+        sql_query_pg("BEGIN");
+
+        // PostgreSQL shop 테이블 status 업데이트
+        $update_shop_sql = " UPDATE {$g5['shop_table']}
+                            SET status = 'closed',
+                                updated_at = '".G5_TIME_YMDHIS."'
+                            WHERE shop_id = '{$shop_id}' ";
+
+        if (!sql_query_pg($update_shop_sql)) {
+            throw new Exception('가맹점 상태 업데이트에 실패했습니다.');
+        }
+
+        sql_query_pg("COMMIT");
+
+        // MySQL 트랜잭션 시작
+        sql_query("START TRANSACTION", 1);
+
+        // 해당 shop_id 가진 모든 회원 업데이트
+        $current_datetime = date("Ymd", strtotime(G5_TIME_YMD));
+        $memo_text = "[{$current_datetime}] 플랫폼 관리자에 의한 가맹점 탈퇴 처리";
+
+        $update_member_sql = " UPDATE {$g5['member_table']}
+                                SET mb_leave_date = '{$current_datetime}',
+                                    mb_memo = CASE
+                                                WHEN mb_memo LIKE '%{$memo_text}%' THEN mb_memo
+                                                ELSE CONCAT(mb_memo, '\n', '{$memo_text}')
+                                            END
+                                WHERE mb_1 = '{$shop_id}'
+                                AND mb_level < 6 ";
+
+        if (!sql_query($update_member_sql, 1)) {
+            throw new Exception('회원 정보 업데이트에 실패했습니다.');
+        }
+
+        sql_query("COMMIT", 1);
+
+        $msg = '폐업 처리가 완료되었습니다.';
+
+    } catch (Exception $e) {
+        sql_query_pg("ROLLBACK");
+        sql_query("ROLLBACK", 1);
+        alert($e->getMessage());
+    }
+
+    // JavaScript용 메시지 이스케이프
+    $msg = str_replace(["\\", "'", '"'], ["\\\\", "\\'", '\\"'], $msg);
+    $msg = str_replace(["\r\n", "\r", "\n"], "\\n", $msg);
+    alert($msg, './company_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
+}
+// 복구 (폐업 상태 해제) - 단일 가맹점
+else if($w == 'restore') {
+    auth_check($auth[$sub_menu], 'd');
+
+    $com = sql_fetch_pg(" SELECT * FROM {$g5['shop_table']} WHERE shop_id = '{$shop_id}' ");
+
+    if (!$com || !$com["shop_id"]) {
+        alert('가맹점 자료가 존재하지 않습니다.');
+    }
+
+    $shop_name = $com["name"] ? $com["name"] : $com["shop_name"];
+    $original_status = $com["status"];
+
+    // 폐업 상태인 가맹점만 복구 가능
+    if ($original_status !== 'closed') {
+        alert('폐업 상태인 가맹점만 복구할 수 있습니다. (현재 상태: '.$original_status.')');
+    }
+
+    try {
+        // PostgreSQL 트랜잭션 시작
+        sql_query_pg("BEGIN");
+
+        // PostgreSQL shop 테이블 status 업데이트
+        $update_shop_sql = " UPDATE {$g5['shop_table']}
+                            SET status = 'active',
+                                updated_at = '".G5_TIME_YMDHIS."'
+                            WHERE shop_id = '{$shop_id}' ";
+
+        if (!sql_query_pg($update_shop_sql)) {
+            throw new Exception('가맹점 상태 업데이트에 실패했습니다.');
+        }
+
+        sql_query_pg("COMMIT");
+
+        // MySQL 트랜잭션 시작
+        sql_query("START TRANSACTION", 1);
+
+        // 해당 shop_id 가진 모든 회원의 탈퇴 처리 해제
+        $current_datetime = date("Ymd", strtotime(G5_TIME_YMD));
+        $memo_text = "[{$current_datetime}] 플랫폼 관리자에 의한 가맹점 복구 처리";
+
+        $update_member_sql = " UPDATE {$g5['member_table']}
+                                SET mb_leave_date = NULL,
+                                    mb_memo = CASE
+                                                WHEN mb_memo LIKE '%{$memo_text}%' THEN mb_memo
+                                                ELSE CONCAT(mb_memo, '\n', '{$memo_text}')
+                                            END
+                                WHERE mb_1 = '{$shop_id}'
+                                AND mb_level < 6 ";
+
+        if (!sql_query($update_member_sql, 1)) {
+            throw new Exception('회원 정보 업데이트에 실패했습니다.');
+        }
+
+        sql_query("COMMIT", 1);
+
+        $msg = '가맹점이 복구되었습니다.';
+
+    } catch (Exception $e) {
+        sql_query_pg("ROLLBACK");
+        sql_query("ROLLBACK", 1);
+        alert($e->getMessage());
+    }
+
+    // JavaScript용 메시지 이스케이프
+    $msg = str_replace(["\\", "'", '"'], ["\\\\", "\\'", '\\"'], $msg);
+    $msg = str_replace(["\r\n", "\r", "\n"], "\\n", $msg);
+    alert($msg, './company_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
 }
 
 // 먼저 shop 해당 업체(shop_id)와 관계되는 category_id들을 전부 삭제
@@ -561,7 +678,6 @@ foreach($_REQUEST as $key => $value ) {
     }
 }
 
-// exit;
 if($w == 'u') {
 	//alert('업체 정보를 수정하였습니다.','./company_form.php?'.$qstr.'&amp;w=u&amp;com_idx='.$com_idx, false);
 	// alert('업체 정보를 수정하였습니다.','./company_list.php?'.$qstr, false);

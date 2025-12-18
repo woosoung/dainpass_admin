@@ -2,6 +2,8 @@
 $sub_menu = "930200";
 include_once('./_common.php');
 
+@auth_check($auth[$sub_menu], 'r');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -199,13 +201,14 @@ include_once('./js/store_service_list.js.php');
                 <th scope="col" class="td_center">옵션구분</th>
                 <th scope="col" class="td_center">대표서비스</th>
                 <th scope="col" class="td_center">시그니처</th>
+                <th scope="col" class="td_center">결제방식</th>
                 <th scope="col" id="mb_list_mng">관리</th>
             </tr>
         </thead>
         <tbody>
             <?php
             if ($total_count == 0) {
-                echo '<tr><td colspan="13" class="empty_table">자료가 없습니다.</td></tr>';
+                echo '<tr><td colspan="14" class="empty_table">자료가 없습니다.</td></tr>';
             } else {
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $num = $total_count - ($page - 1) * $rows - $i;
@@ -250,7 +253,7 @@ include_once('./js/store_service_list.js.php');
                 <td class="td_right"><?=number_format($row['price'] ?? 0)?>원</td>
                 <td class="td_center">
                     <input type="hidden" name="service_id[<?=$i?>]" value="<?=$row['service_id']?>">
-                    <input type="number" name="service_time[<?=$i?>]" value="<?=$row['service_time']?>" class="frm_input text-center" style="width:70px;" min="0">
+                    <input type="number" name="service_time[<?=$i?>]" value="<?=$row['service_time']?>" class="text-center frm_input" style="width:70px;" min="0" max="1440" required>
                 </td>
                 <td class="td_center">
                     <select name="status[<?=$i?>]" class="frm_input">
@@ -286,6 +289,13 @@ include_once('./js/store_service_list.js.php');
                         <option value="Y">시그니처</option>
                     </select>
                     <script>$('select[name="signature_yn[<?=$i?>]"]').val('<?=$row['signature_yn'] ?? 'N'?>');</script>
+                </td>
+                <td class="td_center">
+                    <select name="onsite_payment_yn[<?=$i?>]" class="frm_input">
+                        <option value="N">온라인결제</option>
+                        <option value="Y">현장결제</option>
+                    </select>
+                    <script>$('select[name="onsite_payment_yn[<?=$i?>]"]').val('<?=$row['onsite_payment_yn'] ?? 'N'?>');</script>
                 </td>
                 <td class="td_mng"><?=$s_mod?></td>
             </tr>

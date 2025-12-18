@@ -57,7 +57,7 @@ if (!$schedule_id) {
 $check_sql = "
     SELECT ss.schedule_id 
     FROM staff_schedules ss
-    INNER JOIN staff s ON ss.staff_id = s.steps_id
+    INNER JOIN staff s ON ss.staff_id = s.staff_id
     WHERE ss.schedule_id = {$schedule_id}
     AND s.store_id = {$shop_id}
 ";

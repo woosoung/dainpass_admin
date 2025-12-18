@@ -2,6 +2,8 @@
 $sub_menu = "930200";
 include_once("./_common.php");
 
+@auth_check($auth[$sub_menu], 'u');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -119,12 +121,33 @@ if ($act_button == '선택수정') {
             
             if ($check_row && $check_row['service_id']) {
                 $service_time = isset($_POST['service_time'][$idx]) ? (int)$_POST['service_time'][$idx] : 0;
+
+                // 소요시간 범위 검증
+                if ($service_time < 0 || $service_time > 1440) {
+                    alert('소요시간은 0분 이상 1440분(24시간) 이하로 입력해 주세요.');
+                }
+
+                // select 값들의 화이트리스트 검증 및 기본값 처리
+                $status_whitelist = ['active', 'inactive'];
                 $status = isset($_POST['status'][$idx]) ? trim($_POST['status'][$idx]) : 'active';
+                $status = in_array($status, $status_whitelist) ? $status : 'active';
+
+                $yn_whitelist = ['Y', 'N'];
                 $link_yn = isset($_POST['link_yn'][$idx]) ? trim($_POST['link_yn'][$idx]) : 'N';
+                $link_yn = in_array($link_yn, $yn_whitelist) ? $link_yn : 'N';
+
                 $option_yn = isset($_POST['option_yn'][$idx]) ? trim($_POST['option_yn'][$idx]) : 'N';
+                $option_yn = in_array($option_yn, $yn_whitelist) ? $option_yn : 'N';
+
                 $main_yn = isset($_POST['main_yn'][$idx]) ? trim($_POST['main_yn'][$idx]) : 'N';
+                $main_yn = in_array($main_yn, $yn_whitelist) ? $main_yn : 'N';
+
                 $signature_yn = isset($_POST['signature_yn'][$idx]) ? trim($_POST['signature_yn'][$idx]) : 'N';
-                
+                $signature_yn = in_array($signature_yn, $yn_whitelist) ? $signature_yn : 'N';
+
+                $onsite_payment_yn = isset($_POST['onsite_payment_yn'][$idx]) ? trim($_POST['onsite_payment_yn'][$idx]) : 'N';
+                $onsite_payment_yn = in_array($onsite_payment_yn, $yn_whitelist) ? $onsite_payment_yn : 'N';
+
                 $update_sql = " UPDATE shop_services SET 
                                 service_time = {$service_time},
                                 status = '{$status}',
@@ -132,6 +155,7 @@ if ($act_button == '선택수정') {
                                 option_yn = '{$option_yn}',
                                 main_yn = '{$main_yn}',
                                 signature_yn = '{$signature_yn}',
+                                onsite_payment_yn = '{$onsite_payment_yn}',
                                 updated_at = '".G5_TIME_YMDHIS."'
                             WHERE service_id = {$service_id_val} AND shop_id = {$shop_id} ";
                 sql_query_pg($update_sql);
@@ -143,6 +167,8 @@ if ($act_button == '선택수정') {
 }
 
 if ($act_button == '선택삭제') {
+    @auth_check($auth[$sub_menu], 'd');
+
     check_demo();
     
     if (!isset($_POST['chk']) || !is_array($_POST['chk']) || count($_POST['chk']) == 0) {

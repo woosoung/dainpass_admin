@@ -474,6 +474,13 @@ function form01_submit(f) {
         return false;
     }
 
+    // 업체명 길이 검증 (30자 제한)
+    if (f.name.value.length > 30) {
+        alert('업체명은 최대 30자까지 입력 가능합니다.');
+        f.name.focus();
+        return false;
+    }
+
     if (f.business_no.value.trim() === '') {
         alert('사업자등록번호를 입력해 주십시오.');
         f.business_no.focus();
@@ -486,8 +493,22 @@ function form01_submit(f) {
         return false;
     }
 
+    // 가맹점명 길이 검증 (50자 제한)
+    if (f.shop_name.value.length > 50) {
+        alert('가맹점명은 최대 50자까지 입력 가능합니다.');
+        f.shop_name.focus();
+        return false;
+    }
+
     if (f.branch.value.trim() === '') {
         alert('지점명을 입력해 주십시오.');
+        f.branch.focus();
+        return false;
+    }
+
+    // 지점명 길이 검증 (30자 제한)
+    if (f.branch.value.length > 30) {
+        alert('지점명은 최대 30자까지 입력 가능합니다.');
         f.branch.focus();
         return false;
     }
@@ -536,6 +557,25 @@ function form01_submit(f) {
             f.com_url.focus();
             return false;
         }
+    }
+
+    // URL 필드 길이 검증 (500자 제한)
+    if(f.blog_url && f.blog_url.value.length > 500){
+        alert("블로그 URL은 최대 500자까지 입력 가능합니다.");
+        f.blog_url.focus();
+        return false;
+    }
+
+    if(f.instagram_url && f.instagram_url.value.length > 500){
+        alert("인스타그램 URL은 최대 500자까지 입력 가능합니다.");
+        f.instagram_url.focus();
+        return false;
+    }
+
+    if(f.kakaotalk_url && f.kakaotalk_url.value.length > 500){
+        alert("카카오톡 채널 URL은 최대 500자까지 입력 가능합니다.");
+        f.kakaotalk_url.focus();
+        return false;
     }
 
     return true;

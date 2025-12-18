@@ -37,10 +37,10 @@ document.addEventListener('DOMContentLoaded', function(){
             '<td class="td_right">' + servicePrice + '원</td>' +
             '<td class="td_center">' +
                 '<input type="hidden" name="service_id[]" value="' + serviceId + '">' +
-                '<input type="number" name="service_time[]" value="' + defaultServiceTime + '" class="frm_input text-center" style="width:80px;" min="0" required>' +
+                '<input type="number" name="service_time[]" value="' + defaultServiceTime + '" class="frm_input text-center" style="width:80px;" min="0" max="1440" required>' +
             '</td>' +
             '<td class="td_center">' +
-                '<input type="number" name="slot_max_persons_cnt[]" value="1" class="frm_input text-center" style="width:80px;" min="1" required>' +
+                '<input type="number" name="slot_max_persons_cnt[]" value="1" class="frm_input text-center" style="width:80px;" min="1" max="100" required>' +
             '</td>' +
             '<td class="td_center">' +
                 '<select name="status[]" class="frm_input">' +
@@ -107,19 +107,31 @@ document.addEventListener('DOMContentLoaded', function(){
         // 서비스시간과 슬롯당 고객수 검증
         const serviceTimeInputs = f.querySelectorAll('input[name="service_time[]"]');
         const slotMaxInputs = f.querySelectorAll('input[name="slot_max_persons_cnt[]"]');
-        
+
         for (let i = 0; i < serviceTimeInputs.length; i++) {
             const serviceTime = parseInt(serviceTimeInputs[i].value);
             const slotMax = parseInt(slotMaxInputs[i].value);
-            
+
             if (isNaN(serviceTime) || serviceTime < 0) {
                 alert('서비스시간은 0 이상의 숫자여야 합니다.');
                 serviceTimeInputs[i].focus();
                 return false;
             }
-            
+
+            if (serviceTime > 1440) {
+                alert('서비스시간은 최대 1440분(24시간)까지 입력 가능합니다.');
+                serviceTimeInputs[i].focus();
+                return false;
+            }
+
             if (isNaN(slotMax) || slotMax < 1) {
                 alert('슬롯당 고객수는 1 이상의 숫자여야 합니다.');
+                slotMaxInputs[i].focus();
+                return false;
+            }
+
+            if (slotMax > 100) {
+                alert('슬롯당 고객수는 최대 100명까지 입력 가능합니다.');
                 slotMaxInputs[i].focus();
                 return false;
             }

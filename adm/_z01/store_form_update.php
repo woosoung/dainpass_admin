@@ -3,6 +3,8 @@ $sub_menu = "930100";
 include_once("./_common.php");
 include_once(G5_LIB_PATH."/register.lib.php");
 
+@auth_check($auth[$sub_menu], 'w');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -36,8 +38,15 @@ if ($is_member && $member['mb_id']) {
         if (!empty($mb_1_value)) {
             // PostgreSQL에서 shop_id 확인 (shop_id는 bigint이므로 정수로 비교)
             $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
             $shop_row = sql_fetch_pg($shop_sql);
+
+            // 가맹점 상태에 따른 접근 제한
+            if ($shop_row && ($shop_row['status'] === 'closed')) {
+                alert('탈퇴된 가맹점입니다.');
+            } else if ($shop_row && $shop_row['status'] === 'shutdown') {
+                alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
+            }
             
             if ($shop_row && $shop_row['shop_id']) {
                 $has_access = true;
@@ -69,19 +78,62 @@ if ($w == 'u')
 
 //check_admin_token();
 if(!trim($_POST['category_ids'])) alert('업종(분류)을 반드시 선택해 주세요.');
+
+// category_ids 유효성 검증 - shop_categories 테이블에 존재하는지 확인
+$category_ids_str = trim($_POST['category_ids']);
+if ($category_ids_str) {
+    $category_ids_arr = explode(',', $category_ids_str);
+    $category_ids_arr = array_map('trim', $category_ids_arr);
+    $category_ids_arr = array_filter($category_ids_arr, function($id) {
+        return !empty($id) && is_numeric($id);
+    });
+
+    if (count($category_ids_arr) > 0) {
+        $category_ids_for_query = implode(',', array_map('intval', $category_ids_arr));
+        $cat_check_sql = " SELECT category_id FROM {$g5['shop_categories_table']} WHERE category_id IN ({$category_ids_for_query}) ";
+        $cat_check_result = sql_query_pg($cat_check_sql);
+
+        $existing_category_ids = array();
+        while ($cat_row = sql_fetch_array_pg($cat_check_result)) {
+            $existing_category_ids[] = (string)$cat_row['category_id'];
+        }
+
+        // 존재하지 않는 카테고리 ID 찾기
+        $invalid_category_ids = array_diff($category_ids_arr, $existing_category_ids);
+        if (count($invalid_category_ids) > 0) {
+            alert('유효하지 않은 업종(분류)이 선택되었습니다.');
+        }
+    }
+}
+
 if(!trim($_POST['name'])) alert('업체명을 입력해 주세요.');
 if(!trim($_POST['contact_email'])) alert('이메일을 입력해 주세요.');
 if(!trim($_POST['owner_name'])) alert('대표자명을 입력해 주세요.');
 if(!trim($_POST['contact_phone'])) alert('업체전화번호를 입력해 주세요.');
 
 $name = trim($_POST['name']);
+if (mb_strlen($name) > 30) {
+    alert('업체명은 최대 30자까지 입력 가능합니다.');
+}
 $shop_name = trim($_POST['shop_name']);
+if (mb_strlen($shop_name) > 50) {
+    alert('가맹점명은 최대 50자까지 입력 가능합니다.');
+}
 $business_no = trim($_POST['business_no']);
 $business_no = preg_replace('/[^0-9]/', '', $business_no); // 사업자번호 숫자만 추출
+if (strlen($business_no) > 20) {
+    alert('사업자등록번호가 너무 깁니다.');
+}
 $owner_name = trim($_POST['owner_name']);
+if (mb_strlen($owner_name) > 30) {
+    alert('대표자명은 최대 30자까지 입력 가능합니다.');
+}
 $contact_email = trim($_POST['contact_email']);
 $contact_phone = trim($_POST['contact_phone']);
 $contact_phone = preg_replace('/[^0-9]/', '', $contact_phone); // 전화번호 숫자만 추출
+if (strlen($contact_phone) > 20) {
+    alert('전화번호가 너무 깁니다.');
+}
 $zipcode = trim($_POST['zipcode']);
 $addr1 = trim($_POST['addr1']);
 $addr2 = trim($_POST['addr2']);
@@ -90,6 +142,10 @@ $latitude = trim($_POST['latitude']);
 $longitude = trim($_POST['longitude']);
 $url = trim($_POST['url']);
 $max_capacity = isset($_POST['max_capacity']) ? (int)$_POST['max_capacity'] : 0;
+// 음수 방지, 현실적인 최대값 설정
+if ($max_capacity < 0 || $max_capacity > 100000) {
+    $max_capacity = 0;
+}
 $reservelink_yn = (isset($_POST['reservelink_yn']) && $_POST['reservelink_yn'] == '') ? $_POST['reservelink_yn'] : '';
 $reservelink = isset($_POST['reservelink']) ? trim($_POST['reservelink']) : '';
 $reserve_tel = isset($_POST['reserve_tel']) ? trim($_POST['reserve_tel']) : '';
@@ -103,13 +159,25 @@ $bank_holder = isset($_POST['bank_holder']) ? trim($_POST['bank_holder']) : ''; 
 // $settlement_cycle = isset($_POST['settlement_cycle']) ? trim($_POST['settlement_cycle']) : ''; //정산주기(monthly, weekly, 2monthly)
 // $settlement_day = isset($_POST['settlement_day']) ? (int)$_POST['settlement_day'] : 0; //정산일(25 | 01 ...)
 $tax_type = isset($_POST['tax_type']) ? trim($_POST['tax_type']) : ''; //과세유형
+$allowed_tax_types = ['normal', 'simple', 'exempt', 'freelancer'];
+if (!in_array($tax_type, $allowed_tax_types)) {
+    $tax_type = 'normal'; // shop 테이블 기본값으로 fallback
+}
 // $settlement_memo = isset($_POST['settlement_memo']) ? conv_unescape_nl(stripslashes($_POST['settlement_memo'])) : ''; //정산메모
 // $is_active = (isset($_POST['is_active']) && $_POST['is_active'] != '') ? $_POST['is_active'] : 'N'; //활성화여부
 $cancel_policy = isset($_POST['cancel_policy']) ? conv_unescape_nl(stripslashes($_POST['cancel_policy'])) : '';
 // $point_rate = isset($_POST['point_rate']) ? (float)$_POST['point_rate'] : 0;
 // $point_rate = number_format($point_rate,2,'.','');
+$status = isset($_POST['status']) ? trim($_POST['status']) : '';
+$allowed_status = ['active', 'stopped'];
+if (!in_array($status, $allowed_status)) {
+    alert('유효하지 않은 상태값입니다.');
+}
 // names 업체명 히스토리
 $branch = trim($_POST['branch']);
+if (mb_strlen($branch) > 30) {
+    alert('지점명은 최대 30자까지 입력 가능합니다.');
+}
 // shop_parent_id 본사가맹점 id
 // shop_names = 가맹점명 히스토리
 $mng_menus = ($w == 'u') ? addslashes(trim($_POST['mng_menus'])) : '';
@@ -135,12 +203,33 @@ if ($w == 'u' && $mng_menus) {
 // 추가 필드 처리
 $notice = isset($_POST['notice']) ? conv_unescape_nl(stripslashes($_POST['notice'])) : '';
 $cancellation_period = isset($_POST['cancellation_period']) ? (int)$_POST['cancellation_period'] : 1;
+// 최소 1시간, 최대 720시간(30일)
+if ($cancellation_period < 1 || $cancellation_period > 720) {
+    $cancellation_period = 1;
+}
 $blog_url = isset($_POST['blog_url']) ? trim($_POST['blog_url']) : '';
+if (mb_strlen($blog_url) > 500) {
+    $blog_url = mb_substr($blog_url, 0, 500);
+}
 $instagram_url = isset($_POST['instagram_url']) ? trim($_POST['instagram_url']) : '';
+if (mb_strlen($instagram_url) > 500) {
+    $instagram_url = mb_substr($instagram_url, 0, 500);
+}
 $kakaotalk_url = isset($_POST['kakaotalk_url']) ? trim($_POST['kakaotalk_url']) : '';
+if (mb_strlen($kakaotalk_url) > 500) {
+    $kakaotalk_url = mb_substr($kakaotalk_url, 0, 500);
+}
 $amenities_id_list = isset($_POST['amenities_id_list']) ? trim($_POST['amenities_id_list']) : '';
 $reservation_mode = isset($_POST['reservation_mode']) ? trim($_POST['reservation_mode']) : 'SERVICE_ONLY';
+$allowed_reservation_modes = ['SERVICE_ONLY', 'SPACE_ONLY', 'SERVICE_AND_SPACE'];
+if (!in_array($reservation_mode, $allowed_reservation_modes)) {
+    $reservation_mode = 'SERVICE_ONLY';
+}
 $prep_period_for_reservation = isset($_POST['prep_period_for_reservation']) && $_POST['prep_period_for_reservation'] !== '' ? (int)$_POST['prep_period_for_reservation'] : null;
+// 음수 방지, 최대 1440분(24시간)
+if ($prep_period_for_reservation !== null && ($prep_period_for_reservation < 0 || $prep_period_for_reservation > 1440)) {
+    $prep_period_for_reservation = 0;
+}
 
 // 이메일 형식 체크
 if(!preg_match("/^[a-z0-9_+.-]+@([a-z0-9-]+\.)+[a-z0-9]{2,4}$/",$contact_email)) {
@@ -174,7 +263,8 @@ if ($w=='u'){
     $settlement_day = $com['settlement_day'] ?? 25;
     $settlement_memo = $com['settlement_memo'] ?? '';
     $is_active = $com['is_active'] ?? 'N';
-    $point_rate = $com['point_rate'] ?? 0;
+    // shop table에 존재하지 않는 column
+    // $point_rate = $com['point_rate'] ?? 0;
     
     // 관리메뉴 선택한것과 하지 않은것에 대한 auth테이블 업데이트
     // 이전 mng_menus 정보가져와서 새로 넘어온 mng_menus와 비교
@@ -270,11 +360,11 @@ $sql_common = "	name = '".addslashes($name)."'
                 , addr1 = '{$addr1}'
                 , addr2 = '{$addr2}'
                 , addr3 = '{$addr3}'
-                , latitude = '{$latitude}'
-                , longitude = '{$longitude}'
+                , latitude = {$latitude}
+                , longitude = {$longitude}
                 , url = '{$url}'
                 , max_capacity = {$max_capacity}
-                , status = '{$_POST['status']}'
+                , status = '{$status}'
                 , reservelink_yn = '{$reservelink_yn}'
                 , reservelink = '{$reservelink}'
                 , reserve_tel = '{$reserve_tel}'
@@ -288,7 +378,6 @@ $sql_common = "	name = '".addslashes($name)."'
                 , settlement_cycle = '{$settlement_cycle}'
                 , settlement_day = {$settlement_day}
                 , settlement_memo = '".addslashes($settlement_memo)."'
-                , point_rate = {$point_rate}
                 , is_active = '{$is_active}'
                 , notice = '".addslashes($notice)."'
                 , cancellation_period = {$cancellation_period}
@@ -544,6 +633,8 @@ foreach($_REQUEST as $key => $value ) {
         }
     }
 }
+
+exit;
 
 if($w == 'u') {
     goto_url('./store_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);

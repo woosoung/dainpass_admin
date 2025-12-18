@@ -525,4 +525,22 @@ function form01_submit(f) {
 
     return true;
 }
+
+// 폐업처리 확인
+function confirmCloseShop() {
+    if (confirm('이 가맹점을 폐업 처리하시겠습니까?\n\n폐업 처리 시:\n- 가맹점 상태가 "폐업"으로 변경됩니다.\n- 관련 회원들이 탈퇴 처리됩니다.\n\n계속하시겠습니까?')) {
+        document.form01.w.value = 'd';
+        document.form01.action = './company_form_update.php';
+        document.form01.submit();
+    }
+}
+
+// 복구 확인
+function confirmRestoreShop() {
+    if (confirm('이 가맹점을 복구하시겠습니까?\n\n복구 시:\n- 가맹점 상태가 "정상"으로 변경됩니다.\n- 관련 회원들의 탈퇴 처리가 해제됩니다.\n\n계속하시겠습니까?')) {
+        document.form01.w.value = 'restore';
+        document.form01.action = './company_form_update.php';
+        document.form01.submit();
+    }
+}
 </script>

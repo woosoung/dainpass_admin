@@ -97,8 +97,39 @@ function form01_submit(f) {
         return false;
     }
 
+    if (f.service_name.value.trim().length > 50) {
+        alert('서비스명은 최대 50자까지 입력 가능합니다.');
+        f.service_name.focus();
+        return false;
+    }
+
+    if (f.description.value.trim().length > 500) {
+        alert('서비스 설명은 최대 500자까지 입력 가능합니다.');
+        f.description.focus();
+        return false;
+    }
+
+    const price = parseInt(f.price.value);
+    if (price < 0) {
+        alert('가격은 0원 이상이어야 합니다.');
+        f.price.focus();
+        return false;
+    }
+    if (price > 100000000) {
+        alert('가격은 최대 1억원까지 입력 가능합니다.');
+        f.price.focus();
+        return false;
+    }
+
     if (f.service_time.value.trim() === '' || parseInt(f.service_time.value) < 0) {
         alert('소요시간을 입력해 주십시오.');
+        f.service_time.focus();
+        return false;
+    }
+
+    const serviceTime = parseInt(f.service_time.value);
+    if (serviceTime > 1440) {
+        alert('소요시간은 최대 1440분(24시간)까지 입력 가능합니다.');
         f.service_time.focus();
         return false;
     }

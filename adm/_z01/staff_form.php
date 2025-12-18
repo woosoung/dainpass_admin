@@ -2,6 +2,8 @@
 $sub_menu = "930300";
 include_once('./_common.php');
 
+@auth_check($auth[$sub_menu], 'w');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -130,7 +132,7 @@ $stfi = (isset($stfi) && is_array($stfi)) ? $stfi : ['stfi_f_arr'=>[], 'stfi_fid
 
 // 안전한 기본값 설정 및 입력 수신
 $w = isset($w) ? (string)$w : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
-$steps_id = isset($steps_id) ? (int)$steps_id : (isset($_REQUEST['steps_id']) ? (int)$_REQUEST['steps_id'] : 0);
+$staff_id = isset($staff_id) ? (int)$staff_id : (isset($_REQUEST['staff_id']) ? (int)$_REQUEST['staff_id'] : 0);
 
 if ($w == '') {
     $html_title = '추가';
@@ -145,14 +147,14 @@ if ($w == '') {
     $html_title = '수정';
     
     // 직원 데이터 조회
-    $sql = " SELECT * FROM staff WHERE steps_id = {$steps_id} LIMIT 1 ";
+    $sql = " SELECT * FROM staff WHERE staff_id = {$staff_id} LIMIT 1 ";
     $result = sql_query_pg($sql);
     $com = array();
     if ($result && is_object($result) && isset($result->result)) {
         $com = sql_fetch_array_pg($result->result);
     }
     
-    if (!$com || !isset($com['steps_id']) || !$com['steps_id'])
+    if (!$com || !isset($com['staff_id']) || !$com['staff_id'])
         alert('존재하지 않는 직원자료입니다.');
     
     // 가맹점측 관리자는 자신의 가맹점 직원만 수정 가능
@@ -166,14 +168,14 @@ if ($w == '') {
     $com['title'] = get_text($com['title']);
     
     // 직원관련 이미지
-    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'staff' AND fle_type = 'stfi' AND fle_dir = 'shop/staff_img' AND fle_db_idx = '{$steps_id}' ORDER BY fle_sort, fle_reg_dt DESC ";
+    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'staff' AND fle_type = 'stfi' AND fle_dir = 'shop/staff_img' AND fle_db_idx = '{$staff_id}' ORDER BY fle_sort, fle_reg_dt DESC ";
 	$rs = sql_query_pg($sql);
     $stfi_wd = 110;
     $stfi_ht = 80;
     $stfi['stfi_f_arr'] = array();
     $stfi['stfi_fidxs'] = array();
     $stfi['stfi_lst_idx'] = 0;
-    $stfi['fle_db_idx'] = $steps_id;
+    $stfi['fle_db_idx'] = $staff_id;
 	if ($rs && is_object($rs) && isset($rs->result)) {
 		for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 			$is_s3file_yn = is_s3file($row2['fle_path']);
@@ -181,9 +183,9 @@ if ($w == '') {
 			$row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$stfi_wd.'px;height:'.$stfi_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
 			$row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="stfi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-			'<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-			<br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
-			<br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+			'<br><span class="sp_sql"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+			<br><span class="sp_orig_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+			<br><span class="sp_thumb_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
 			$row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
 			$stfi['fle_db_idx'] = $row2['fle_db_idx'];
 			@array_push($stfi['stfi_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
@@ -209,7 +211,7 @@ include_once('./js/staff_form.js.php');
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
 <input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
-<input type="hidden" name="steps_id" value="<?php echo $steps_id; ?>">
+<input type="hidden" name="staff_id" value="<?php echo $staff_id; ?>">
 <?=$form_input??''?>
 <div class="local_desc01 local_desc">
     <p>직원 정보를 관리해 주세요.</p>
@@ -228,27 +230,27 @@ include_once('./js/staff_form.js.php');
 	<tr>
 		<th scope="row">이름<strong class="sound_only">필수</strong></th>
 		<td colspan="3">
-			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="이름" id="name" class="frm_input" required>
+			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="이름" id="name" class="frm_input" maxlength="10" required>
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">전화번호</th>
 		<td>
-			<input type="text" name="phone" value="<?=$com['phone']??''?>" placeholder="010-1234-5678" id="phone" class="frm_input">
+			<input type="text" name="phone" value="<?=$com['phone']??''?>" placeholder="01012345678" id="phone" class="frm_input" maxlength="20" pattern="[0-9]*" inputmode="numeric">
 		</td>
 		<th scope="row">직책</th>
 		<td>
-			<input type="text" name="title" value="<?=$com['title']??''?>" placeholder="직책" id="title" class="frm_input">
+			<input type="text" name="title" value="<?=$com['title']??''?>" placeholder="직책" id="title" class="frm_input" maxlength="30">
 		</td>
 	</tr>
 	<tr>
 		<th scope="row">전문분야</th>
 		<td>
-			<input type="text" name="specialty" value="<?=$com['specialty']??''?>" placeholder="전문분야" id="specialty" class="frm_input">
+			<input type="text" name="specialty" value="<?=$com['specialty']??''?>" placeholder="전문분야" id="specialty" class="frm_input" maxlength="100">
 		</td>
 		<th scope="row">슬롯당 최대고객수<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="number" name="max_customers_per_slot" value="<?=$com['max_customers_per_slot']??1?>" id="max_customers_per_slot" class="frm_input text-right w-[100px]" min="1" required>
+			<input type="number" name="max_customers_per_slot" value="<?=$com['max_customers_per_slot']??1?>" id="max_customers_per_slot" class="frm_input text-right w-[100px]" min="1" max="100" required>
 			<span>명</span>
 		</td>
 	</tr>

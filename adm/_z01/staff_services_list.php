@@ -2,6 +2,8 @@
 $sub_menu = "930400";
 include_once('./_common.php');
 
+@auth_check($auth[$sub_menu], 'r');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -115,7 +117,7 @@ if ($where)
     $sql_search = ' WHERE '.implode(' AND ', $where);
 
 if (!$sst) {
-    $sst = "steps_id";
+    $sst = "staff_id";
     $sod = "DESC";
 }
 
@@ -199,14 +201,14 @@ include_once('./js/staff_services_list.js.php');
             } else {
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $num = $total_count - ($page - 1) * $rows - $i;
-                    $s_mod = '<a href="./staff_services_form.php?'.$qstr.'&amp;steps_id='.$row['steps_id'].'">관리</a>';
+                    $s_mod = '<a href="./staff_services_form.php?'.$qstr.'&amp;staff_id='.$row['staff_id'].'">관리</a>';
 
                     // 해당 직원의 이미지중에 fle_sort순으로 1개만 가져오는 쿼리
                     $fsql = " SELECT fle_path FROM {$g5['dain_file_table']}
                                 WHERE fle_db_tbl = 'staff'
                                     AND fle_type = 'stfi'
                                     AND fle_dir = 'shop/staff_img'
-                                    AND fle_db_idx = '{$row['steps_id']}'
+                                    AND fle_db_idx = '{$row['staff_id']}'
                                 ORDER BY fle_sort ASC, fle_reg_dt DESC LIMIT 1 ";
                     $fres = sql_fetch_pg($fsql);
                     // 이미지파일이 존재하면 썸네일 경로 생성
@@ -223,7 +225,7 @@ include_once('./js/staff_services_list.js.php');
                     $service_sql = " SELECT ss.*, s.service_name, s.description, s.price, s.status as service_status
                                      FROM staff_services ss
                                      INNER JOIN shop_services s ON ss.service_id = s.service_id
-                                     WHERE ss.steps_id = {$row['steps_id']}
+                                     WHERE ss.staff_id = {$row['staff_id']}
                                        AND ss.shop_id = {$shop_id}
                                      ORDER BY ss.staff_service_id DESC ";
                     $service_result = sql_query_pg($service_sql);
@@ -253,7 +255,7 @@ include_once('./js/staff_services_list.js.php');
                             $status_text = ($service_row['service_status'] == 'active') ? '정상' : '비활성';
                             $staff_status_text = ($service_row['status'] == 'ok') ? '정상' : '대기';
                             
-                            $service_list_html .= '<tr class="service-row-'.$row['steps_id'].'">';
+                            $service_list_html .= '<tr class="service-row-'.$row['staff_id'].'">';
                             $service_list_html .= '<td class="td_center">'.$service_thumb.'</td>';
                             $service_list_html .= '<td class="td_left">'.get_text($service_row['service_name']).'</td>';
                             $service_list_html .= '<td class="td_left">'.get_text(cut_str($service_row['description'] ?? '', 30)).'</td>';
@@ -268,7 +270,7 @@ include_once('./js/staff_services_list.js.php');
 
                     $bg = 'bg'.($i%2);
             ?>
-            <tr class="<?=$bg?> staff-main-row" data-staff-id="<?=$row['steps_id']?>">
+            <tr class="<?=$bg?> staff-main-row" data-staff-id="<?=$row['staff_id']?>">
                 <td class="td_num"><?=$num?></td>
                 <td class="td_center"><?=$row['thumb_tag']?></td>
                 <td class="td_left"><?=get_text($row['name'])?></td>
@@ -278,7 +280,7 @@ include_once('./js/staff_services_list.js.php');
                 <td class="td_center"><?=$row['max_customers_per_slot']?></td>
                 <td class="td_center">
                     <?php if ($service_count > 0): ?>
-                        <button type="button" class="btn-toggle-services btn btn_02" data-staff-id="<?=$row['steps_id']?>">
+                        <button type="button" class="btn-toggle-services btn btn_02" data-staff-id="<?=$row['staff_id']?>">
                             <span class="service-count"><?=$service_count?>개</span>
                             <span class="toggle-icon">▼</span>
                         </button>
@@ -289,7 +291,7 @@ include_once('./js/staff_services_list.js.php');
                 <td class="td_mng"><?=$s_mod?></td>
             </tr>
             <?php if ($service_count > 0): ?>
-            <tr class="service-accordion-row service-accordion-<?=$row['steps_id']?>" style="display:none;">
+            <tr class="service-accordion-row service-accordion-<?=$row['staff_id']?>" style="display:none;">
                 <td colspan="9" class="p-0">
                     <div class="service-accordion-content">
                         <table class="table table-bordered table-condensed" style="margin:0;">
