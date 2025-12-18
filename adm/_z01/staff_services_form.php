@@ -110,21 +110,21 @@ if ($page > 1) {
 }
 
 // 안전한 기본값 설정 및 입력 수신
-$steps_id = isset($steps_id) ? (int)$steps_id : (isset($_REQUEST['steps_id']) ? (int)$_REQUEST['steps_id'] : 0);
+$staff_id = isset($staff_id) ? (int)$staff_id : (isset($_REQUEST['staff_id']) ? (int)$_REQUEST['staff_id'] : 0);
 
-if (!$steps_id) {
+if (!$staff_id) {
     alert('직원 정보가 없습니다.');
 }
 
 // 직원 정보 조회
-$sql = " SELECT * FROM staff WHERE steps_id = {$steps_id} AND store_id = {$shop_id} LIMIT 1 ";
+$sql = " SELECT * FROM staff WHERE staff_id = {$staff_id} AND store_id = {$shop_id} LIMIT 1 ";
 $result = sql_query_pg($sql);
 $staff = array();
 if ($result && is_object($result) && isset($result->result)) {
     $staff = sql_fetch_array_pg($result->result);
 }
 
-if (!$staff || !isset($staff['steps_id']) || !$staff['steps_id']) {
+if (!$staff || !isset($staff['staff_id']) || !$staff['staff_id']) {
     alert('존재하지 않는 직원자료입니다.');
 }
 
@@ -133,7 +133,7 @@ $fsql = " SELECT fle_path FROM {$g5['dain_file_table']}
             WHERE fle_db_tbl = 'staff'
                 AND fle_type = 'stfi'
                 AND fle_dir = 'shop/staff_img'
-                AND fle_db_idx = '{$steps_id}'
+                AND fle_db_idx = '{$staff_id}'
             ORDER BY fle_sort ASC, fle_reg_dt DESC LIMIT 1 ";
 $fres = sql_fetch_pg($fsql);
 $stfi_wd = 110;
@@ -154,7 +154,7 @@ $service_sql = " SELECT s.*
                     AND NOT EXISTS (
                         SELECT 1 FROM staff_services ss
                         WHERE ss.service_id = s.service_id
-                          AND ss.steps_id = {$steps_id}
+                          AND ss.staff_id = {$staff_id}
                           AND ss.shop_id = {$shop_id}
                     )
                   ORDER BY s.service_name ASC ";
@@ -164,7 +164,7 @@ $service_result = sql_query_pg($service_sql);
 $registered_sql = " SELECT ss.*, s.service_name, s.description, s.price
                      FROM staff_services ss
                      INNER JOIN shop_services s ON ss.service_id = s.service_id
-                     WHERE ss.steps_id = {$steps_id}
+                     WHERE ss.staff_id = {$staff_id}
                        AND ss.shop_id = {$shop_id}
                      ORDER BY ss.staff_service_id DESC ";
 $registered_result = sql_query_pg($registered_sql);
@@ -184,7 +184,7 @@ include_once('./js/staff_services_form.js.php');
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
 <input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
-<input type="hidden" name="steps_id" value="<?php echo $steps_id; ?>">
+<input type="hidden" name="staff_id" value="<?php echo $staff_id; ?>">
 
 <div class="local_desc01 local_desc">
     <p>직원별 담당 서비스를 관리해 주세요.</p>

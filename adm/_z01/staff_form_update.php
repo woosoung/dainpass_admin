@@ -61,7 +61,7 @@ if (!$has_access) {
 // 입력 기본값 안전 초기화
 $w = isset($_POST['w']) ? trim($_POST['w']) : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
 $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
-$steps_id = isset($_POST['steps_id']) ? (int)$_POST['steps_id'] : (isset($_REQUEST['steps_id']) ? (int)$_REQUEST['steps_id'] : 0);
+$staff_id = isset($_POST['staff_id']) ? (int)$_POST['staff_id'] : (isset($_REQUEST['staff_id']) ? (int)$_REQUEST['staff_id'] : 0);
 
 // 가맹점측 관리자는 자신의 가맹점만 수정 가능
 if ($post_shop_id != $shop_id) {
@@ -128,14 +128,14 @@ if ($w == '') {
             ) ";
     // echo $sql;exit;
     sql_query_pg($sql);
-    $steps_id = sql_insert_id_pg('staff');
+    $staff_id = sql_insert_id_pg('staff');
 } else if ($w == 'u') {
     // 수정
     // 해당 직원이 해당 가맹점의 것인지 확인
-    $check_sql = " SELECT steps_id FROM staff WHERE steps_id = {$steps_id} AND store_id = {$shop_id} ";
+    $check_sql = " SELECT staff_id FROM staff WHERE staff_id = {$staff_id} AND store_id = {$shop_id} ";
     $check_row = sql_fetch_pg($check_sql);
     
-    if (!$check_row || !$check_row['steps_id']) {
+    if (!$check_row || !$check_row['staff_id']) {
         alert('존재하지 않는 직원자료입니다.');
     }
     
@@ -146,7 +146,7 @@ if ($w == '') {
                 max_customers_per_slot = {$max_customers_per_slot},
                 title = ".($title ? "'".addslashes($title)."'" : "NULL").",
                 updated_at = '".G5_TIME_YMDHIS."'
-            WHERE steps_id = {$steps_id} AND store_id = {$shop_id} ";
+            WHERE staff_id = {$staff_id} AND store_id = {$shop_id} ";
     
     sql_query_pg($sql);
 }
@@ -169,10 +169,10 @@ if($w == '' || $w == 'u'){
     }
     if(is_array($del_arr) && @count($del_arr)) delete_idx_s3_file($del_arr);
     
-    //$steps_id가 반드시 있어야 파일업로드가 가능
-    if($steps_id){
+    //$staff_id가 반드시 있어야 파일업로드가 가능
+    if($staff_id){
         //멀티파일처리
-        upload_multi_file($_FILES['stfi_datas'],'staff',$steps_id,'shop/staff_img','stfi');
+        upload_multi_file($_FILES['stfi_datas'],'staff',$staff_id,'shop/staff_img','stfi');
     }
 }
 
@@ -203,10 +203,10 @@ foreach($_REQUEST as $key => $value ) {
 }
 
 if($w == 'u') {
-    goto_url('./staff_form.php?'.$qstr.'&w=u&steps_id='.$steps_id, false);
+    goto_url('./staff_form.php?'.$qstr.'&w=u&staff_id='.$staff_id, false);
 }
 else {
-    goto_url('./staff_form.php?'.$qstr.'&w=u&steps_id='.$steps_id, false);
+    goto_url('./staff_form.php?'.$qstr.'&w=u&staff_id='.$staff_id, false);
 }
 
 ?>

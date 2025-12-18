@@ -91,7 +91,7 @@ $schedule_id = isset($_REQUEST['schedule_id']) ? (int)$_REQUEST['schedule_id'] :
 
 // 직원 목록 가져오기
 $staff_sql = "
-    SELECT steps_id, name, phone, specialty, title
+    SELECT staff_id, name, phone, specialty, title
     FROM staff
     WHERE store_id = {$shop_id}
     ORDER BY name
@@ -146,7 +146,7 @@ if ($w == '') {
             s.name as staff_name,
             s.store_id
         FROM staff_schedules ss
-        INNER JOIN staff s ON ss.staff_id = s.steps_id
+        INNER JOIN staff s ON ss.staff_id = s.staff_id
         WHERE ss.schedule_id = {$schedule_id}
     ";
     
@@ -209,8 +209,8 @@ include_once('./js/staff_schedule_form.js.php');
             <select name="staff_id" id="staff_id" class="frm_input required" required style="width:300px;">
                 <option value="">직원을 선택하세요</option>
                 <?php foreach ($staff_list as $staff): ?>
-                <option value="<?php echo $staff['steps_id']; ?>" 
-                    <?php echo ($schedule['staff_id'] == $staff['steps_id']) ? 'selected' : ''; ?>>
+                <option value="<?php echo $staff['staff_id']; ?>" 
+                    <?php echo ($schedule['staff_id'] == $staff['staff_id']) ? 'selected' : ''; ?>>
                     <?php 
                     echo htmlspecialchars($staff['name']);
                     if ($staff['title']) {
@@ -245,7 +245,7 @@ include_once('./js/staff_schedule_form.js.php');
     <tr>
         <th scope="row">근무 시간</th>
         <td colspan="3">
-            <span id="work_duration" class="text-blue-600 font-bold"></span>
+            <span id="work_duration" class="font-bold text-blue-600"></span>
         </td>
     </tr>
     <?php if ($w == 'u' && isset($schedule['created_at'])): ?>

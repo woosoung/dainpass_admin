@@ -132,7 +132,7 @@ $stfi = (isset($stfi) && is_array($stfi)) ? $stfi : ['stfi_f_arr'=>[], 'stfi_fid
 
 // 안전한 기본값 설정 및 입력 수신
 $w = isset($w) ? (string)$w : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
-$steps_id = isset($steps_id) ? (int)$steps_id : (isset($_REQUEST['steps_id']) ? (int)$_REQUEST['steps_id'] : 0);
+$staff_id = isset($staff_id) ? (int)$staff_id : (isset($_REQUEST['staff_id']) ? (int)$_REQUEST['staff_id'] : 0);
 
 if ($w == '') {
     $html_title = '추가';
@@ -147,14 +147,14 @@ if ($w == '') {
     $html_title = '수정';
     
     // 직원 데이터 조회
-    $sql = " SELECT * FROM staff WHERE steps_id = {$steps_id} LIMIT 1 ";
+    $sql = " SELECT * FROM staff WHERE staff_id = {$staff_id} LIMIT 1 ";
     $result = sql_query_pg($sql);
     $com = array();
     if ($result && is_object($result) && isset($result->result)) {
         $com = sql_fetch_array_pg($result->result);
     }
     
-    if (!$com || !isset($com['steps_id']) || !$com['steps_id'])
+    if (!$com || !isset($com['staff_id']) || !$com['staff_id'])
         alert('존재하지 않는 직원자료입니다.');
     
     // 가맹점측 관리자는 자신의 가맹점 직원만 수정 가능
@@ -168,14 +168,14 @@ if ($w == '') {
     $com['title'] = get_text($com['title']);
     
     // 직원관련 이미지
-    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'staff' AND fle_type = 'stfi' AND fle_dir = 'shop/staff_img' AND fle_db_idx = '{$steps_id}' ORDER BY fle_sort, fle_reg_dt DESC ";
+    $sql = " SELECT * FROM {$g5['dain_file_table']} WHERE fle_db_tbl = 'staff' AND fle_type = 'stfi' AND fle_dir = 'shop/staff_img' AND fle_db_idx = '{$staff_id}' ORDER BY fle_sort, fle_reg_dt DESC ";
 	$rs = sql_query_pg($sql);
     $stfi_wd = 110;
     $stfi_ht = 80;
     $stfi['stfi_f_arr'] = array();
     $stfi['stfi_fidxs'] = array();
     $stfi['stfi_lst_idx'] = 0;
-    $stfi['fle_db_idx'] = $steps_id;
+    $stfi['fle_db_idx'] = $staff_id;
 	if ($rs && is_object($rs) && isset($rs->result)) {
 		for($i=0;$row2=sql_fetch_array_pg($rs->result);$i++) {
 			$is_s3file_yn = is_s3file($row2['fle_path']);
@@ -211,7 +211,7 @@ include_once('./js/staff_form.js.php');
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
 <input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
-<input type="hidden" name="steps_id" value="<?php echo $steps_id; ?>">
+<input type="hidden" name="staff_id" value="<?php echo $staff_id; ?>">
 <?=$form_input??''?>
 <div class="local_desc01 local_desc">
     <p>직원 정보를 관리해 주세요.</p>

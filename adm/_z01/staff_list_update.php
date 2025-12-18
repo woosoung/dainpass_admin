@@ -81,20 +81,20 @@ if ($act_button == '선택수정') {
     $chk = $_POST['chk'];
     
     // 선택된 직원들 업데이트
-    if (isset($_POST['steps_id']) && is_array($_POST['steps_id'])) {
-        foreach ($_POST['steps_id'] as $idx => $steps_id_val) {
-            $steps_id_val = (int)$steps_id_val;
+    if (isset($_POST['staff_id']) && is_array($_POST['staff_id'])) {
+        foreach ($_POST['staff_id'] as $idx => $staff_id_val) {
+            $staff_id_val = (int)$staff_id_val;
             
             // 선택된 직원만 처리
-            if (!in_array($steps_id_val, $chk)) {
+            if (!in_array($staff_id_val, $chk)) {
                 continue;
             }
             
             // 해당 직원이 해당 가맹점의 것인지 확인
-            $check_sql = " SELECT steps_id FROM staff WHERE steps_id = {$steps_id_val} AND store_id = {$shop_id} ";
+            $check_sql = " SELECT staff_id FROM staff WHERE staff_id = {$staff_id_val} AND store_id = {$shop_id} ";
             $check_row = sql_fetch_pg($check_sql);
             
-            if ($check_row && $check_row['steps_id']) {
+            if ($check_row && $check_row['staff_id']) {
                 $max_customers_per_slot = isset($_POST['max_customers_per_slot'][$idx]) ? (int)$_POST['max_customers_per_slot'][$idx] : 1;
 
                 // 슬롯당 최대고객수 범위 검증
@@ -107,7 +107,7 @@ if ($act_button == '선택수정') {
                 $update_sql = " UPDATE staff SET 
                                 max_customers_per_slot = {$max_customers_per_slot},
                                 updated_at = '".G5_TIME_YMDHIS."'
-                            WHERE steps_id = {$steps_id_val} AND store_id = {$shop_id} ";
+                            WHERE staff_id = {$staff_id_val} AND store_id = {$shop_id} ";
                 sql_query_pg($update_sql);
             }
         }
@@ -126,18 +126,18 @@ if ($act_button == '선택삭제') {
     }
     
     $chk = $_POST['chk'];
-    foreach ($chk as $steps_id) {
-        $steps_id = (int)$steps_id;
+    foreach ($chk as $staff_id) {
+        $staff_id = (int)$staff_id;
         
         // 해당 직원이 해당 가맹점의 것인지 확인
-        $check_sql = " SELECT steps_id FROM staff WHERE steps_id = {$steps_id} AND store_id = {$shop_id} ";
+        $check_sql = " SELECT staff_id FROM staff WHERE staff_id = {$staff_id} AND store_id = {$shop_id} ";
         $check_row = sql_fetch_pg($check_sql);
         
-        if ($check_row && $check_row['steps_id']) {
+        if ($check_row && $check_row['staff_id']) {
             // 관련 이미지 파일 삭제
             $img_sql = " SELECT fle_idx FROM {$g5['dain_file_table']}
                          WHERE fle_db_tbl = 'staff'
-                           AND fle_db_idx = '{$steps_id}'
+                           AND fle_db_idx = '{$staff_id}'
                            AND fle_type = 'stfi'
                            AND fle_dir = 'shop/staff_img' ";
             $img_result = sql_query_pg($img_sql);
@@ -152,7 +152,7 @@ if ($act_button == '선택삭제') {
             }
             
             // 직원 삭제
-            $delete_sql = " DELETE FROM staff WHERE steps_id = {$steps_id} AND store_id = {$shop_id} ";
+            $delete_sql = " DELETE FROM staff WHERE staff_id = {$staff_id} AND store_id = {$shop_id} ";
             sql_query_pg($delete_sql);
         }
     }

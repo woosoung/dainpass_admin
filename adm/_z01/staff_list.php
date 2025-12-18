@@ -117,7 +117,7 @@ if ($where)
     $sql_search = ' WHERE '.implode(' AND ', $where);
 
 if (!$sst) {
-    $sst = "steps_id";
+    $sst = "staff_id";
     $sod = "DESC";
 }
 
@@ -210,14 +210,14 @@ include_once('./js/staff_list.js.php');
             } else {
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $num = $total_count - ($page - 1) * $rows - $i;
-                    $s_mod = '<a href="./staff_form.php?'.$qstr.'&amp;w=u&amp;steps_id='.$row['steps_id'].'">수정</a>';
+                    $s_mod = '<a href="./staff_form.php?'.$qstr.'&amp;w=u&amp;staff_id='.$row['staff_id'].'">수정</a>';
 
                     // 해당 직원의 이미지중에 fle_sort순으로 1개만 가져오는 쿼리
                     $fsql = " SELECT fle_path FROM {$g5['dain_file_table']}
                                 WHERE fle_db_tbl = 'staff'
                                     AND fle_type = 'stfi'
                                     AND fle_dir = 'shop/staff_img'
-                                    AND fle_db_idx = '{$row['steps_id']}'
+                                    AND fle_db_idx = '{$row['staff_id']}'
                                 ORDER BY fle_sort ASC, fle_reg_dt DESC LIMIT 1 ";
                     $fres = sql_fetch_pg($fsql);
                     // 이미지파일이 존재하면 썸네일 경로 생성
@@ -235,7 +235,7 @@ include_once('./js/staff_list.js.php');
             <tr class="<?=$bg?>">
                 <td class="td_chk">
                     <label for="chk_<?=$i?>" class="sound_only"><?=get_text($row['name'])?></label>
-                    <input type="checkbox" name="chk[]" value="<?=$row['steps_id']?>" id="chk_<?=$i?>">
+                    <input type="checkbox" name="chk[]" value="<?=$row['staff_id']?>" id="chk_<?=$i?>">
                 </td>
                 <td class="td_num"><?=$num?></td>
                 <td class="td_center"><?=$row['thumb_tag']?></td>
@@ -244,7 +244,7 @@ include_once('./js/staff_list.js.php');
                 <td class="td_left"><?=get_text($row['title'] ?? '')?></td>
                 <td class="td_left"><?=get_text($row['specialty'] ?? '')?></td>
                 <td class="td_center">
-                    <input type="hidden" name="steps_id[<?=$i?>]" value="<?=$row['steps_id']?>">
+                    <input type="hidden" name="staff_id[<?=$i?>]" value="<?=$row['staff_id']?>">
                     <input type="number" name="max_customers_per_slot[<?=$i?>]" value="<?=$row['max_customers_per_slot']?>" class="text-center frm_input" style="width:70px;" min="1" max="100" required>
                 </td>
                 <td class="td_mng"><?=$s_mod?></td>

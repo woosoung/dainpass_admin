@@ -59,22 +59,22 @@ if (!$has_access) {
 
 // 입력 기본값 안전 초기화
 $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
-$steps_id = isset($_POST['steps_id']) ? (int)$_POST['steps_id'] : (isset($_REQUEST['steps_id']) ? (int)$_REQUEST['steps_id'] : 0);
+$staff_id = isset($_POST['staff_id']) ? (int)$_POST['staff_id'] : (isset($_REQUEST['staff_id']) ? (int)$_REQUEST['staff_id'] : 0);
 
 // 가맹점측 관리자는 자신의 가맹점만 수정 가능
 if ($post_shop_id != $shop_id) {
     alert('접속할 수 없는 페이지 입니다.');
 }
 
-if (!$steps_id) {
+if (!$staff_id) {
     alert('직원 정보가 없습니다.');
 }
 
 // 해당 직원이 해당 가맹점의 것인지 확인
-$check_sql = " SELECT steps_id FROM staff WHERE steps_id = {$steps_id} AND store_id = {$shop_id} ";
+$check_sql = " SELECT staff_id FROM staff WHERE staff_id = {$staff_id} AND store_id = {$shop_id} ";
 $check_row = sql_fetch_pg($check_sql);
 
-if (!$check_row || !$check_row['steps_id']) {
+if (!$check_row || !$check_row['staff_id']) {
     alert('존재하지 않는 직원자료입니다.');
 }
 
@@ -88,14 +88,14 @@ if (isset($_POST['delete_staff_service_id']) && is_array($_POST['delete_staff_se
             // 해당 직원별 서비스가 해당 가맹점의 것인지 확인
             $check_del_sql = " SELECT staff_service_id FROM staff_services 
                                WHERE staff_service_id = {$delete_id} 
-                                 AND steps_id = {$steps_id} 
+                                 AND staff_id = {$staff_id} 
                                  AND shop_id = {$shop_id} ";
             $check_del_row = sql_fetch_pg($check_del_sql);
             
             if ($check_del_row && $check_del_row['staff_service_id']) {
                 $delete_sql = " DELETE FROM staff_services 
                                 WHERE staff_service_id = {$delete_id} 
-                                  AND steps_id = {$steps_id} 
+                                  AND staff_id = {$staff_id} 
                                   AND shop_id = {$shop_id} ";
                 sql_query_pg($delete_sql);
             }
@@ -112,7 +112,7 @@ if (isset($_POST['staff_service_id']) && is_array($_POST['staff_service_id'])) {
             // 해당 직원별 서비스가 해당 가맹점의 것인지 확인
             $check_update_sql = " SELECT staff_service_id FROM staff_services 
                                    WHERE staff_service_id = {$staff_service_id_val} 
-                                     AND steps_id = {$steps_id} 
+                                     AND staff_id = {$staff_id} 
                                      AND shop_id = {$shop_id} ";
             $check_update_row = sql_fetch_pg($check_update_sql);
             
@@ -138,7 +138,7 @@ if (isset($_POST['staff_service_id']) && is_array($_POST['staff_service_id'])) {
                                 slot_max_persons_cnt = {$slot_max_persons_cnt},
                                 status = '{$status}'
                             WHERE staff_service_id = {$staff_service_id_val} 
-                              AND steps_id = {$steps_id} 
+                              AND staff_id = {$staff_id} 
                               AND shop_id = {$shop_id} ";
                 sql_query_pg($update_sql);
             }
@@ -167,7 +167,7 @@ if (isset($_POST['service_id']) && is_array($_POST['service_id'])) {
             if ($check_service_row && $check_service_row['service_id']) {
                 // 이미 등록되어 있는지 확인
                 $check_exist_sql = " SELECT staff_service_id FROM staff_services 
-                                     WHERE steps_id = {$steps_id} 
+                                     WHERE staff_id = {$staff_id} 
                                        AND service_id = {$service_id_val} 
                                        AND shop_id = {$shop_id} ";
                 $check_exist_row = sql_fetch_pg($check_exist_sql);
@@ -191,14 +191,14 @@ if (isset($_POST['service_id']) && is_array($_POST['service_id'])) {
                     
                     $insert_sql = " INSERT INTO staff_services (
                                     shop_id,
-                                    steps_id,
+                                    staff_id,
                                     service_id,
                                     service_time,
                                     slot_max_persons_cnt,
                                     status
                                 ) VALUES (
                                     {$shop_id},
-                                    {$steps_id},
+                                    {$staff_id},
                                     {$service_id_val},
                                     {$service_time},
                                     {$slot_max_persons_cnt},
@@ -224,6 +224,6 @@ if ($sst) $qstr .= '&sst='.urlencode($sst);
 if ($sod) $qstr .= '&sod='.urlencode($sod);
 if ($page > 1) $qstr .= '&page='.$page;
 
-alert('저장되었습니다.', './staff_services_form.php?'.$qstr.'&steps_id='.$steps_id, false);
+alert('저장되었습니다.', './staff_services_form.php?'.$qstr.'&staff_id='.$staff_id, false);
 ?>
 

@@ -100,9 +100,9 @@ if ($end_timestamp <= $start_timestamp) {
 
 // 직원이 해당 가맹점 소속인지 확인
 $staff_check_sql = "
-    SELECT steps_id 
+    SELECT staff_id 
     FROM staff 
-    WHERE steps_id = {$staff_id} 
+    WHERE staff_id = {$staff_id} 
     AND store_id = {$shop_id}
 ";
 
@@ -167,7 +167,7 @@ if ($w == '') {
     $check_sql = "
         SELECT ss.schedule_id, s.store_id
         FROM staff_schedules ss
-        INNER JOIN staff s ON ss.staff_id = s.steps_id
+        INNER JOIN staff s ON ss.staff_id = s.staff_id
         WHERE ss.schedule_id = {$schedule_id}
     ";
     
