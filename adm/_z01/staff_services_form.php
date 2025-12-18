@@ -2,6 +2,8 @@
 $sub_menu = "930400";
 include_once('./_common.php');
 
+@auth_check($auth[$sub_menu], 'w');
+
 // 가맹점측 관리자 접근 권한 체크
 $has_access = false;
 $shop_id = 0;
@@ -292,10 +294,10 @@ include_once('./js/staff_services_form.js.php');
                 echo '<td class="td_center">';
                 echo '<input type="hidden" name="staff_service_id[]" value="'.$registered_row['staff_service_id'].'">';
                 echo '<input type="hidden" name="service_id[]" value="'.$registered_row['service_id'].'">';
-                echo '<input type="number" name="service_time[]" value="'.$registered_row['service_time'].'" class="frm_input text-center" style="width:80px;" min="0" required>';
+                echo '<input type="number" name="service_time[]" value="'.$registered_row['service_time'].'" class="text-center frm_input" style="width:80px;" min="0" required>';
                 echo '</td>';
                 echo '<td class="td_center">';
-                echo '<input type="number" name="slot_max_persons_cnt[]" value="'.$registered_row['slot_max_persons_cnt'].'" class="frm_input text-center" style="width:80px;" min="1" required>';
+                echo '<input type="number" name="slot_max_persons_cnt[]" value="'.$registered_row['slot_max_persons_cnt'].'" class="text-center frm_input" style="width:80px;" min="1" required>';
                 echo '</td>';
                 echo '<td class="td_center">';
                 echo '<select name="status[]" class="frm_input">';
