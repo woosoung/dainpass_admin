@@ -120,9 +120,17 @@ if (isset($_POST['staff_service_id']) && is_array($_POST['staff_service_id'])) {
                 $service_time = isset($_POST['service_time'][$idx]) ? (int)$_POST['service_time'][$idx] : 0;
                 $slot_max_persons_cnt = isset($_POST['slot_max_persons_cnt'][$idx]) ? (int)$_POST['slot_max_persons_cnt'][$idx] : 1;
                 $status = isset($_POST['status'][$idx]) ? trim($_POST['status'][$idx]) : 'ok';
-                
-                if ($service_time < 0) $service_time = 0;
-                if ($slot_max_persons_cnt < 1) $slot_max_persons_cnt = 1;
+
+                // 입력값 범위 검증
+                if ($service_time < 0 || $service_time > 1440) {
+                    alert('서비스시간은 0분 이상 1440분(24시간) 이하로 입력해 주세요.');
+                }
+
+                if ($slot_max_persons_cnt < 1 || $slot_max_persons_cnt > 100) {
+                    alert('슬롯당 고객수는 1명 이상 100명 이하로 입력해 주세요.');
+                }
+
+                // select 값 화이트리스트 검증
                 if (!in_array($status, array('ok', 'pending'))) $status = 'ok';
                 
                 $update_sql = " UPDATE staff_services SET 
@@ -168,9 +176,17 @@ if (isset($_POST['service_id']) && is_array($_POST['service_id'])) {
                     $service_time = isset($_POST['service_time'][$idx]) ? (int)$_POST['service_time'][$idx] : 0;
                     $slot_max_persons_cnt = isset($_POST['slot_max_persons_cnt'][$idx]) ? (int)$_POST['slot_max_persons_cnt'][$idx] : 1;
                     $status = isset($_POST['status'][$idx]) ? trim($_POST['status'][$idx]) : 'ok';
-                    
-                    if ($service_time < 0) $service_time = 0;
-                    if ($slot_max_persons_cnt < 1) $slot_max_persons_cnt = 1;
+
+                    // 입력값 범위 검증
+                    if ($service_time < 0 || $service_time > 1440) {
+                        alert('서비스시간은 0분 이상 1440분(24시간) 이하로 입력해 주세요.');
+                    }
+
+                    if ($slot_max_persons_cnt < 1 || $slot_max_persons_cnt > 100) {
+                        alert('슬롯당 고객수는 1명 이상 100명 이하로 입력해 주세요.');
+                    }
+
+                    // select 값 화이트리스트 검증
                     if (!in_array($status, array('ok', 'pending'))) $status = 'ok';
                     
                     $insert_sql = " INSERT INTO staff_services (
