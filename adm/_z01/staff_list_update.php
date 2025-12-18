@@ -117,6 +117,8 @@ if ($act_button == '선택수정') {
 }
 
 if ($act_button == '선택삭제') {
+    @auth_check($auth[$sub_menu], 'd');
+
     check_demo();
     
     if (!isset($_POST['chk']) || !is_array($_POST['chk']) || count($_POST['chk']) == 0) {
