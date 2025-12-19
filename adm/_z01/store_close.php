@@ -4,86 +4,60 @@ include_once("./_common.php");
 
 @auth_check($auth[$sub_menu], 'd');
 
-// 가맹점측 관리자 접근 권한 체크
-$has_access = false;
-$shop_id = 0;
-$is_platform_admin = false; // 플랫폼 관리자 여부
-
+// 플랫폼 관리자 여부 확인
+$is_platform_admin = false;
 if ($is_member && $member['mb_id']) {
-    // 회원 정보 확인
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date
                 FROM {$g5['member_table']}
                 WHERE mb_id = '{$member['mb_id']}' ";
-
     $mb_row = sql_fetch($mb_sql, 1);
 
     if ($mb_row && $mb_row['mb_id']) {
-        $is_platform_admin = ($mb_row['mb_level'] >= 6); // 플랫폼 관리자 여부
-
-        // 플랫폼 관리자가 아닌 경우에만 추가 검증
-        if (!$is_platform_admin) {
-            // mb_level 5 미만이면 접근 불가 (가맹점 오너만 탈퇴 가능)
-            if ($mb_row['mb_level'] < 5) {
-                alert('가맹점 오너만 탈퇴 처리를 할 수 있습니다.');
-            }
-
-            // 이미 탈퇴한 회원인지 확인
-            if (!empty($mb_row['mb_leave_date'])) {
-                alert('이미 탈퇴한 회원입니다.');
-            }
-        }
-
-        $mb_1 = trim($mb_row['mb_1']);
-
-        // 플랫폼 관리자인 경우: POST로 전달받은 shop_id 사용
-        if ($is_platform_admin) {
-            // POST로 전달된 shop_id 확인
-            $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
-            if (!$post_shop_id) {
-                alert('탈퇴할 가맹점을 선택해 주세요.');
-            }
-
-            // PostgreSQL에서 shop_id 확인
-            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$post_shop_id} ";
-            $shop_row = sql_fetch_pg($shop_sql);
-
-            if ($shop_row && $shop_row['shop_id']) {
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
-                $shop_status = $shop_row['status'];
-            } else {
-                alert('업체 데이터가 없습니다.');
-            }
-        }
-        // 가맹점 오너인 경우: mb_1의 shop_id 사용
-        else {
-            // mb_1 = '0'인 경우: 오류
-            if ($mb_1 === '0' || $mb_1 === '') {
-                alert('업체 데이터가 없습니다.');
-            }
-
-            // mb_1에 shop_id 값이 있는 경우: 해당 shop_id로 shop 테이블 조회
-            if (!empty($mb_1)) {
-                // PostgreSQL에서 shop_id 확인
-                $shop_id_check = (int)$mb_1;
-                $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
-                $shop_row = sql_fetch_pg($shop_sql);
-
-                if ($shop_row && $shop_row['shop_id']) {
-                    $has_access = true;
-                    $shop_id = (int)$shop_row['shop_id'];
-                    $shop_status = $shop_row['status'];
-                } else {
-                    alert('업체 데이터가 없습니다.');
-                }
-            }
-        }
+        $is_platform_admin = ($mb_row['mb_level'] >= 6);
     }
 }
 
-// 접근 권한이 없으면 메시지 표시
-if (!$has_access) {
-    alert('접속할 수 없는 페이지 입니다.');
+// 플랫폼 관리자인 경우: POST shop_id 사용
+if ($is_platform_admin) {
+    $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
+    if (!$post_shop_id) {
+        alert('탈퇴할 가맹점을 선택해 주세요.');
+    }
+
+    // shop_id 유효성 확인
+    $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$post_shop_id} ";
+    $shop_row = sql_fetch_pg($shop_sql);
+
+    if (!$shop_row || !$shop_row['shop_id']) {
+        alert('업체 데이터가 없습니다.');
+    }
+
+    $shop_id = (int)$shop_row['shop_id'];
+    $shop_status = $shop_row['status'];
+}
+// 가맹점 오너인 경우: check_shop_access() 사용
+else {
+    // mb_level >= 5 체크
+    if ($mb_row['mb_level'] < 5) {
+        alert('가맹점 오너만 탈퇴 처리를 할 수 있습니다.');
+    }
+
+    // 이미 탈퇴한 회원인지 확인
+    if (!empty($mb_row['mb_leave_date'])) {
+        alert('이미 탈퇴한 회원입니다.');
+    }
+
+    // check_shop_access() 사용
+    $result = check_shop_access(array(
+        'check_status' => false,  // status는 별도 확인
+        'output_mode' => 'alert'
+    ));
+    $shop_id = $result['shop_id'];
+
+    // shop_status 별도 조회
+    $shop_sql = " SELECT status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id} ";
+    $shop_row = sql_fetch_pg($shop_sql);
+    $shop_status = $shop_row['status'];
 }
 
 // POST 요청만 허용

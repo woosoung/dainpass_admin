@@ -2,76 +2,10 @@
 $sub_menu = "960300";
 include_once('./_common.php');
 
-// 가맹점측 관리자 접근 권한 체크
-$has_access = false;
-$shop_id = 0;
-$shop_info = null;
-
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
-                FROM {$g5['member_table']} 
-                WHERE mb_id = '{$member['mb_id']}' 
-                AND mb_level >= 4 
-                AND (
-                    mb_level >= 6 
-                    OR (mb_level < 6 AND mb_2 = 'Y')
-                )
-                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
-                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
-    $mb_row = sql_fetch($mb_sql, 1);
-    
-    if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        
-        if ($mb_1_value === '0' || $mb_1_value === '') {
-            $g5['title'] = '고객문의관리';
-            include_once(G5_ADMIN_PATH.'/admin.head.php');
-            echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-            echo '<p>업체 데이터가 없습니다.</p>';
-            echo '</div>';
-            include_once(G5_ADMIN_PATH.'/admin.tail.php');
-            exit;
-        }
-        
-        if (!empty($mb_1_value)) {
-            $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id, shop_name, name, status 
-                         FROM {$g5['shop_table']} 
-                         WHERE shop_id = {$shop_id_check} ";
-            $shop_row = sql_fetch_pg($shop_sql);
-            
-            if ($shop_row && $shop_row['shop_id']) {
-                if ($shop_row['status'] == 'pending')
-                    alert('아직 승인이 되지 않았습니다.');
-                if ($shop_row['status'] == 'closed')
-                    alert('폐업되었습니다.');
-                if ($shop_row['status'] == 'shutdown')
-                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
-                $shop_info = $shop_row;
-            } else {
-                $g5['title'] = '고객문의관리';
-                include_once(G5_ADMIN_PATH.'/admin.head.php');
-                echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-                echo '<p>업체 데이터가 없습니다.</p>';
-                echo '</div>';
-                include_once(G5_ADMIN_PATH.'/admin.tail.php');
-                exit;
-            }
-        }
-    }
-}
-
-if (!$has_access) {
-    $g5['title'] = '고객문의관리';
-    include_once(G5_ADMIN_PATH.'/admin.head.php');
-    echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-    echo '<p>접속할 수 없는 페이지 입니다.</p>';
-    echo '</div>';
-    include_once(G5_ADMIN_PATH.'/admin.tail.php');
-    exit;
-}
+// 가맹점 접근 권한 체크
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 auth_check_menu($auth, $sub_menu, "r");
 
@@ -192,7 +126,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             <td>
                 <a href="javascript:void(0);" class="text-blue-600">
                     <?php if($qna['qna_secret_yn'] == 'Y') { ?>
-                        <i class="fa fa-lock text-gray-500"></i>
+                        <i class="text-gray-500 fa fa-lock"></i>
                     <?php } ?>
                     <?=get_text($qna['qna_subject'])?>
                 </a>
@@ -203,7 +137,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             <td>
                 <div class="text-sm">
                     <strong><?=get_text($qna['name'])?></strong> (<?=get_text($qna['user_id'])?>)
-                    <span class="text-gray-500 text-xs ml-2"><?=substr($qna['qna_created_at'],0,10)?></span>
+                    <span class="ml-2 text-xs text-gray-500"><?=substr($qna['qna_created_at'],0,10)?></span>
                 </div>
             </td>
         </tr>
@@ -327,7 +261,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
                 <div>
                     <strong><?=$writer_name?></strong>
                     <?php if($is_admin) { ?>
-                        <span class="text-blue-700 text-sm font-weight-bold">(가맹점 관리자)</span>
+                        <span class="text-sm text-blue-700 font-weight-bold">(가맹점 관리자)</span>
                         <?php 
                         // 관리자 답변이고 고객이 확인하지 않은 경우 (qna_status = 'pending')
                         $can_edit = ($is_admin && !empty($reply['qna_status']) && $reply['qna_status'] == 'pending');
@@ -336,23 +270,23 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
                         // 고객 확인 여부 표시
                         if ($is_confirmed) {
                         ?>
-                        <span class="text-green-600 text-xs ml-2"><i class="fa fa-check-circle"></i> 고객 확인완료</span>
+                        <span class="ml-2 text-xs text-green-600"><i class="fa fa-check-circle"></i> 고객 확인완료</span>
                         <?php } else { ?>
-                        <span class="text-orange-600 text-xs ml-2"><i class="fa fa-clock-o"></i> 고객 미확인</span>
+                        <span class="ml-2 text-xs text-orange-600"><i class="fa fa-clock-o"></i> 고객 미확인</span>
                         <?php } ?>
                         
                         <?php if ($can_edit) { ?>
-                        <span class="text-orange-600 text-xs ml-2">(수정/삭제 가능)</span>
+                        <span class="ml-2 text-xs text-orange-600">(수정/삭제 가능)</span>
                         <?php } ?>
                     <?php } else { ?>
-                        <span class="text-green-700 text-sm font-weight-bold">(고객)</span>
+                        <span class="text-sm text-green-700 font-weight-bold">(고객)</span>
                     <?php } ?>
                     <?php if($show_lock) { ?>
-                        <i class="fa fa-lock text-gray-500 ml-2"></i>
+                        <i class="ml-2 text-gray-500 fa fa-lock"></i>
                     <?php } ?>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="text-gray-500 text-sm"><?=!empty($reply['qna_created_at']) ? substr($reply['qna_created_at'],0,16) : ''?></span>
+                    <span class="text-sm text-gray-500"><?=!empty($reply['qna_created_at']) ? substr($reply['qna_created_at'],0,16) : ''?></span>
                     <?php if($is_admin && $can_edit) { ?>
                         <button type="button" class="btn_edit_reply btn_02 btn" data-reply-id="<?=$reply['qna_id']?>" style="padding: 4px 8px; font-size: 12px;">수정</button>
                         <button type="button" class="btn_delete_reply btn_02 btn" data-reply-id="<?=$reply['qna_id']?>" style="padding: 4px 8px; font-size: 12px; background: #dc3545; color: #fff;">삭제</button>

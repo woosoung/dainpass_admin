@@ -5,34 +5,8 @@ include_once('./_common.php');
 @auth_check($auth[$sub_menu],'w');
 
 // 가맹점 접근 권한 체크
-$has_access = false;
-$shop_id = 0;
-
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2 
-                FROM {$g5['member_table']} 
-                WHERE mb_id = '{$member['mb_id']}' 
-                AND mb_level >= 4 
-                AND (mb_level >= 6 OR (mb_level < 6 AND mb_2 = 'Y')) ";
-    $mb_row = sql_fetch($mb_sql, 1);
-    
-    if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        if (!empty($mb_1_value) && $mb_1_value !== '0') {
-            $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
-            $shop_row = sql_fetch_pg($shop_sql);
-            if ($shop_row && $shop_row['shop_id']) {
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
-            }
-        }
-    }
-}
-
-if (!$has_access) {
-    alert('접근 권한이 없습니다.');
-}
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
 
 $group_id = isset($_GET['group_id']) ? (int)$_GET['group_id'] : 0;
 

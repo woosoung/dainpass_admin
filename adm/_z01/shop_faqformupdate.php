@@ -14,36 +14,9 @@ if ($w === 'd') {
 
 check_admin_token();
 
-// 현재 로그인한 가맹점 정보 확인
-$has_access = false;
-$shop_id = 0;
-
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date
-                FROM {$g5['member_table']}
-                WHERE mb_id = '{$member['mb_id']}'
-                  AND mb_level >= 4
-                  AND (
-                        mb_level >= 6
-                        OR (mb_level < 6 AND mb_2 = 'Y')
-                  )
-                  AND (mb_leave_date = '' OR mb_leave_date IS NULL)
-                  AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
-    $mb_row = sql_fetch($mb_sql, 1);
-
-    if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        if ($mb_1_value !== '' && $mb_1_value !== '0') {
-            $shop_id = (int) $mb_1_value;
-            $has_access = true;
-        }
-    }
-}
-
-if (!$has_access || !$shop_id) {
-    alert('접속할 수 없는 페이지 입니다.', './shop_faqmasterlist.php');
-    exit;
-}
+// 가맹점 접근 권한 체크
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
 
 // 파라미터
 $fm_id = isset($_REQUEST['fm_id']) ? (int) $_REQUEST['fm_id'] : 0;

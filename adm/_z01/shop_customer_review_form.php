@@ -2,76 +2,10 @@
 $sub_menu = "960400";
 include_once('./_common.php');
 
-// 가맹점측 관리자 접근 권한 체크
-$has_access = false;
-$shop_id = 0;
-$shop_info = null;
-
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
-                FROM {$g5['member_table']} 
-                WHERE mb_id = '{$member['mb_id']}' 
-                AND mb_level >= 4 
-                AND (
-                    mb_level >= 6 
-                    OR (mb_level < 6 AND mb_2 = 'Y')
-                )
-                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
-                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
-    $mb_row = sql_fetch($mb_sql, 1);
-    
-    if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        
-        if ($mb_1_value === '0' || $mb_1_value === '') {
-            $g5['title'] = '고객리뷰관리';
-            include_once(G5_ADMIN_PATH.'/admin.head.php');
-            echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-            echo '<p>업체 데이터가 없습니다.</p>';
-            echo '</div>';
-            include_once(G5_ADMIN_PATH.'/admin.tail.php');
-            exit;
-        }
-        
-        if (!empty($mb_1_value)) {
-            $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id, shop_name, name, status 
-                         FROM {$g5['shop_table']} 
-                         WHERE shop_id = {$shop_id_check} ";
-            $shop_row = sql_fetch_pg($shop_sql);
-            
-            if ($shop_row && $shop_row['shop_id']) {
-                if ($shop_row['status'] == 'pending')
-                    alert('아직 승인이 되지 않았습니다.');
-                if ($shop_row['status'] == 'closed')
-                    alert('폐업되었습니다.');
-                if ($shop_row['status'] == 'shutdown')
-                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
-                $shop_info = $shop_row;
-            } else {
-                $g5['title'] = '고객리뷰관리';
-                include_once(G5_ADMIN_PATH.'/admin.head.php');
-                echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-                echo '<p>업체 데이터가 없습니다.</p>';
-                echo '</div>';
-                include_once(G5_ADMIN_PATH.'/admin.tail.php');
-                exit;
-            }
-        }
-    }
-}
-
-if (!$has_access) {
-    $g5['title'] = '고객리뷰관리';
-    include_once(G5_ADMIN_PATH.'/admin.head.php');
-    echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-    echo '<p>접속할 수 없는 페이지 입니다.</p>';
-    echo '</div>';
-    include_once(G5_ADMIN_PATH.'/admin.tail.php');
-    exit;
-}
+// 가맹점 접근 권한 체크
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 auth_check_menu($auth, $sub_menu, "w");
 
@@ -111,9 +45,9 @@ if ($w == 'u' && $review_id > 0) {
             $row2['thumb'] = '<span class="sp_thumb"><img src="'.$row2['thumb_url'].'" alt="'.$row2['fle_name_orig'].'" style="width:'.$rvwi_wd.'px;height:'.$rvwi_ht.'px;border:1px solid #ddd;"></span>'.PHP_EOL;
             $row2['down_del'] = ($is_s3file_yn) ? $row2['fle_name_orig'].'&nbsp;&nbsp;<a class="a_download" href="'.G5_Z_URL.'/lib/download.php?file_path='.$row2['fle_path'].'&file_name_orig='.$row2['fle_name_orig'].'">(<span class="sp_size">'.$row2['fle_width'].' X '.$row2['fle_height'].'</span>)[파일다운로드]</a>&nbsp;&nbsp;'.substr($row2['fle_reg_dt'],0,19).'&nbsp;&nbsp;<label class="lb_delchk" for="del_'.$row2['fle_idx'].'" style="position:relative;top:-3px;cursor:pointer;"><input type="checkbox" name="rvwi_del['.$row2['fle_idx'].']" id="del_'.$row2['fle_idx'].'" value="1"> 삭제</label>'.PHP_EOL : ''.PHP_EOL;
             $row2['down_del'] .= ($is_dev_manager && $is_s3file_yn) ? 
-            '<br><span class="sp_sql"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
-            <br><span class="sp_orig_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
-            <br><span class="sp_thumb_img_url"><i class="copy_url fa fa-clone cursor-pointer text-blue-500" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
+            '<br><span class="sp_sql"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.trim($sql).' LIMIT 1;</span></span>
+            <br><span class="sp_orig_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$set_conf['set_s3_basicurl'].'/'.$row2['fle_path'].'</span></span>
+            <br><span class="sp_thumb_img_url"><i class="text-blue-500 cursor-pointer copy_url fa fa-clone" aria-hidden="true"></i>&nbsp;<span class="copied_url">'.$row2['thumb_url'].'</span></span>'.PHP_EOL : ''.PHP_EOL;
             $row2['down_del'] .= ($is_s3file_yn) ? '<br>'.$row2['thumb'].PHP_EOL : ''.PHP_EOL;
             $rvwi['fle_db_idx'] = $row2['fle_db_idx'];
             @array_push($rvwi['rvwi_f_arr'], array('file'=>$row2['down_del'],'id'=>$row2['fle_idx']));
@@ -181,7 +115,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         <td>
             <div class="text-sm">
                 <strong><?php echo get_text($review['customer_name']); ?></strong> (<?php echo get_text($review['user_id']); ?>)
-                <span class="text-gray-500 text-xs ml-2">ID: <?php echo $review['customer_id']; ?></span>
+                <span class="ml-2 text-xs text-gray-500">ID: <?php echo $review['customer_id']; ?></span>
             </div>
         </td>
     </tr>

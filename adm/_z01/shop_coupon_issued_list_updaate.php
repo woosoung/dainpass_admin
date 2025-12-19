@@ -7,56 +7,8 @@ header('Content-Type: application/json; charset=utf-8');
 @auth_check($auth[$sub_menu], 'w');
 
 // 가맹점 접근 권한 체크
-$has_access = false;
-$shop_id = 0;
-
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
-                FROM {$g5['member_table']} 
-                WHERE mb_id = '{$member['mb_id']}' 
-                AND mb_level >= 4 
-                AND (
-                    mb_level >= 6 
-                    OR (mb_level < 6 AND mb_2 = 'Y')
-                )
-                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
-                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
-    $mb_row = sql_fetch($mb_sql, 1);
-    
-    if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        
-        if ($mb_1_value === '0' || $mb_1_value === '') {
-            echo json_encode(array('success' => false, 'message' => '업체 데이터가 없습니다.'));
-            exit;
-        }
-        
-        if (!empty($mb_1_value)) {
-            $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
-            $shop_row = sql_fetch_pg($shop_sql);
-            
-            if ($shop_row && $shop_row['shop_id']) {
-                if ($shop_row['status'] == 'pending')
-                    echo json_encode(array('success' => false, 'message' => '아직 승인이 되지 않았습니다.'));
-                if ($shop_row['status'] == 'closed')
-                    echo json_encode(array('success' => false, 'message' => '폐업되었습니다.'));
-                if ($shop_row['status'] == 'shutdown')
-                    echo json_encode(array('success' => false, 'message' => '접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.'));
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
-            } else {
-                echo json_encode(array('success' => false, 'message' => '업체 데이터가 없습니다.'));
-                exit;
-            }
-        }
-    }
-}
-
-if (!$has_access) {
-    echo json_encode(array('success' => false, 'message' => '접속할 수 없는 페이지 입니다.'));
-    exit;
-}
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
 
 // 토큰 체크
 check_admin_token();

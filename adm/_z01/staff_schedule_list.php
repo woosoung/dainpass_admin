@@ -4,76 +4,9 @@ include_once('./_common.php');
 
 @auth_check($auth[$sub_menu], 'r');
 
-// 가맹점측 관리자 접근 권한 체크
-$has_access = false;
-$shop_id = 0;
-
-if ($is_member && $member['mb_id']) {
-    // MySQL에서 회원 정보 확인
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date 
-                FROM {$g5['member_table']} 
-                WHERE mb_id = '{$member['mb_id']}' 
-                AND mb_level >= 4 
-                AND (
-                    mb_level >= 6 
-                    OR (mb_level < 6 AND mb_2 = 'Y')
-                )
-                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
-                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
-    $mb_row = sql_fetch($mb_sql, 1);
-    
-    if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        
-        // mb_1 = '0'인 경우: 플랫폼 관리자
-        if ($mb_1_value === '0' || $mb_1_value === '') {
-            $g5['title'] = '직원별 근무시간 관리';
-            include_once(G5_ADMIN_PATH.'/admin.head.php');
-            echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-            echo '<p>업체 데이터가 없습니다.</p>';
-            echo '</div>';
-            include_once(G5_ADMIN_PATH.'/admin.tail.php');
-            exit;
-        }
-        
-        // mb_1에 shop_id 값이 있는 경우
-        if (!empty($mb_1_value)) {
-            $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
-            $shop_row = sql_fetch_pg($shop_sql);
-            
-            if ($shop_row && $shop_row['shop_id']) {
-                if ($shop_row['status'] == 'pending')
-                    alert('아직 승인이 되지 않았습니다.');
-                if ($shop_row['status'] == 'closed')
-                    alert('폐업되었습니다.');
-                if ($shop_row['status'] == 'shutdown')
-                    alert('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.');
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
-            } else {
-                $g5['title'] = '직원별 근무시간 관리';
-                include_once(G5_ADMIN_PATH.'/admin.head.php');
-                echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-                echo '<p>업체 데이터가 없습니다.</p>';
-                echo '</div>';
-                include_once(G5_ADMIN_PATH.'/admin.tail.php');
-                exit;
-            }
-        }
-    }
-}
-
-// 접근 권한이 없으면 메시지 표시
-if (!$has_access) {
-    $g5['title'] = '직원별 근무시간 관리';
-    include_once(G5_ADMIN_PATH.'/admin.head.php');
-    echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-    echo '<p>접속할 수 없는 페이지 입니다.</p>';
-    echo '</div>';
-    include_once(G5_ADMIN_PATH.'/admin.tail.php');
-    exit;
-}
+// 가맹점 접근 권한 체크
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
 
 // 검색 조건
 $ser_staff_id = isset($_GET['ser_staff_id']) ? (int)$_GET['ser_staff_id'] : 0;
