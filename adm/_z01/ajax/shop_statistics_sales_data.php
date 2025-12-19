@@ -1,0 +1,538 @@
+<?php
+include_once('./_common.php');
+
+header('Content-Type: application/json; charset=utf-8');
+
+// 에러 발생 시 JSON으로 응답하도록 설정
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['success' => false, 'message' => '서버 오류가 발생했습니다: ' . $error['message']], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+});
+
+// =========================
+// Helper functions (함수 정의를 먼저)
+// =========================
+
+if (!function_exists('calculate_date_range')) {
+function calculate_date_range($period_type, $start_date, $end_date)
+{
+    $today = new DateTime('today');
+
+    // start_date와 end_date가 모두 제공되면 custom으로 처리
+    if ($start_date && $end_date) {
+        $start = DateTime::createFromFormat('Y-m-d', $start_date);
+        $end   = DateTime::createFromFormat('Y-m-d', $end_date);
+        
+        if ($start && $end) {
+            // 날짜 유효성 검사
+            if ($start > $end) {
+                $tmp = $start;
+                $start = $end;
+                $end = $tmp;
+            }
+            return [$start->format('Y-m-d'), $end->format('Y-m-d')];
+        }
+    }
+
+    // start_date만 제공되면 해당 날짜 기준으로 처리
+    if ($start_date && !$end_date) {
+        $start = DateTime::createFromFormat('Y-m-d', $start_date);
+        if ($start) {
+            $end = clone $start;
+            switch ($period_type) {
+                case 'weekly':
+                    $end->modify('+6 days');
+                    break;
+                case 'monthly':
+                    $end->modify('last day of this month');
+                    break;
+                case 'daily':
+                default:
+                    $end = clone $today;
+                    break;
+            }
+            return [$start->format('Y-m-d'), $end->format('Y-m-d')];
+        }
+    }
+
+    // period_type에 따라 기본 기간 계산
+    switch ($period_type) {
+        case 'weekly':
+            // 최근 7일
+            $end = clone $today;
+            $start = (clone $today)->modify('-6 days');
+            break;
+        case 'monthly':
+            // 이번 달 1일부터 오늘까지
+            $end = clone $today;
+            $start = new DateTime($today->format('Y-m-01'));
+            break;
+        case 'daily':
+        default:
+            // 기본: 최근 30일
+            $end = clone $today;
+            $start = (clone $today)->modify('-29 days');
+            break;
+    }
+
+    if ($start > $end) {
+        $tmp = $start;
+        $start = $end;
+        $end = $tmp;
+    }
+
+    return [$start->format('Y-m-d'), $end->format('Y-m-d')];
+}
+}
+
+if (!function_exists('get_sales_summary')) {
+function get_sales_summary($shop_id, $range_start, $range_end)
+{
+    // 오늘 기준
+    $today = date('Y-m-d');
+    $month_start = date('Y-m-01');
+    $prev_month_start = date('Y-m-01', strtotime('-1 month'));
+    $prev_month_end   = date('Y-m-t', strtotime('-1 month'));
+
+    // 오늘 매출 & 예약 & 취소
+    $sql_today = "
+        SELECT 
+            COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
+            COUNT(*) AS appointment_count
+        FROM appointment_shop_detail AS asd
+        WHERE asd.shop_id = {$shop_id}
+          AND asd.appointment_datetime >= '{$today} 00:00:00'
+          AND asd.appointment_datetime <= '{$today} 23:59:59'
+          AND asd.status IN ('COMPLETED', 'CANCELLED')
+    ";
+    $row_today = sql_fetch_pg($sql_today);
+
+    $sql_today_cancel = "
+        SELECT COALESCE(SUM(psc.cancel_amount), 0) AS cancel_amount,
+               COUNT(*) AS cancel_count
+        FROM payments_shop_cancel AS psc
+        WHERE psc.appointment_id IN (
+            SELECT appointment_id
+            FROM appointment_shop_detail
+            WHERE shop_id = {$shop_id}
+        )
+          AND psc.created_at >= '{$today} 00:00:00'
+          AND psc.created_at <= '{$today} 23:59:59'
+    ";
+    $row_today_cancel = sql_fetch_pg($sql_today_cancel);
+
+    // 이번 달 매출
+    $sql_month = "
+        SELECT 
+            COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
+            COUNT(*) AS appointment_count
+        FROM appointment_shop_detail AS asd
+        WHERE asd.shop_id = {$shop_id}
+          AND asd.appointment_datetime >= '{$month_start} 00:00:00'
+          AND asd.appointment_datetime <= '{$today} 23:59:59'
+          AND asd.status IN ('COMPLETED', 'CANCELLED')
+    ";
+    $row_month = sql_fetch_pg($sql_month);
+
+    // 전월 매출 (증감률 계산용)
+    $sql_prev_month = "
+        SELECT 
+            COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
+            COUNT(*) AS appointment_count
+        FROM appointment_shop_detail AS asd
+        WHERE asd.shop_id = {$shop_id}
+          AND asd.appointment_datetime >= '{$prev_month_start} 00:00:00'
+          AND asd.appointment_datetime <= '{$prev_month_end} 23:59:59'
+          AND asd.status IN ('COMPLETED', 'CANCELLED')
+    ";
+    $row_prev_month = sql_fetch_pg($sql_prev_month);
+
+    $month_vs_prev_rate = 0.0;
+    if (!empty($row_prev_month['total_sales']) && $row_prev_month['total_sales'] > 0) {
+        $month_vs_prev_rate = (($row_month['total_sales'] - $row_prev_month['total_sales']) / $row_prev_month['total_sales']) * 100.0;
+    }
+
+    // 누적 매출
+    $sql_total = "
+        SELECT 
+            COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
+            COUNT(*) AS appointment_count
+        FROM appointment_shop_detail AS asd
+        WHERE asd.shop_id = {$shop_id}
+          AND asd.status IN ('COMPLETED', 'CANCELLED')
+    ";
+    $row_total = sql_fetch_pg($sql_total);
+
+    // 선택 기간(대시보드 카드 취소 통계 계산에 활용)
+    $sql_range_base = "
+        SELECT 
+            COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
+            COUNT(*) AS appointment_count,
+            COALESCE(SUM(asd.org_balance_amount - asd.balance_amount), 0) AS cancel_amount,
+            COUNT(CASE WHEN asd.status = 'CANCELLED' THEN 1 END) AS cancel_count
+        FROM appointment_shop_detail AS asd
+        WHERE asd.shop_id = {$shop_id}
+          AND asd.appointment_datetime >= '{$range_start} 00:00:00'
+          AND asd.appointment_datetime <= '{$range_end} 23:59:59'
+          AND asd.status IN ('COMPLETED', 'CANCELLED')
+    ";
+    $row_range = sql_fetch_pg($sql_range_base);
+
+    $cancel_rate = 0.0;
+    if (!empty($row_range['appointment_count']) && $row_range['appointment_count'] > 0) {
+        $cancel_rate = ($row_range['cancel_count'] / $row_range['appointment_count']) * 100.0;
+    }
+
+    $avg_amount = 0.0;
+    if (!empty($row_range['appointment_count']) && $row_range['appointment_count'] > 0) {
+        $avg_amount = $row_range['total_sales'] / $row_range['appointment_count'];
+    }
+
+    return [
+        'today_sales_amount'        => (int)$row_today['total_sales'],
+        'today_appointment_count'   => (int)$row_today['appointment_count'],
+        'today_cancel_amount'       => (int)$row_today_cancel['cancel_amount'],
+        'today_cancel_count'        => (int)$row_today_cancel['cancel_count'],
+
+        'month_sales_amount'        => (int)$row_month['total_sales'],
+        'month_appointment_count'   => (int)$row_month['appointment_count'],
+        'prev_month_sales_amount'   => (int)$row_prev_month['total_sales'],
+        'prev_month_appointment_count' => (int)$row_prev_month['appointment_count'],
+        'month_vs_prev_rate'        => $month_vs_prev_rate,
+
+        'total_sales_amount'        => (int)$row_total['total_sales'],
+        'total_appointment_count'   => (int)$row_total['appointment_count'],
+
+        'range_total_sales_amount'  => (int)$row_range['total_sales'],
+        'range_appointment_count'   => (int)$row_range['appointment_count'],
+        'range_cancel_amount'       => (int)$row_range['cancel_amount'],
+        'range_cancel_count'        => (int)$row_range['cancel_count'],
+        'range_cancel_rate'         => $cancel_rate,
+        'range_avg_amount'          => $avg_amount,
+    ];
+}
+}
+
+if (!function_exists('get_daily_sales')) {
+function get_daily_sales($shop_id, $range_start, $range_end)
+{
+    // PostgreSQL에서 DATE 추출: CAST 또는 ::date 사용
+    $sql = "
+        SELECT 
+            CAST(asd.appointment_datetime AS DATE) AS date,
+            COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
+            COALESCE(SUM(asd.org_balance_amount - asd.balance_amount), 0) AS cancel_amount,
+            COUNT(*) AS appointment_count,
+            COUNT(CASE WHEN asd.status = 'CANCELLED' THEN 1 END) AS cancel_count
+        FROM appointment_shop_detail AS asd
+        WHERE asd.shop_id = {$shop_id}
+          AND asd.appointment_datetime >= '{$range_start} 00:00:00'
+          AND asd.appointment_datetime <= '{$range_end} 23:59:59'
+          AND asd.status IN ('COMPLETED', 'CANCELLED')
+        GROUP BY CAST(asd.appointment_datetime AS DATE)
+        ORDER BY date ASC
+    ";
+
+    $result = sql_query_pg($sql);
+    $rows = [];
+
+    if ($result && is_object($result) && isset($result->result)) {
+        while ($row = sql_fetch_array_pg($result->result)) {
+            $total_sales = (int)$row['total_sales'];
+            $cancel_amount = (int)$row['cancel_amount'];
+            $net_sales = $total_sales - $cancel_amount;
+
+            $rows[] = [
+                'date'              => $row['date'],
+                'total_sales'       => $total_sales,
+                'cancel_amount'     => $cancel_amount,
+                'net_sales'         => $net_sales,
+                'appointment_count' => (int)$row['appointment_count'],
+                'cancel_count'      => (int)$row['cancel_count'],
+            ];
+        }
+    }
+
+    return $rows;
+}
+}
+
+if (!function_exists('get_payment_method_statistics')) {
+function get_payment_method_statistics($shop_id, $range_start, $range_end)
+{
+    // appointment_shop_detail의 appointment_datetime 기준으로 필터링
+    // payments 테이블과 조인하되, 예약 일시 기준으로 필터링
+    $sql = "
+        SELECT 
+            p.payment_method,
+            COALESCE(SUM(p.amount), 0) AS total_amount,
+            COUNT(*) AS payment_count
+        FROM payments AS p
+        INNER JOIN appointment_shop_detail AS asd 
+            ON p.appointment_id = asd.appointment_id
+        WHERE asd.shop_id = {$shop_id}
+          AND (p.pay_flag = 'GENERAL' OR p.pay_flag IS NULL)
+          AND asd.appointment_datetime >= '{$range_start} 00:00:00'
+          AND asd.appointment_datetime <= '{$range_end} 23:59:59'
+          AND asd.status IN ('COMPLETED', 'CANCELLED')
+          AND p.status = 'DONE'
+        GROUP BY p.payment_method
+        ORDER BY total_amount DESC
+    ";
+
+    $result = sql_query_pg($sql);
+    $rows = [];
+    $total_sum = 0;
+
+    if ($result && is_object($result) && isset($result->result)) {
+        while ($row = sql_fetch_array_pg($result->result)) {
+            $amount = (int)$row['total_amount'];
+            $total_sum += $amount;
+            $rows[] = [
+                'payment_method' => $row['payment_method'],
+                'total_amount'   => $amount,
+                'payment_count'  => (int)$row['payment_count'],
+                'ratio'          => 0,
+            ];
+        }
+    }
+
+    if ($total_sum > 0) {
+        foreach ($rows as $idx => $item) {
+            $rows[$idx]['ratio'] = round(($item['total_amount'] * 100.0) / $total_sum, 2);
+        }
+    }
+
+    return $rows;
+}
+}
+
+if (!function_exists('get_cancellation_statistics')) {
+function get_cancellation_statistics($shop_id, $range_start, $range_end, $summary)
+{
+    // summary에서 이미 계산한 값 재사용
+    return [
+        'total_cancel_amount' => isset($summary['range_cancel_amount']) ? (int)$summary['range_cancel_amount'] : 0,
+        'cancel_count'        => isset($summary['range_cancel_count']) ? (int)$summary['range_cancel_count'] : 0,
+        'cancel_rate'         => isset($summary['range_cancel_rate']) ? (float)$summary['range_cancel_rate'] : 0.0,
+        'total_sales_amount'  => isset($summary['range_total_sales_amount']) ? (int)$summary['range_total_sales_amount'] : 0,
+        'appointment_count'   => isset($summary['range_appointment_count']) ? (int)$summary['range_appointment_count'] : 0,
+    ];
+}
+}
+
+if (!function_exists('get_settlement_deduction_statistics')) {
+function get_settlement_deduction_statistics($shop_id, $range_start, $range_end)
+{
+    // 실 매출: appointment_shop_detail.balance_amount (예약 기준)
+    $sql_sales = "
+        SELECT 
+            COALESCE(SUM(asd.balance_amount), 0) AS total_sales
+        FROM appointment_shop_detail AS asd
+        WHERE asd.shop_id = {$shop_id}
+          AND asd.appointment_datetime >= '{$range_start} 00:00:00'
+          AND asd.appointment_datetime <= '{$range_end} 23:59:59'
+          AND asd.status = 'COMPLETED'
+    ";
+    $row_sales = sql_fetch_pg($sql_sales);
+    $total_sales = (int)$row_sales['total_sales'];
+
+    // 정산금액: shop_settlements.net_settlement_amount (정산 기준)
+    $sql_settlement = "
+        SELECT 
+            COALESCE(SUM(ss.net_settlement_amount), 0) AS total_settlement
+        FROM shop_settlements AS ss
+        WHERE ss.shop_id = {$shop_id}
+          AND ss.appointment_datetime >= '{$range_start} 00:00:00'
+          AND ss.appointment_datetime <= '{$range_end} 23:59:59'
+          AND ss.settlement_status = 'COMPLETED'
+    ";
+    $row_settlement = sql_fetch_pg($sql_settlement);
+    $total_settlement = (int)$row_settlement['total_settlement'];
+
+    // 차감액 = 실 매출 - 정산금액 (수수료 및 기타 차감 포함)
+    $deduction_amount = $total_sales - $total_settlement;
+    
+    // 차감율 계산
+    $deduction_rate = 0.0;
+    if ($total_sales > 0) {
+        $deduction_rate = ($deduction_amount / $total_sales) * 100.0;
+    }
+
+    return [
+        'total_sales_amount'    => $total_sales,
+        'total_settlement_amount' => $total_settlement,
+        'deduction_amount'       => $deduction_amount,
+        'deduction_rate'        => $deduction_rate,
+    ];
+}
+}
+
+if (!function_exists('get_settlement_chart')) {
+function get_settlement_chart($shop_id, $range_start, $range_end)
+{
+    // shop_settlement_log 기준 월별 정산 금액 추이
+    $sql = "
+        SELECT
+            date_trunc('month', settlement_at)::date AS month,
+            COALESCE(SUM(settlement_amount), 0)      AS total_amount,
+            COUNT(*)                                  AS settlement_count,
+            COUNT(CASE WHEN status = 'done' THEN 1 END) AS done_count
+        FROM shop_settlement_log
+        WHERE shop_id = {$shop_id}
+          AND settlement_at >= '{$range_start} 00:00:00'
+          AND settlement_at <= '{$range_end} 23:59:59'
+        GROUP BY date_trunc('month', settlement_at)
+        ORDER BY month ASC
+    ";
+
+    $result = sql_query_pg($sql);
+    $rows = [];
+
+    if ($result && is_object($result) && isset($result->result)) {
+        while ($row = sql_fetch_array_pg($result->result)) {
+            $rows[] = [
+                'month'            => $row['month'],
+                'total_amount'     => (int)$row['total_amount'],
+                'settlement_count' => (int)$row['settlement_count'],
+                'done_count'       => (int)$row['done_count'],
+            ];
+        }
+    }
+
+    return $rows;
+}
+}
+
+if (!function_exists('get_settlement_logs')) {
+function get_settlement_logs($shop_id, $range_start, $range_end)
+{
+    // shop_settlement_log의 개별 정산 처리 내역
+    $sql = "
+        SELECT
+            settlement_at::date        AS settlement_date,
+            settlement_start_at,
+            settlement_end_at,
+            settlement_amount,
+            status
+        FROM shop_settlement_log
+        WHERE shop_id = {$shop_id}
+          AND settlement_at >= '{$range_start} 00:00:00'
+          AND settlement_at <= '{$range_end} 23:59:59'
+        ORDER BY settlement_at DESC
+    ";
+
+    $result = sql_query_pg($sql);
+    $rows = [];
+
+    if ($result && is_object($result) && isset($result->result)) {
+        while ($row = sql_fetch_array_pg($result->result)) {
+            $rows[] = [
+                'settlement_date'    => $row['settlement_date'],
+                'settlement_start_at'=> $row['settlement_start_at'],
+                'settlement_end_at'  => $row['settlement_end_at'],
+                'settlement_amount'  => (int)$row['settlement_amount'],
+                'status'             => $row['status'],
+            ];
+        }
+    }
+
+    return $rows;
+}
+}
+
+// 공통: 가맹점 접근 권한 및 shop_id 확인 (페이지와 동일 로직이지만 JSON으로 응답)
+$has_access = false;
+$shop_id = 0;
+
+if ($is_member && $member['mb_id']) {
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date ".
+              " FROM {$g5['member_table']} ".
+              " WHERE mb_id = '{$member['mb_id']}' ".
+              " AND mb_level >= 4 ".
+              " AND ( ".
+              "     mb_level >= 6 ".
+              "     OR (mb_level < 6 AND mb_2 = 'Y') ".
+              " ) ".
+              " AND (mb_leave_date = '' OR mb_leave_date IS NULL) ".
+              " AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+    $mb_row = sql_fetch($mb_sql, 1);
+
+    if ($mb_row && $mb_row['mb_id']) {
+        $mb_1_value = trim($mb_row['mb_1']);
+
+        if ($mb_1_value !== '0' && $mb_1_value !== '') {
+            $shop_id_check = (int)$mb_1_value;
+            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+            $shop_row = sql_fetch_pg($shop_sql);
+
+            if ($shop_row && $shop_row['shop_id']) {
+                if ($shop_row['status'] == 'pending') {
+                    echo json_encode(['success' => false, 'message' => '아직 승인이 되지 않았습니다.']);
+                    exit;
+                }
+                if ($shop_row['status'] == 'closed') {
+                    echo json_encode(['success' => false, 'message' => '폐업된 업체입니다.']);
+                    exit;
+                }
+                if ($shop_row['status'] == 'shutdown') {
+                    echo json_encode(['success' => false, 'message' => '접근이 제한된 업체입니다. 플랫폼 관리자에게 문의하세요.']);
+                    exit;
+                }
+
+                $has_access = true;
+                $shop_id = (int)$shop_row['shop_id'];
+            }
+        }
+    }
+}
+
+if (!$has_access || !$shop_id) {
+    echo json_encode(['success' => false, 'message' => '접속할 수 없는 페이지 입니다.']);
+    exit;
+}
+
+// 입력값
+$period_type = isset($_POST['period_type']) ? trim($_POST['period_type']) : 'daily';
+$start_date  = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
+$end_date    = isset($_POST['end_date']) ? trim($_POST['end_date']) : '';
+
+try {
+    // 기간 계산
+    list($range_start, $range_end) = calculate_date_range($period_type, $start_date, $end_date);
+
+    // 통계 데이터 조회
+    $summary          = get_sales_summary($shop_id, $range_start, $range_end);
+    $daily_sales      = get_daily_sales($shop_id, $range_start, $range_end);
+    $payment_methods  = get_payment_method_statistics($shop_id, $range_start, $range_end);
+    $cancellations    = get_cancellation_statistics($shop_id, $range_start, $range_end, $summary);
+    $settlement_chart = get_settlement_chart($shop_id, $range_start, $range_end);
+    $settlement_logs  = get_settlement_logs($shop_id, $range_start, $range_end);
+    $settlement_deduction = get_settlement_deduction_statistics($shop_id, $range_start, $range_end);
+
+    echo json_encode([
+        'success'          => true,
+        'period_type'      => $period_type,
+        'range_start'      => $range_start,
+        'range_end'        => $range_end,
+        'summary'          => $summary,
+        'daily_sales'      => $daily_sales,
+        'payment_methods'  => $payment_methods,
+        'cancellations'    => $cancellations,
+        'settlement_chart' => $settlement_chart,
+        'settlement_logs'  => $settlement_logs,
+        'settlement_deduction' => $settlement_deduction,
+    ], JSON_UNESCAPED_UNICODE);
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'message' => '데이터 조회 중 오류가 발생했습니다: ' . $e->getMessage()
+    ], JSON_UNESCAPED_UNICODE);
+}
+exit;
