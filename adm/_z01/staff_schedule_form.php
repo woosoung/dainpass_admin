@@ -81,15 +81,35 @@ $ser_date_from = isset($_REQUEST['ser_date_from']) ? trim($_REQUEST['ser_date_fr
 $ser_date_to = isset($_REQUEST['ser_date_to']) ? trim($_REQUEST['ser_date_to']) : '';
 $page = isset($_REQUEST['page']) ? (int)$_REQUEST['page'] : 1;
 
+// 입력값 검증
+if ($ser_staff_id < 0) $ser_staff_id = 0;
+if ($page < 1) $page = 1;
+
+// 날짜 형식 검증
+if ($ser_date_from && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ser_date_from)) {
+    $ser_date_from = '';
+}
+if ($ser_date_to && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ser_date_to)) {
+    $ser_date_to = '';
+}
+
 $qstr = '';
-if ($ser_staff_id) $qstr .= '&ser_staff_id='.$ser_staff_id;
-if ($ser_date_from) $qstr .= '&ser_date_from='.$ser_date_from;
-if ($ser_date_to) $qstr .= '&ser_date_to='.$ser_date_to;
-if ($page > 1) $qstr .= '&page='.$page;
+if ($ser_staff_id) $qstr .= '&ser_staff_id='.(int)$ser_staff_id;
+if ($ser_date_from) $qstr .= '&ser_date_from='.urlencode($ser_date_from);
+if ($ser_date_to) $qstr .= '&ser_date_to='.urlencode($ser_date_to);
+if ($page > 1) $qstr .= '&page='.(int)$page;
 
 // w 값에 따른 처리 (추가/수정)
 $w = isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '';
 $schedule_id = isset($_REQUEST['schedule_id']) ? (int)$_REQUEST['schedule_id'] : 0;
+
+// w 값 검증 (빈 문자열 또는 'u'만 허용)
+if ($w !== '' && $w !== 'u') {
+    alert('잘못된 접근입니다.');
+}
+
+// schedule_id 검증
+if ($schedule_id < 0) $schedule_id = 0;
 
 // 직원 목록 가져오기
 $staff_sql = "
@@ -121,7 +141,13 @@ if ($w == '') {
     // URL 파라미터로 work_date가 전달되면 사용, 없으면 오늘 날짜
     $work_date_param = isset($_REQUEST['work_date']) ? trim($_REQUEST['work_date']) : '';
     if ($work_date_param && preg_match('/^\d{4}-\d{2}-\d{2}$/', $work_date_param)) {
-        $schedule['work_date'] = $work_date_param;
+        // 날짜 유효성 추가 검증
+        $date_parts = explode('-', $work_date_param);
+        if (checkdate((int)$date_parts[1], (int)$date_parts[2], (int)$date_parts[0])) {
+            $schedule['work_date'] = $work_date_param;
+        } else {
+            $schedule['work_date'] = date('Y-m-d');
+        }
     } else {
         $schedule['work_date'] = date('Y-m-d');
     }
@@ -211,12 +237,12 @@ include_once('./js/staff_schedule_form.js.php');
             <select name="staff_id" id="staff_id" class="frm_input required" required style="width:300px;">
                 <option value="">직원을 선택하세요</option>
                 <?php foreach ($staff_list as $staff): ?>
-                <option value="<?php echo $staff['staff_id']; ?>" 
+                <option value="<?php echo $staff['staff_id']; ?>"
                     <?php echo ($schedule['staff_id'] == $staff['staff_id']) ? 'selected' : ''; ?>>
-                    <?php 
-                    echo htmlspecialchars($staff['name']);
+                    <?php
+                    echo htmlspecialchars($staff['name'], ENT_QUOTES, 'UTF-8');
                     if ($staff['title']) {
-                        echo ' ('.htmlspecialchars($staff['title']).')';
+                        echo ' ('.htmlspecialchars($staff['title'], ENT_QUOTES, 'UTF-8').')';
                     }
                     ?>
                 </option>
@@ -227,7 +253,7 @@ include_once('./js/staff_schedule_form.js.php');
     <tr>
         <th scope="row"><label for="work_date">근무 날짜<strong class="sound_only">필수</strong></label></th>
         <td>
-            <input type="date" name="work_date" value="<?php echo $schedule['work_date']; ?>" id="work_date" class="frm_input required" required style="width:200px;">
+            <input type="date" name="work_date" value="<?php echo htmlspecialchars($schedule['work_date'], ENT_QUOTES, 'UTF-8'); ?>" id="work_date" class="frm_input required" required style="width:200px;">
         </td>
         <th scope="row">요일</th>
         <td>
@@ -237,11 +263,11 @@ include_once('./js/staff_schedule_form.js.php');
     <tr>
         <th scope="row"><label for="start_time">근무 시작 시간<strong class="sound_only">필수</strong></label></th>
         <td>
-            <input type="time" name="start_time" value="<?php echo $schedule['start_time']; ?>" id="start_time" class="frm_input required" required style="width:150px;">
+            <input type="time" name="start_time" value="<?php echo htmlspecialchars($schedule['start_time'], ENT_QUOTES, 'UTF-8'); ?>" id="start_time" class="frm_input required" required style="width:150px;">
         </td>
         <th scope="row"><label for="end_time">근무 종료 시간<strong class="sound_only">필수</strong></label></th>
         <td>
-            <input type="time" name="end_time" value="<?php echo $schedule['end_time']; ?>" id="end_time" class="frm_input required" required style="width:150px;">
+            <input type="time" name="end_time" value="<?php echo htmlspecialchars($schedule['end_time'], ENT_QUOTES, 'UTF-8'); ?>" id="end_time" class="frm_input required" required style="width:150px;">
         </td>
     </tr>
     <tr>

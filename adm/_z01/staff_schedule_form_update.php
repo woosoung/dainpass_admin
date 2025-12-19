@@ -55,11 +55,30 @@ $ser_date_from = isset($_POST['ser_date_from']) ? trim($_POST['ser_date_from']) 
 $ser_date_to = isset($_POST['ser_date_to']) ? trim($_POST['ser_date_to']) : '';
 $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
 
+// 입력값 범위 검증
+if ($schedule_id < 0) $schedule_id = 0;
+if ($staff_id < 0) $staff_id = 0;
+if ($ser_staff_id < 0) $ser_staff_id = 0;
+if ($page < 1) $page = 1;
+
+// w 값 검증 (빈 문자열 또는 'u'만 허용)
+if ($w !== '' && $w !== 'u') {
+    alert('잘못된 접근입니다.');
+}
+
+// 날짜 형식 검증
+if ($ser_date_from && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ser_date_from)) {
+    $ser_date_from = '';
+}
+if ($ser_date_to && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $ser_date_to)) {
+    $ser_date_to = '';
+}
+
 $qstr = '';
-if ($ser_staff_id) $qstr .= '&ser_staff_id='.$ser_staff_id;
-if ($ser_date_from) $qstr .= '&ser_date_from='.$ser_date_from;
-if ($ser_date_to) $qstr .= '&ser_date_to='.$ser_date_to;
-if ($page > 1) $qstr .= '&page='.$page;
+if ($ser_staff_id) $qstr .= '&ser_staff_id='.(int)$ser_staff_id;
+if ($ser_date_from) $qstr .= '&ser_date_from='.urlencode($ser_date_from);
+if ($ser_date_to) $qstr .= '&ser_date_to='.urlencode($ser_date_to);
+if ($page > 1) $qstr .= '&page='.(int)$page;
 
 // 유효성 검사
 if (!$staff_id) {
@@ -79,9 +98,25 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $work_date)) {
     alert('올바른 날짜 형식이 아닙니다.');
 }
 
+// 날짜 유효성 검증
+$date_parts = explode('-', $work_date);
+if (count($date_parts) !== 3 || !checkdate((int)$date_parts[1], (int)$date_parts[2], (int)$date_parts[0])) {
+    alert('유효하지 않은 날짜입니다.');
+}
+
 // 시간 형식 검증
 if (!preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $start_time) || !preg_match('/^\d{2}:\d{2}(:\d{2})?$/', $end_time)) {
     alert('올바른 시간 형식이 아닙니다.');
+}
+
+// 시간 값 범위 검증
+$start_parts = explode(':', $start_time);
+$end_parts = explode(':', $end_time);
+if ((int)$start_parts[0] < 0 || (int)$start_parts[0] > 23 || (int)$start_parts[1] < 0 || (int)$start_parts[1] > 59) {
+    alert('올바른 시작 시간이 아닙니다.');
+}
+if ((int)$end_parts[0] < 0 || (int)$end_parts[0] > 23 || (int)$end_parts[1] < 0 || (int)$end_parts[1] > 59) {
+    alert('올바른 종료 시간이 아닙니다.');
 }
 
 // 시간에 초가 없으면 추가
@@ -99,6 +134,11 @@ $end_timestamp = strtotime($end_time);
 if ($end_timestamp <= $start_timestamp) {
     alert('근무 종료 시간이 시작 시간보다 늦어야 합니다.');
 }
+
+// SQL 인젝션 방지를 위한 이스케이핑
+$work_date = sql_escape_string($work_date);
+$start_time = sql_escape_string($start_time);
+$end_time = sql_escape_string($end_time);
 
 // 직원이 해당 가맹점 소속인지 확인
 $staff_check_sql = "
@@ -123,8 +163,8 @@ if ($w == '') {
     
     // 중복 체크 (같은 직원, 같은 날짜, 시간이 겹치는 경우)
     $duplicate_check_sql = "
-        SELECT schedule_id 
-        FROM staff_schedules 
+        SELECT schedule_id
+        FROM staff_schedules
         WHERE staff_id = {$staff_id}
         AND work_date = '{$work_date}'
         AND (
@@ -144,9 +184,9 @@ if ($w == '') {
     
     // 추가 실행
     $insert_sql = "
-        INSERT INTO staff_schedules 
-        (staff_id, work_date, start_time, end_time, created_at) 
-        VALUES 
+        INSERT INTO staff_schedules
+        (staff_id, work_date, start_time, end_time, created_at)
+        VALUES
         ({$staff_id}, '{$work_date}', '{$start_time}', '{$end_time}', NOW())
     ";
     
@@ -189,8 +229,8 @@ if ($w == '') {
     
     // 중복 체크 (자신을 제외한 다른 스케줄과의 겹침)
     $duplicate_check_sql = "
-        SELECT schedule_id 
-        FROM staff_schedules 
+        SELECT schedule_id
+        FROM staff_schedules
         WHERE staff_id = {$staff_id}
         AND work_date = '{$work_date}'
         AND schedule_id != {$schedule_id}
@@ -211,8 +251,8 @@ if ($w == '') {
     
     // 수정 실행
     $update_sql = "
-        UPDATE staff_schedules 
-        SET 
+        UPDATE staff_schedules
+        SET
             staff_id = {$staff_id},
             work_date = '{$work_date}',
             start_time = '{$start_time}',
