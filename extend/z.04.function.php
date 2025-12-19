@@ -3673,3 +3673,126 @@ function delete_shop_faq_all_s3_images($shop_id, $fm_id, $fa_id) {
 }
 }
 
+/**
+ * 가맹점 관리자 접근 권한 체크
+ *
+ * @param array $options 옵션 배열
+ *   - check_status: bool (기본값: true) - shop status 검증 여부
+ *   - output_mode: string (기본값: 'alert') - 'alert', 'json', 'html' 중 선택 (html모드는 현재 미사용)
+ *   - page_title: string (기본값: '') - HTML 모드에서 사용할 페이지 제목
+ *   - select_fields: string (기본값: 'shop_id, status') - shop 테이블에서 조회할 필드
+ *   - redirect_url: string (기본값: '') - alert 모드에서 리다이렉트 URL
+ *   - allow_pending: bool (기본값: false) - pending 상태 허용 여부
+ *
+ * @return array|false
+ *   - 성공: ['shop_id' => int, 'shop_info' => array] 반환
+ *   - 실패: 함수 내부에서 종료 (alert/html/json)
+ */
+if (!function_exists('check_shop_access')) {
+function check_shop_access($options = array()) {
+    global $g5, $is_member, $member;
+
+    // 옵션 기본값 설정
+    $defaults = array(
+        'check_status' => true,
+        'output_mode' => 'alert',
+        'page_title' => '접근 권한 확인',
+        'select_fields' => 'shop_id, status',
+        'redirect_url' => '',
+        'allow_pending' => false
+    );
+    $opts = array_merge($defaults, $options);
+
+    // 회원 로그인 체크
+    if (!$is_member || !$member['mb_id']) {
+        _shop_access_error('로그인이 필요합니다.', $opts);
+    }
+
+    // MySQL 회원 정보 조회
+    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date
+                FROM {$g5['member_table']}
+                WHERE mb_id = '{$member['mb_id']}'
+                AND mb_level >= 4
+                AND (
+                    mb_level >= 6
+                    OR (mb_level < 6 AND mb_2 = 'Y')
+                )
+                AND (mb_leave_date = '' OR mb_leave_date IS NULL)
+                AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+    $mb_row = sql_fetch($mb_sql, 1);
+
+    if (!$mb_row || !$mb_row['mb_id']) {
+        _shop_access_error('접속할 수 없는 페이지 입니다.', $opts);
+    }
+
+    // mb_1 값 체크 (플랫폼 관리자 차단)
+    $mb_1_value = trim($mb_row['mb_1']);
+    if ($mb_1_value === '0' || $mb_1_value === '') {
+        _shop_access_error('업체 데이터가 없습니다.', $opts);
+    }
+
+    // PostgreSQL shop 테이블 조회
+    $shop_id_check = (int)$mb_1_value;
+    $shop_sql = " SELECT {$opts['select_fields']}
+                 FROM {$g5['shop_table']}
+                 WHERE shop_id = {$shop_id_check} ";
+    $shop_row = sql_fetch_pg($shop_sql);
+
+    if (!$shop_row || !$shop_row['shop_id']) {
+        _shop_access_error('업체 데이터가 없습니다.', $opts);
+    }
+
+    // Status 체크 (옵션)
+    if ($opts['check_status'] && isset($shop_row['status'])) {
+        if ($shop_row['status'] == 'pending' && !$opts['allow_pending']) {
+            _shop_access_error('현재 가입 승인 심사가 진행 중입니다.\\n승인 완료 후 서비스 이용이 가능합니다.', $opts);
+        }
+        if ($shop_row['status'] == 'closed') {
+            _shop_access_error('탈퇴된 가맹점입니다.', $opts);
+        }
+        if ($shop_row['status'] == 'shutdown') {
+            _shop_access_error('접근이 제한되었습니다. 플랫폼 관리자에게 문의하세요.', $opts);
+        }
+    }
+
+    // 성공 반환
+    return array(
+        'shop_id' => (int)$shop_row['shop_id'],
+        'shop_info' => $shop_row
+    );
+}
+}
+
+/**
+ * 가맹점 접근 권한 에러 처리 (내부 헬퍼 함수)
+ *
+ * @param string $message 에러 메시지
+ * @param array $opts 옵션 배열
+ */
+if (!function_exists('_shop_access_error')) {
+function _shop_access_error($message, $opts) {
+    global $g5;
+
+    switch ($opts['output_mode']) {
+        case 'json':
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(array('success' => false, 'message' => $message));
+            exit;
+
+        case 'html':
+            $g5['title'] = $opts['page_title'];
+            include_once(G5_ADMIN_PATH.'/admin.head.php');
+            echo '<div class="local_desc01 local_desc text-center py-[200px]">';
+            echo '<p>' . htmlspecialchars($message, ENT_QUOTES, 'UTF-8') . '</p>';
+            echo '</div>';
+            include_once(G5_ADMIN_PATH.'/admin.tail.php');
+            break;
+
+        case 'alert':
+        default:
+            alert($message, G5_URL);
+            exit;
+    }
+}
+}
+
