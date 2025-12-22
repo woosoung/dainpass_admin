@@ -95,32 +95,33 @@ function calculate_date_range($period_type, $start_date, $end_date)
 if (!function_exists('get_reservation_summary')) {
 function get_reservation_summary($shop_id, $range_start, $range_end)
 {
-    // 전체 예약 건수
+    // 전체 예약 건수 (BOOKED 상태 제외 - 일시적 상태이므로 통계에서 제외)
     $sql_total = "
         SELECT COUNT(*) AS total_count
         FROM appointment_shop_detail
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
     ";
     $row_total = sql_fetch_pg($sql_total);
     $total_count = (int)$row_total['total_count'];
 
-    // 활성 예약 건수
+    // 활성 예약 건수 (BOOKED 상태 제외 - 일시적 상태이므로 통계에서 제외)
     $sql_active = "
         SELECT COUNT(*) AS active_count
         FROM shop_appointments sa
         INNER JOIN appointment_shop_detail asd ON sa.appointment_id = asd.appointment_id
         WHERE asd.shop_id = {$shop_id}
           AND sa.is_deleted = 'N'
-          AND sa.status IN ('BOOKED', 'CONFIRMED')
+          AND sa.status = 'CONFIRMED'
           AND asd.appointment_datetime >= '{$range_start} 00:00:00'
           AND asd.appointment_datetime <= '{$range_end} 23:59:59'
     ";
     $row_active = sql_fetch_pg($sql_active);
     $active_count = (int)$row_active['active_count'];
 
-    // 취소율 통계
+    // 취소율 통계 (BOOKED 상태 제외)
     $sql_cancel = "
         SELECT 
             COUNT(*) AS total_count,
@@ -133,41 +134,46 @@ function get_reservation_summary($shop_id, $range_start, $range_end)
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
     ";
     $row_cancel = sql_fetch_pg($sql_cancel);
     $cancel_count = (int)$row_cancel['cancel_count'];
     $cancel_rate = (float)$row_cancel['cancel_rate'];
 
     // 재방문율 통계
-    // 고유 고객 수
+    // 고유 고객 수 (BOOKED 상태 제외)
     $sql_unique_customer = "
         SELECT COUNT(DISTINCT customer_id) AS unique_customer_count
         FROM shop_appointments
         WHERE customer_id IS NOT NULL
+          AND status != 'BOOKED'
           AND appointment_id IN (
               SELECT appointment_id
               FROM appointment_shop_detail
               WHERE shop_id = {$shop_id}
                 AND appointment_datetime >= '{$range_start} 00:00:00'
                 AND appointment_datetime <= '{$range_end} 23:59:59'
+                AND status != 'BOOKED'
           )
     ";
     $row_unique = sql_fetch_pg($sql_unique_customer);
     $unique_customer_count = (int)$row_unique['unique_customer_count'];
 
-    // 재방문 고객 수 (2회 이상 예약)
+    // 재방문 고객 수 (2회 이상 예약, BOOKED 상태 제외)
     $sql_repeat = "
         SELECT COUNT(*) AS repeat_customer_count
         FROM (
             SELECT customer_id, COUNT(*) AS appointment_count
             FROM shop_appointments
             WHERE customer_id IS NOT NULL
+              AND status != 'BOOKED'
               AND appointment_id IN (
                   SELECT appointment_id
                   FROM appointment_shop_detail
                   WHERE shop_id = {$shop_id}
                     AND appointment_datetime >= '{$range_start} 00:00:00'
                     AND appointment_datetime <= '{$range_end} 23:59:59'
+                    AND status != 'BOOKED'
               )
             GROUP BY customer_id
             HAVING COUNT(*) >= 2
@@ -214,6 +220,7 @@ function get_daily_appointments($shop_id, $range_start, $range_end)
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
         GROUP BY CAST(appointment_datetime AS DATE)
         ORDER BY date ASC
     ";
@@ -245,6 +252,7 @@ function get_status_distribution($shop_id, $range_start, $range_end)
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
         GROUP BY status
         ORDER BY count DESC
     ";
@@ -277,6 +285,7 @@ function get_hourly_appointments($shop_id, $range_start, $range_end)
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
         GROUP BY EXTRACT(HOUR FROM appointment_datetime)
         ORDER BY hour
     ";
@@ -321,6 +330,7 @@ function get_weekly_appointments($shop_id, $range_start, $range_end)
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
         GROUP BY EXTRACT(DOW FROM appointment_datetime)
         ORDER BY weekday
     ";
@@ -369,6 +379,7 @@ function get_cancel_trend($shop_id, $range_start, $range_end)
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
         GROUP BY CAST(appointment_datetime AS DATE)
         ORDER BY date ASC
     ";
@@ -404,6 +415,7 @@ function get_weekday_hour_pattern($shop_id, $range_start, $range_end)
         WHERE shop_id = {$shop_id}
           AND appointment_datetime >= '{$range_start} 00:00:00'
           AND appointment_datetime <= '{$range_end} 23:59:59'
+          AND status != 'BOOKED'
         GROUP BY EXTRACT(DOW FROM appointment_datetime), EXTRACT(HOUR FROM appointment_datetime)
         ORDER BY weekday, hour
     ";
