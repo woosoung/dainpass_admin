@@ -403,6 +403,8 @@ function get_coupon_detail_statistics($shop_id, $range_start, $range_end)
 }
 
 // 공통: 가맹점 접근 권한 및 shop_id 확인 (페이지와 동일 로직이지만 JSON으로 응답)
+// 단독 ajax 호출일 때만 실행되도록 가드
+if (!defined('SHOP_STAT_LIB_MODE')) {
 $has_access = false;
 $shop_id = 0;
 
@@ -497,4 +499,5 @@ try {
     ], JSON_UNESCAPED_UNICODE);
 }
 exit;
+}
 

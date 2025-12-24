@@ -112,6 +112,10 @@ function get_sales_summary($shop_id, $range_start, $range_end)
           AND asd.status IN ('COMPLETED', 'CANCELLED')
     ";
     $row_today = sql_fetch_pg($sql_today);
+    // sql_fetch_pg가 false를 반환할 수 있으므로 안전하게 처리
+    if ($row_today === false || !is_array($row_today)) {
+        $row_today = ['total_sales' => 0, 'appointment_count' => 0];
+    }
 
     $sql_today_cancel = "
         SELECT COALESCE(SUM(psc.cancel_amount), 0) AS cancel_amount,
@@ -126,6 +130,10 @@ function get_sales_summary($shop_id, $range_start, $range_end)
           AND psc.created_at <= '{$today} 23:59:59'
     ";
     $row_today_cancel = sql_fetch_pg($sql_today_cancel);
+    // sql_fetch_pg가 false를 반환할 수 있으므로 안전하게 처리
+    if ($row_today_cancel === false || !is_array($row_today_cancel)) {
+        $row_today_cancel = ['cancel_amount' => 0, 'cancel_count' => 0];
+    }
 
     // 이번 달 매출
     $sql_month = "
@@ -139,6 +147,10 @@ function get_sales_summary($shop_id, $range_start, $range_end)
           AND asd.status IN ('COMPLETED', 'CANCELLED')
     ";
     $row_month = sql_fetch_pg($sql_month);
+    // sql_fetch_pg가 false를 반환할 수 있으므로 안전하게 처리
+    if ($row_month === false || !is_array($row_month)) {
+        $row_month = ['total_sales' => 0, 'appointment_count' => 0];
+    }
 
     // 전월 매출 (증감률 계산용)
     $sql_prev_month = "
@@ -152,6 +164,10 @@ function get_sales_summary($shop_id, $range_start, $range_end)
           AND asd.status IN ('COMPLETED', 'CANCELLED')
     ";
     $row_prev_month = sql_fetch_pg($sql_prev_month);
+    // sql_fetch_pg가 false를 반환할 수 있으므로 안전하게 처리
+    if ($row_prev_month === false || !is_array($row_prev_month)) {
+        $row_prev_month = ['total_sales' => 0, 'appointment_count' => 0];
+    }
 
     $month_vs_prev_rate = 0.0;
     if (!empty($row_prev_month['total_sales']) && $row_prev_month['total_sales'] > 0) {
@@ -168,6 +184,10 @@ function get_sales_summary($shop_id, $range_start, $range_end)
           AND asd.status IN ('COMPLETED', 'CANCELLED')
     ";
     $row_total = sql_fetch_pg($sql_total);
+    // sql_fetch_pg가 false를 반환할 수 있으므로 안전하게 처리
+    if ($row_total === false || !is_array($row_total)) {
+        $row_total = ['total_sales' => 0, 'appointment_count' => 0];
+    }
 
     // 선택 기간(대시보드 카드 취소 통계 계산에 활용)
     $sql_range_base = "
@@ -183,6 +203,10 @@ function get_sales_summary($shop_id, $range_start, $range_end)
           AND asd.status IN ('COMPLETED', 'CANCELLED')
     ";
     $row_range = sql_fetch_pg($sql_range_base);
+    // sql_fetch_pg가 false를 반환할 수 있으므로 안전하게 처리
+    if ($row_range === false || !is_array($row_range)) {
+        $row_range = ['total_sales' => 0, 'appointment_count' => 0, 'cancel_amount' => 0, 'cancel_count' => 0];
+    }
 
     $cancel_rate = 0.0;
     if (!empty($row_range['appointment_count']) && $row_range['appointment_count'] > 0) {
@@ -195,24 +219,24 @@ function get_sales_summary($shop_id, $range_start, $range_end)
     }
 
     return [
-        'today_sales_amount'        => (int)$row_today['total_sales'],
-        'today_appointment_count'   => (int)$row_today['appointment_count'],
-        'today_cancel_amount'       => (int)$row_today_cancel['cancel_amount'],
-        'today_cancel_count'        => (int)$row_today_cancel['cancel_count'],
+        'today_sales_amount'        => (int)(isset($row_today['total_sales']) ? $row_today['total_sales'] : 0),
+        'today_appointment_count'   => (int)(isset($row_today['appointment_count']) ? $row_today['appointment_count'] : 0),
+        'today_cancel_amount'       => (int)(isset($row_today_cancel['cancel_amount']) ? $row_today_cancel['cancel_amount'] : 0),
+        'today_cancel_count'        => (int)(isset($row_today_cancel['cancel_count']) ? $row_today_cancel['cancel_count'] : 0),
 
-        'month_sales_amount'        => (int)$row_month['total_sales'],
-        'month_appointment_count'   => (int)$row_month['appointment_count'],
-        'prev_month_sales_amount'   => (int)$row_prev_month['total_sales'],
-        'prev_month_appointment_count' => (int)$row_prev_month['appointment_count'],
+        'month_sales_amount'        => (int)(isset($row_month['total_sales']) ? $row_month['total_sales'] : 0),
+        'month_appointment_count'   => (int)(isset($row_month['appointment_count']) ? $row_month['appointment_count'] : 0),
+        'prev_month_sales_amount'   => (int)(isset($row_prev_month['total_sales']) ? $row_prev_month['total_sales'] : 0),
+        'prev_month_appointment_count' => (int)(isset($row_prev_month['appointment_count']) ? $row_prev_month['appointment_count'] : 0),
         'month_vs_prev_rate'        => $month_vs_prev_rate,
 
-        'total_sales_amount'        => (int)$row_total['total_sales'],
-        'total_appointment_count'   => (int)$row_total['appointment_count'],
+        'total_sales_amount'        => (int)(isset($row_total['total_sales']) ? $row_total['total_sales'] : 0),
+        'total_appointment_count'   => (int)(isset($row_total['appointment_count']) ? $row_total['appointment_count'] : 0),
 
-        'range_total_sales_amount'  => (int)$row_range['total_sales'],
-        'range_appointment_count'   => (int)$row_range['appointment_count'],
-        'range_cancel_amount'       => (int)$row_range['cancel_amount'],
-        'range_cancel_count'        => (int)$row_range['cancel_count'],
+        'range_total_sales_amount'  => (int)(isset($row_range['total_sales']) ? $row_range['total_sales'] : 0),
+        'range_appointment_count'   => (int)(isset($row_range['appointment_count']) ? $row_range['appointment_count'] : 0),
+        'range_cancel_amount'       => (int)(isset($row_range['cancel_amount']) ? $row_range['cancel_amount'] : 0),
+        'range_cancel_count'        => (int)(isset($row_range['cancel_count']) ? $row_range['cancel_count'] : 0),
         'range_cancel_rate'         => $cancel_rate,
         'range_avg_amount'          => $avg_amount,
     ];
@@ -528,91 +552,95 @@ function get_settlement_logs($shop_id, $range_start, $range_end)
 }
 
 // 공통: 가맹점 접근 권한 및 shop_id 확인 (페이지와 동일 로직이지만 JSON으로 응답)
-$has_access = false;
-$shop_id = 0;
+// 이 블록은 단독 ajax 호출일 때만 실행되고,
+// 다른 파일에서 라이브러리처럼 include 할 때는 실행되지 않도록 가드한다.
+if (!defined('SHOP_STAT_LIB_MODE')) {
+    $has_access = false;
+    $shop_id = 0;
 
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date ".
-              " FROM {$g5['member_table']} ".
-              " WHERE mb_id = '{$member['mb_id']}' ".
-              " AND mb_level >= 4 ".
-              " AND ( ".
-              "     mb_level >= 6 ".
-              "     OR (mb_level < 6 AND mb_2 = 'Y') ".
-              " ) ".
-              " AND (mb_leave_date = '' OR mb_leave_date IS NULL) ".
-              " AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
-    $mb_row = sql_fetch($mb_sql, 1);
+    if ($is_member && $member['mb_id']) {
+        $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date ".
+                  " FROM {$g5['member_table']} ".
+                  " WHERE mb_id = '{$member['mb_id']}' ".
+                  " AND mb_level >= 4 ".
+                  " AND ( ".
+                  "     mb_level >= 6 ".
+                  "     OR (mb_level < 6 AND mb_2 = 'Y') ".
+                  " ) ".
+                  " AND (mb_leave_date = '' OR mb_leave_date IS NULL) ".
+                  " AND (mb_intercept_date = '' OR mb_intercept_date IS NULL) ";
+        $mb_row = sql_fetch($mb_sql, 1);
 
-    if ($mb_row && $mb_row['mb_id']) {
-        $mb_1_value = trim($mb_row['mb_1']);
+        if ($mb_row && $mb_row['mb_id']) {
+            $mb_1_value = trim($mb_row['mb_1']);
 
-        if ($mb_1_value !== '0' && $mb_1_value !== '') {
-            $shop_id_check = (int)$mb_1_value;
-            $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
-            $shop_row = sql_fetch_pg($shop_sql);
+            if ($mb_1_value !== '0' && $mb_1_value !== '') {
+                $shop_id_check = (int)$mb_1_value;
+                $shop_sql = " SELECT shop_id, status FROM {$g5['shop_table']} WHERE shop_id = {$shop_id_check} ";
+                $shop_row = sql_fetch_pg($shop_sql);
 
-            if ($shop_row && $shop_row['shop_id']) {
-                if ($shop_row['status'] == 'pending') {
-                    echo json_encode(['success' => false, 'message' => '아직 승인이 되지 않았습니다.']);
-                    exit;
+                if ($shop_row && $shop_row['shop_id']) {
+                    if ($shop_row['status'] == 'pending') {
+                        echo json_encode(['success' => false, 'message' => '아직 승인이 되지 않았습니다.']);
+                        exit;
+                    }
+                    if ($shop_row['status'] == 'closed') {
+                        echo json_encode(['success' => false, 'message' => '폐업된 업체입니다.']);
+                        exit;
+                    }
+                    if ($shop_row['status'] == 'shutdown') {
+                        echo json_encode(['success' => false, 'message' => '접근이 제한된 업체입니다. 플랫폼 관리자에게 문의하세요.']);
+                        exit;
+                    }
+
+                    $has_access = true;
+                    $shop_id = (int)$shop_row['shop_id'];
                 }
-                if ($shop_row['status'] == 'closed') {
-                    echo json_encode(['success' => false, 'message' => '폐업된 업체입니다.']);
-                    exit;
-                }
-                if ($shop_row['status'] == 'shutdown') {
-                    echo json_encode(['success' => false, 'message' => '접근이 제한된 업체입니다. 플랫폼 관리자에게 문의하세요.']);
-                    exit;
-                }
-
-                $has_access = true;
-                $shop_id = (int)$shop_row['shop_id'];
             }
         }
     }
-}
 
-if (!$has_access || !$shop_id) {
-    echo json_encode(['success' => false, 'message' => '접속할 수 없는 페이지 입니다.']);
+    if (!$has_access || !$shop_id) {
+        echo json_encode(['success' => false, 'message' => '접속할 수 없는 페이지 입니다.']);
+        exit;
+    }
+
+    // 입력값
+    $period_type = isset($_POST['period_type']) ? trim($_POST['period_type']) : 'daily';
+    $start_date  = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
+    $end_date    = isset($_POST['end_date']) ? trim($_POST['end_date']) : '';
+
+    try {
+        // 기간 계산
+        list($range_start, $range_end) = calculate_date_range($period_type, $start_date, $end_date);
+
+        // 통계 데이터 조회
+        $summary          = get_sales_summary($shop_id, $range_start, $range_end);
+        $daily_sales      = get_daily_sales($shop_id, $range_start, $range_end, $period_type);
+        $payment_methods  = get_payment_method_statistics($shop_id, $range_start, $range_end);
+        $cancellations    = get_cancellation_statistics($shop_id, $range_start, $range_end, $summary);
+        $settlement_chart = get_settlement_chart($shop_id, $range_start, $range_end, $period_type);
+        $settlement_logs  = get_settlement_logs($shop_id, $range_start, $range_end);
+        $settlement_deduction = get_settlement_deduction_statistics($shop_id, $range_start, $range_end);
+
+        echo json_encode([
+            'success'          => true,
+            'period_type'      => $period_type,
+            'range_start'      => $range_start,
+            'range_end'        => $range_end,
+            'summary'          => $summary,
+            'daily_sales'      => $daily_sales,
+            'payment_methods'  => $payment_methods,
+            'cancellations'    => $cancellations,
+            'settlement_chart' => $settlement_chart,
+            'settlement_logs'  => $settlement_logs,
+            'settlement_deduction' => $settlement_deduction,
+        ], JSON_UNESCAPED_UNICODE);
+    } catch (Exception $e) {
+        echo json_encode([
+            'success' => false,
+            'message' => '데이터 조회 중 오류가 발생했습니다: ' . $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
+    }
     exit;
 }
-
-// 입력값
-$period_type = isset($_POST['period_type']) ? trim($_POST['period_type']) : 'daily';
-$start_date  = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
-$end_date    = isset($_POST['end_date']) ? trim($_POST['end_date']) : '';
-
-try {
-    // 기간 계산
-    list($range_start, $range_end) = calculate_date_range($period_type, $start_date, $end_date);
-
-    // 통계 데이터 조회
-    $summary          = get_sales_summary($shop_id, $range_start, $range_end);
-    $daily_sales      = get_daily_sales($shop_id, $range_start, $range_end, $period_type);
-    $payment_methods  = get_payment_method_statistics($shop_id, $range_start, $range_end);
-    $cancellations    = get_cancellation_statistics($shop_id, $range_start, $range_end, $summary);
-    $settlement_chart = get_settlement_chart($shop_id, $range_start, $range_end, $period_type);
-    $settlement_logs  = get_settlement_logs($shop_id, $range_start, $range_end);
-    $settlement_deduction = get_settlement_deduction_statistics($shop_id, $range_start, $range_end);
-
-    echo json_encode([
-        'success'          => true,
-        'period_type'      => $period_type,
-        'range_start'      => $range_start,
-        'range_end'        => $range_end,
-        'summary'          => $summary,
-        'daily_sales'      => $daily_sales,
-        'payment_methods'  => $payment_methods,
-        'cancellations'    => $cancellations,
-        'settlement_chart' => $settlement_chart,
-        'settlement_logs'  => $settlement_logs,
-        'settlement_deduction' => $settlement_deduction,
-    ], JSON_UNESCAPED_UNICODE);
-} catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => '데이터 조회 중 오류가 발생했습니다: ' . $e->getMessage()
-    ], JSON_UNESCAPED_UNICODE);
-}
-exit;
