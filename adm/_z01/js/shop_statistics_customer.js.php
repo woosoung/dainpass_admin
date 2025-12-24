@@ -148,7 +148,7 @@ if (!defined('_GNUBOARD_')) exit;
         if (topCustomers && topCustomers.length) {
             for (var i = 0; i < topCustomers.length; i++) {
                 var row = topCustomers[i];
-                labels.push('고객 ' + row.customer_id);
+                labels.push(row.customer_name || ('고객 ' + row.customer_id));
                 data.push(row.total_amount || 0);
             }
         }
@@ -386,9 +386,14 @@ if (!defined('_GNUBOARD_')) exit;
         }
 
         vipCustomers.forEach(function(row) {
+            // user_id(nickname) 형식으로 표시
+            var customerDisplay = row.customer_display || 
+                (row.user_id ? (row.user_id + (row.nickname ? '(' + row.nickname + ')' : '')) : 
+                ('고객 ' + row.customer_id));
+            
             var tr = '<tr>' +
                 '<td class="text-center">' + (row.rank || '-') + '</td>' +
-                '<td class="text-center">' + (row.customer_id || '-') + '</td>' +
+                '<td class="text-center">' + customerDisplay + '</td>' +
                 '<td class="text-center">' + formatNumber(row.appointment_count || 0) + '회</td>' +
                 '<td class="text-center">' + formatCurrency(row.total_amount || 0) + '</td>' +
                 '<td class="text-center">' + formatCurrency(row.avg_amount || 0) + '</td>' +
@@ -401,7 +406,8 @@ if (!defined('_GNUBOARD_')) exit;
         var today = new Date();
         var endDate = today.toISOString().slice(0, 10);
         var start = new Date();
-        start.setDate(start.getDate() - 29);
+        // 한 달 전부터 오늘까지
+        start.setMonth(start.getMonth() - 1);
         var startDate = start.toISOString().slice(0, 10);
 
         if (!$('#start_date').val()) {

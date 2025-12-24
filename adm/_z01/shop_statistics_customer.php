@@ -92,9 +92,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 
-// 기본 기간: 최근 30일 (JS에서 다시 세팅하지만 초기값용)
+// 기본 기간: 한 달 전부터 오늘까지 (JS에서 다시 세팅하지만 초기값용)
 $today = date('Y-m-d');
-$default_start = date('Y-m-d', strtotime('-29 days'));
+$default_start = date('Y-m-d', strtotime('-1 month'));
 ?>
 
 <div class="local_desc01 local_desc mb-4">
@@ -174,8 +174,8 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
 </div>
 
 <!-- 차트 영역 -->
-<!-- 신규/기존 고객 비율 차트 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
+<!-- 신규/기존 고객 비율, 고객별 예약 금액 분포, 예약 빈도 분포 (3열 배치) -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">신규/기존 고객 비율</h3>
         <canvas id="customer_type_chart" height="120"></canvas>
@@ -186,24 +186,23 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
         <h3 class="mb-2 font-semibold">고객별 예약 금액 분포 (상위 10명)</h3>
         <canvas id="customer_amount_chart" height="120"></canvas>
     </div>
-</div>
-
-<!-- 예약 빈도 분포 차트 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
+    
+    <!-- 예약 빈도 분포 -->
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">예약 빈도 분포</h3>
         <canvas id="appointment_frequency_chart" height="120"></canvas>
     </div>
-    
+</div>
+
+<!-- 찜 목록 추가 추이, 찜 → 예약 전환률 추이 (2열 배치) -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
     <!-- 찜 목록 추가 추이 -->
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">찜 목록 추가 추이</h3>
         <canvas id="wish_trend_chart" height="120"></canvas>
     </div>
-</div>
-
-<!-- 찜 → 예약 전환률 추이 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr);">
+    
+    <!-- 찜 → 예약 전환률 추이 -->
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">찜 → 예약 전환률 추이</h3>
         <canvas id="wish_conversion_trend_chart" height="120"></canvas>
@@ -218,7 +217,7 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
             <thead>
             <tr>
                 <th scope="col" class="text-center">순위</th>
-                <th scope="col" class="text-center">고객 ID</th>
+                <th scope="col" class="text-center">고객 ID(닉네임)</th>
                 <th scope="col" class="text-center">예약 횟수</th>
                 <th scope="col" class="text-center">누적 결제 금액</th>
                 <th scope="col" class="text-center">평균 결제 금액</th>

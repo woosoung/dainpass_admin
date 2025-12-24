@@ -202,34 +202,34 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
     </div>
 </div>
 
-<!-- 평점 분포 차트 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr);">
+<!-- 평점 분포 차트 및 서비스별 상세 통계 -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">평점별 리뷰 건수 분포</h3>
         <canvas id="rating_distribution_chart" height="120"></canvas>
     </div>
-</div>
-
-<!-- 서비스별 상세 통계 테이블 -->
-<div class="statistics-tables border rounded p-4 bg-white shadow-sm mb-6">
-    <h3 class="mb-2 font-semibold">서비스별 상세 통계 (상위 20개)</h3>
-    <div class="overflow-x-auto">
-        <table class="tbl_head01 w-full text-sm" id="service_detail_table">
-            <thead>
-            <tr>
-                <th scope="col" class="text-center">서비스명</th>
-                <th scope="col" class="text-center">가격</th>
-                <th scope="col" class="text-center">예약 건수</th>
-                <th scope="col" class="text-center">총 매출</th>
-                <th scope="col" class="text-center">평균 매출</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td colspan="5" class="text-center text-gray-500">조회된 데이터가 없습니다.</td>
-            </tr>
-            </tbody>
-        </table>
+    
+    <!-- 서비스별 상세 통계 테이블 -->
+    <div class="statistics-tables border rounded p-4 bg-white shadow-sm">
+        <h3 class="mb-2 font-semibold">서비스별 상세 통계 (상위 20개)</h3>
+        <div class="overflow-x-auto">
+            <table class="tbl_head01 w-full text-sm" id="service_detail_table">
+                <thead>
+                <tr>
+                    <th scope="col" class="text-center">서비스명</th>
+                    <th scope="col" class="text-center">가격</th>
+                    <th scope="col" class="text-center">예약 건수</th>
+                    <th scope="col" class="text-center">총 매출</th>
+                    <th scope="col" class="text-center">평균 매출</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td colspan="5" class="text-center text-gray-500">조회된 데이터가 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

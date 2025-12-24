@@ -92,9 +92,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 
-// 기본 기간: 최근 30일 (JS에서 다시 세팅하지만 초기값용)
+// 기본 기간: 한 달 전부터 오늘까지 (JS에서 다시 세팅하지만 초기값용)
 $today = date('Y-m-d');
-$default_start = date('Y-m-d', strtotime('-29 days'));
+$default_start = date('Y-m-d', strtotime('-1 month'));
 ?>
 
 <div class="local_desc01 local_desc mb-4">
@@ -155,24 +155,20 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
     </div>
 </div>
 
-<!-- 차트 영역 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);">
+<!-- 차트 영역: 첫 번째 줄 - 기간별 매출 추이, 정산 금액 추이 -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">기간별 매출 추이</h3>
         <canvas id="sales_trend_chart" height="120"></canvas>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
-        <h3 class="mb-2 font-semibold">결제 수단별 통계</h3>
-        <canvas id="payment_method_chart" height="120"></canvas>
-    </div>
-</div>
-
-<!-- 정산 통계 영역: 플랫폼 → 가맹점 정산 내역 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">정산 금액 추이</h3>
         <canvas id="settlement_trend_chart" height="120"></canvas>
     </div>
+</div>
+
+<!-- 차트 영역: 두 번째 줄 - 정산 처리 내역, 결제 수단별 통계, 상세 통계 요약 -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm overflow-x-auto">
         <h3 class="mb-2 font-semibold">정산 처리 내역</h3>
         <table class="tbl_head01 w-full text-sm" id="settlement_table">
@@ -191,13 +187,15 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
             </tbody>
         </table>
     </div>
-</div>
-
-<!-- 상세 통계 (Phase 1 에서는 간단 요약 텍스트만) -->
-<div class="statistics-tables border rounded p-4 bg-white shadow-sm">
-    <h3 class="mb-2 font-semibold">상세 통계 요약</h3>
-    <div id="sales_detail_summary" class="text-sm text-gray-700">
-        선택한 기간의 매출, 예약건수, 평균 객단가, 취소금액/취소율이 이곳에 요약으로 표시됩니다.
+    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+        <h3 class="mb-2 font-semibold">결제 수단별 통계</h3>
+        <canvas id="payment_method_chart" height="120"></canvas>
+    </div>
+    <div class="statistics-tables border rounded p-4 bg-white shadow-sm">
+        <h3 class="mb-2 font-semibold">상세 통계 요약</h3>
+        <div id="sales_detail_summary" class="text-sm text-gray-700">
+            선택한 기간의 매출, 예약건수, 평균 객단가, 취소금액/취소율이 이곳에 요약으로 표시됩니다.
+        </div>
     </div>
 </div>
 

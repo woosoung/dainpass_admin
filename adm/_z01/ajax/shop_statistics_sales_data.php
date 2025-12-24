@@ -220,23 +220,64 @@ function get_sales_summary($shop_id, $range_start, $range_end)
 }
 
 if (!function_exists('get_daily_sales')) {
-function get_daily_sales($shop_id, $range_start, $range_end)
+function get_daily_sales($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
-    // PostgreSQL에서 DATE 추출: CAST 또는 ::date 사용
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        // 각 주의 월요일만 추출 (DOW: 0=일요일, 1=월요일, ..., 6=토요일)
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(appointment_datetime AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        sales_data AS (
+            SELECT 
+                {$date_group_expr} AS period_date,
+                COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
+                COALESCE(SUM(asd.org_balance_amount - asd.balance_amount), 0) AS cancel_amount,
+                COUNT(*) AS appointment_count,
+                COUNT(CASE WHEN asd.status = 'CANCELLED' THEN 1 END) AS cancel_count
+            FROM appointment_shop_detail AS asd
+            WHERE asd.shop_id = {$shop_id}
+              AND asd.appointment_datetime >= '{$range_start} 00:00:00'
+              AND asd.appointment_datetime <= '{$range_end} 23:59:59'
+              AND asd.status IN ('COMPLETED', 'CANCELLED')
+            GROUP BY {$date_group_expr}
+        )
         SELECT 
-            CAST(asd.appointment_datetime AS DATE) AS date,
-            COALESCE(SUM(asd.balance_amount), 0) AS total_sales,
-            COALESCE(SUM(asd.org_balance_amount - asd.balance_amount), 0) AS cancel_amount,
-            COUNT(*) AS appointment_count,
-            COUNT(CASE WHEN asd.status = 'CANCELLED' THEN 1 END) AS cancel_count
-        FROM appointment_shop_detail AS asd
-        WHERE asd.shop_id = {$shop_id}
-          AND asd.appointment_datetime >= '{$range_start} 00:00:00'
-          AND asd.appointment_datetime <= '{$range_end} 23:59:59'
-          AND asd.status IN ('COMPLETED', 'CANCELLED')
-        GROUP BY CAST(asd.appointment_datetime AS DATE)
-        ORDER BY date ASC
+            dp.period_date AS date,
+            COALESCE(sd.total_sales, 0) AS total_sales,
+            COALESCE(sd.cancel_amount, 0) AS cancel_amount,
+            COALESCE(sd.appointment_count, 0) AS appointment_count,
+            COALESCE(sd.cancel_count, 0) AS cancel_count
+        FROM date_periods dp
+        LEFT JOIN sales_data sd ON dp.period_date = sd.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -375,21 +416,60 @@ function get_settlement_deduction_statistics($shop_id, $range_start, $range_end)
 }
 
 if (!function_exists('get_settlement_chart')) {
-function get_settlement_chart($shop_id, $range_start, $range_end)
+function get_settlement_chart($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
-    // shop_settlement_log 기준 월별 정산 금액 추이
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(settlement_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(settlement_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(settlement_at AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        settlement_data AS (
+            SELECT
+                {$date_group_expr} AS period_date,
+                COALESCE(SUM(settlement_amount), 0)      AS total_amount,
+                COUNT(*)                                  AS settlement_count,
+                COUNT(CASE WHEN status = 'done' THEN 1 END) AS done_count
+            FROM shop_settlement_log
+            WHERE shop_id = {$shop_id}
+              AND settlement_at >= '{$range_start} 00:00:00'
+              AND settlement_at <= '{$range_end} 23:59:59'
+            GROUP BY {$date_group_expr}
+        )
         SELECT
-            date_trunc('month', settlement_at)::date AS month,
-            COALESCE(SUM(settlement_amount), 0)      AS total_amount,
-            COUNT(*)                                  AS settlement_count,
-            COUNT(CASE WHEN status = 'done' THEN 1 END) AS done_count
-        FROM shop_settlement_log
-        WHERE shop_id = {$shop_id}
-          AND settlement_at >= '{$range_start} 00:00:00'
-          AND settlement_at <= '{$range_end} 23:59:59'
-        GROUP BY date_trunc('month', settlement_at)
-        ORDER BY month ASC
+            dp.period_date AS month,
+            COALESCE(sd.total_amount, 0) AS total_amount,
+            COALESCE(sd.settlement_count, 0) AS settlement_count,
+            COALESCE(sd.done_count, 0) AS done_count
+        FROM date_periods dp
+        LEFT JOIN settlement_data sd ON dp.period_date = sd.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -509,10 +589,10 @@ try {
 
     // 통계 데이터 조회
     $summary          = get_sales_summary($shop_id, $range_start, $range_end);
-    $daily_sales      = get_daily_sales($shop_id, $range_start, $range_end);
+    $daily_sales      = get_daily_sales($shop_id, $range_start, $range_end, $period_type);
     $payment_methods  = get_payment_method_statistics($shop_id, $range_start, $range_end);
     $cancellations    = get_cancellation_statistics($shop_id, $range_start, $range_end, $summary);
-    $settlement_chart = get_settlement_chart($shop_id, $range_start, $range_end);
+    $settlement_chart = get_settlement_chart($shop_id, $range_start, $range_end, $period_type);
     $settlement_logs  = get_settlement_logs($shop_id, $range_start, $range_end);
     $settlement_deduction = get_settlement_deduction_statistics($shop_id, $range_start, $range_end);
 

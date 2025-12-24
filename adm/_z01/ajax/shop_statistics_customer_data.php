@@ -307,11 +307,13 @@ function get_top_customers($shop_id, $range_start, $range_end)
     $sql = "
         SELECT 
             sa.customer_id,
+            COALESCE(c.nickname, '고객 ' || sa.customer_id::text) AS customer_name,
             COUNT(*) AS appointment_count,
             SUM(asd.balance_amount) AS total_amount,
             AVG(asd.balance_amount) AS avg_amount
         FROM shop_appointments sa
         INNER JOIN appointment_shop_detail asd ON sa.appointment_id = asd.appointment_id
+        LEFT JOIN customers c ON sa.customer_id = c.customer_id
         WHERE asd.shop_id = {$shop_id}
           AND asd.appointment_datetime >= '{$range_start} 00:00:00'
           AND asd.appointment_datetime <= '{$range_end} 23:59:59'
@@ -319,7 +321,7 @@ function get_top_customers($shop_id, $range_start, $range_end)
           AND asd.status != 'BOOKED'
           AND sa.is_deleted = 'N'
           AND sa.customer_id IS NOT NULL
-        GROUP BY sa.customer_id
+        GROUP BY sa.customer_id, c.nickname
         ORDER BY total_amount DESC
         LIMIT 10
     ";
@@ -331,6 +333,7 @@ function get_top_customers($shop_id, $range_start, $range_end)
         while ($row = sql_fetch_array_pg($result->result)) {
             $rows[] = [
                 'customer_id' => (int)$row['customer_id'],
+                'customer_name' => $row['customer_name'],
                 'appointment_count' => (int)$row['appointment_count'],
                 'total_amount' => (int)$row['total_amount'],
                 'avg_amount' => (float)$row['avg_amount'],
@@ -413,20 +416,59 @@ function get_frequency_distribution($shop_id, $range_start, $range_end)
 }
 }
 
-// 찜 목록 추가 추이 (일별)
+// 찜 목록 추가 추이 (일별/주별/월별)
 if (!function_exists('get_wish_trend')) {
-function get_wish_trend($shop_id, $range_start, $range_end)
+function get_wish_trend($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(created_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        // 각 주의 월요일만 추출 (DOW: 0=일요일, 1=월요일, ..., 6=토요일)
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(created_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(created_at AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        wish_data AS (
+            SELECT 
+                {$date_group_expr} AS period_date,
+                COUNT(*) AS wish_count
+            FROM wish_list
+            WHERE shop_id = {$shop_id}
+              AND created_at >= '{$range_start} 00:00:00'
+              AND created_at <= '{$range_end} 23:59:59'
+            GROUP BY {$date_group_expr}
+        )
         SELECT 
-            CAST(created_at AS DATE) AS date,
-            COUNT(*) AS wish_count
-        FROM wish_list
-        WHERE shop_id = {$shop_id}
-          AND created_at >= '{$range_start} 00:00:00'
-          AND created_at <= '{$range_end} 23:59:59'
-        GROUP BY CAST(created_at AS DATE)
-        ORDER BY date ASC
+            dp.period_date AS date,
+            COALESCE(w.wish_count, 0) AS wish_count
+        FROM date_periods dp
+        LEFT JOIN wish_data w ON dp.period_date = w.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -445,42 +487,81 @@ function get_wish_trend($shop_id, $range_start, $range_end)
 }
 }
 
-// 찜 → 예약 전환률 추이 (일별)
+// 찜 → 예약 전환률 추이 (일별/주별/월별)
 if (!function_exists('get_wish_conversion_trend')) {
-function get_wish_conversion_trend($shop_id, $range_start, $range_end)
+function get_wish_conversion_trend($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(wl.created_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        // 각 주의 월요일만 추출 (DOW: 0=일요일, 1=월요일, ..., 6=토요일)
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(wl.created_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(wl.created_at AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        conversion_data AS (
+            SELECT 
+                {$date_group_expr} AS period_date,
+                COUNT(DISTINCT wl.customer_id) AS wish_customer_count,
+                COUNT(DISTINCT CASE 
+                    WHEN sa.appointment_id IS NOT NULL THEN wl.customer_id 
+                END) AS converted_customer_count,
+                CASE 
+                    WHEN COUNT(DISTINCT wl.customer_id) > 0 THEN
+                        ROUND((COUNT(DISTINCT CASE 
+                            WHEN sa.appointment_id IS NOT NULL THEN wl.customer_id 
+                        END)::numeric / COUNT(DISTINCT wl.customer_id)) * 100, 2)
+                    ELSE 0
+                END AS conversion_rate
+            FROM wish_list wl
+            LEFT JOIN shop_appointments sa ON wl.customer_id = sa.customer_id
+              AND sa.status != 'BOOKED'
+              AND sa.is_deleted = 'N'
+              AND sa.appointment_id IN (
+                SELECT appointment_id
+                FROM appointment_shop_detail
+                WHERE shop_id = {$shop_id}
+                  AND status != 'BOOKED'
+                  AND appointment_datetime >= wl.created_at
+                  AND appointment_datetime >= '{$range_start} 00:00:00'
+                  AND appointment_datetime <= '{$range_end} 23:59:59'
+              )
+            WHERE wl.shop_id = {$shop_id}
+              AND wl.created_at >= '{$range_start} 00:00:00'
+              AND wl.created_at <= '{$range_end} 23:59:59'
+            GROUP BY {$date_group_expr}
+        )
         SELECT 
-            CAST(wl.created_at AS DATE) AS date,
-            COUNT(DISTINCT wl.customer_id) AS wish_customer_count,
-            COUNT(DISTINCT CASE 
-                WHEN sa.appointment_id IS NOT NULL THEN wl.customer_id 
-            END) AS converted_customer_count,
-            CASE 
-                WHEN COUNT(DISTINCT wl.customer_id) > 0 THEN
-                    ROUND((COUNT(DISTINCT CASE 
-                        WHEN sa.appointment_id IS NOT NULL THEN wl.customer_id 
-                    END)::numeric / COUNT(DISTINCT wl.customer_id)) * 100, 2)
-                ELSE 0
-            END AS conversion_rate
-        FROM wish_list wl
-        LEFT JOIN shop_appointments sa ON wl.customer_id = sa.customer_id
-          AND sa.status != 'BOOKED'
-          AND sa.is_deleted = 'N'
-          AND sa.appointment_id IN (
-            SELECT appointment_id
-            FROM appointment_shop_detail
-            WHERE shop_id = {$shop_id}
-              AND status != 'BOOKED'
-              AND appointment_datetime >= wl.created_at
-              AND appointment_datetime >= '{$range_start} 00:00:00'
-              AND appointment_datetime <= '{$range_end} 23:59:59'
-          )
-        WHERE wl.shop_id = {$shop_id}
-          AND wl.created_at >= '{$range_start} 00:00:00'
-          AND wl.created_at <= '{$range_end} 23:59:59'
-        GROUP BY CAST(wl.created_at AS DATE)
-        ORDER BY date ASC
+            dp.period_date AS date,
+            COALESCE(c.conversion_rate, 0) AS conversion_rate
+        FROM date_periods dp
+        LEFT JOIN conversion_data c ON dp.period_date = c.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -506,11 +587,14 @@ function get_vip_customers($shop_id, $range_start, $range_end)
     $sql = "
         SELECT 
             sa.customer_id,
+            c.user_id,
+            c.nickname,
             COUNT(*) AS appointment_count,
             SUM(asd.balance_amount) AS total_amount,
             AVG(asd.balance_amount) AS avg_amount
         FROM shop_appointments sa
         INNER JOIN appointment_shop_detail asd ON sa.appointment_id = asd.appointment_id
+        LEFT JOIN customers c ON sa.customer_id = c.customer_id
         WHERE asd.shop_id = {$shop_id}
           AND asd.appointment_datetime >= '{$range_start} 00:00:00'
           AND asd.appointment_datetime <= '{$range_end} 23:59:59'
@@ -518,7 +602,7 @@ function get_vip_customers($shop_id, $range_start, $range_end)
           AND asd.status != 'BOOKED'
           AND sa.is_deleted = 'N'
           AND sa.customer_id IS NOT NULL
-        GROUP BY sa.customer_id
+        GROUP BY sa.customer_id, c.user_id, c.nickname
         ORDER BY total_amount DESC
         LIMIT 10
     ";
@@ -529,9 +613,17 @@ function get_vip_customers($shop_id, $range_start, $range_end)
 
     if ($result && is_object($result) && isset($result->result)) {
         while ($row = sql_fetch_array_pg($result->result)) {
+            // user_id(nickname) 형식으로 표시
+            $user_id = $row['user_id'] ? $row['user_id'] : ('고객 ' . $row['customer_id']);
+            $nickname = $row['nickname'] ? '(' . $row['nickname'] . ')' : '';
+            $customer_display = $user_id . $nickname;
+            
             $rows[] = [
                 'rank' => $rank++,
                 'customer_id' => (int)$row['customer_id'],
+                'user_id' => $row['user_id'],
+                'nickname' => $row['nickname'],
+                'customer_display' => $customer_display,
                 'appointment_count' => (int)$row['appointment_count'],
                 'total_amount' => (int)$row['total_amount'],
                 'avg_amount' => (float)$row['avg_amount'],
@@ -608,8 +700,8 @@ try {
     $customer_type_distribution = get_customer_type_distribution($shop_id, $range_start, $range_end);
     $top_customers = get_top_customers($shop_id, $range_start, $range_end);
     $frequency_distribution = get_frequency_distribution($shop_id, $range_start, $range_end);
-    $wish_trend = get_wish_trend($shop_id, $range_start, $range_end);
-    $wish_conversion_trend = get_wish_conversion_trend($shop_id, $range_start, $range_end);
+    $wish_trend = get_wish_trend($shop_id, $range_start, $range_end, $period_type);
+    $wish_conversion_trend = get_wish_conversion_trend($shop_id, $range_start, $range_end, $period_type);
     $vip_customers = get_vip_customers($shop_id, $range_start, $range_end);
 
     echo json_encode([

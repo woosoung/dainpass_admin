@@ -357,7 +357,7 @@ if (!defined('_GNUBOARD_')) exit;
         var today = new Date();
         var endDate = today.toISOString().slice(0, 10);
         var start = new Date();
-        start.setDate(start.getDate() - 29);
+        start.setMonth(start.getMonth() - 1); // 한 달 전
         var startDate = start.toISOString().slice(0, 10);
 
         if (!$('#start_date').val()) {

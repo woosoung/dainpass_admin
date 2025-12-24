@@ -207,22 +207,62 @@ function get_reservation_summary($shop_id, $range_start, $range_end)
 }
 }
 
-// 기간별 예약 건수 추이 (일별)
+// 기간별 예약 건수 추이 (일별/주별/월별)
 if (!function_exists('get_daily_appointments')) {
-function get_daily_appointments($shop_id, $range_start, $range_end)
+function get_daily_appointments($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        // 각 주의 월요일만 추출 (DOW: 0=일요일, 1=월요일, ..., 6=토요일)
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(appointment_datetime AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        appointment_data AS (
+            SELECT 
+                {$date_group_expr} AS period_date,
+                COUNT(*) AS total_count,
+                COUNT(CASE WHEN status = 'CANCELLED' OR request_cancel_datetime IS NOT NULL THEN 1 END) AS cancel_count
+            FROM appointment_shop_detail
+            WHERE shop_id = {$shop_id}
+              AND appointment_datetime >= '{$range_start} 00:00:00'
+              AND appointment_datetime <= '{$range_end} 23:59:59'
+              AND status != 'BOOKED'
+            GROUP BY {$date_group_expr}
+        )
         SELECT 
-            CAST(appointment_datetime AS DATE) AS date,
-            COUNT(*) AS total_count,
-            COUNT(CASE WHEN status = 'CANCELLED' OR request_cancel_datetime IS NOT NULL THEN 1 END) AS cancel_count
-        FROM appointment_shop_detail
-        WHERE shop_id = {$shop_id}
-          AND appointment_datetime >= '{$range_start} 00:00:00'
-          AND appointment_datetime <= '{$range_end} 23:59:59'
-          AND status != 'BOOKED'
-        GROUP BY CAST(appointment_datetime AS DATE)
-        ORDER BY date ASC
+            dp.period_date AS date,
+            COALESCE(ad.total_count, 0) AS total_count,
+            COALESCE(ad.cancel_count, 0) AS cancel_count
+        FROM date_periods dp
+        LEFT JOIN appointment_data ad ON dp.period_date = ad.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -361,27 +401,68 @@ function get_weekly_appointments($shop_id, $range_start, $range_end)
 }
 }
 
-// 취소율 추이 (일별)
+// 취소율 추이 (일별/주별/월별)
 if (!function_exists('get_cancel_trend')) {
-function get_cancel_trend($shop_id, $range_start, $range_end)
+function get_cancel_trend($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        // 각 주의 월요일만 추출 (DOW: 0=일요일, 1=월요일, ..., 6=토요일)
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(appointment_datetime AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        cancel_data AS (
+            SELECT 
+                {$date_group_expr} AS period_date,
+                COUNT(*) AS total_count,
+                COUNT(CASE WHEN status = 'CANCELLED' OR request_cancel_datetime IS NOT NULL THEN 1 END) AS cancel_count,
+                CASE 
+                    WHEN COUNT(*) > 0 THEN 
+                        ROUND((COUNT(CASE WHEN status = 'CANCELLED' OR request_cancel_datetime IS NOT NULL THEN 1 END)::numeric / COUNT(*)) * 100, 2)
+                    ELSE 0
+                END AS cancel_rate
+            FROM appointment_shop_detail
+            WHERE shop_id = {$shop_id}
+              AND appointment_datetime >= '{$range_start} 00:00:00'
+              AND appointment_datetime <= '{$range_end} 23:59:59'
+              AND status != 'BOOKED'
+            GROUP BY {$date_group_expr}
+        )
         SELECT 
-            CAST(appointment_datetime AS DATE) AS date,
-            COUNT(*) AS total_count,
-            COUNT(CASE WHEN status = 'CANCELLED' OR request_cancel_datetime IS NOT NULL THEN 1 END) AS cancel_count,
-            CASE 
-                WHEN COUNT(*) > 0 THEN 
-                    ROUND((COUNT(CASE WHEN status = 'CANCELLED' OR request_cancel_datetime IS NOT NULL THEN 1 END)::numeric / COUNT(*)) * 100, 2)
-                ELSE 0
-            END AS cancel_rate
-        FROM appointment_shop_detail
-        WHERE shop_id = {$shop_id}
-          AND appointment_datetime >= '{$range_start} 00:00:00'
-          AND appointment_datetime <= '{$range_end} 23:59:59'
-          AND status != 'BOOKED'
-        GROUP BY CAST(appointment_datetime AS DATE)
-        ORDER BY date ASC
+            dp.period_date AS date,
+            COALESCE(cd.total_count, 0) AS total_count,
+            COALESCE(cd.cancel_count, 0) AS cancel_count,
+            COALESCE(cd.cancel_rate, 0) AS cancel_rate
+        FROM date_periods dp
+        LEFT JOIN cancel_data cd ON dp.period_date = cd.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -538,11 +619,11 @@ try {
 
     // 통계 데이터 조회
     $summary = get_reservation_summary($shop_id, $range_start, $range_end);
-    $daily_appointments = get_daily_appointments($shop_id, $range_start, $range_end);
+    $daily_appointments = get_daily_appointments($shop_id, $range_start, $range_end, $period_type);
     $status_distribution = get_status_distribution($shop_id, $range_start, $range_end);
     $hourly_appointments = get_hourly_appointments($shop_id, $range_start, $range_end);
     $weekly_appointments = get_weekly_appointments($shop_id, $range_start, $range_end);
-    $cancel_trend = get_cancel_trend($shop_id, $range_start, $range_end);
+    $cancel_trend = get_cancel_trend($shop_id, $range_start, $range_end, $period_type);
     $weekday_hour_pattern = get_weekday_hour_pattern($shop_id, $range_start, $range_end);
     $business_hours_data = get_business_hours_data($shop_id);
 

@@ -171,35 +171,36 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
     </div>
 </div>
 
-<!-- 쿠폰별 사용률 차트 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr);">
+<!-- 쿠폰별 사용률 차트 및 상세 통계 테이블 (가로 배치) -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
+    <!-- 쿠폰별 사용률 차트 -->
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">쿠폰별 사용률 (상위 10개)</h3>
         <canvas id="coupon_usage_rate_chart" height="120"></canvas>
     </div>
-</div>
-
-<!-- 쿠폰별 상세 통계 테이블 -->
-<div class="statistics-tables border rounded p-4 bg-white shadow-sm mb-6">
-    <h3 class="mb-2 font-semibold">쿠폰별 상세 통계 (상위 20개)</h3>
-    <div class="overflow-x-auto">
-        <table class="tbl_head01 w-full text-sm" id="coupon_detail_table">
-            <thead>
-            <tr>
-                <th scope="col" class="text-center">쿠폰명</th>
-                <th scope="col" class="text-center">쿠폰코드</th>
-                <th scope="col" class="text-center">발급 수</th>
-                <th scope="col" class="text-center">사용 수</th>
-                <th scope="col" class="text-center">사용률 (%)</th>
-                <th scope="col" class="text-center">할인 금액 합계</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td colspan="6" class="text-center text-gray-500">조회된 데이터가 없습니다.</td>
-            </tr>
-            </tbody>
-        </table>
+    
+    <!-- 쿠폰별 상세 통계 테이블 -->
+    <div class="statistics-tables border rounded p-4 bg-white shadow-sm">
+        <h3 class="mb-2 font-semibold">쿠폰별 상세 통계 (상위 20개)</h3>
+        <div class="overflow-x-auto">
+            <table class="tbl_head01 w-full text-sm" id="coupon_detail_table">
+                <thead>
+                <tr>
+                    <th scope="col" class="text-center">쿠폰명</th>
+                    <th scope="col" class="text-center">쿠폰코드</th>
+                    <th scope="col" class="text-center">발급 수</th>
+                    <th scope="col" class="text-center">사용 수</th>
+                    <th scope="col" class="text-center">사용률 (%)</th>
+                    <th scope="col" class="text-center">할인 금액 합계</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td colspan="6" class="text-center text-gray-500">조회된 데이터가 없습니다.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

@@ -92,9 +92,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 
-// 기본 기간: 최근 30일 (JS에서 다시 세팅하지만 초기값용)
+// 기본 기간: 한 달 전부터 오늘까지 (JS에서 다시 세팅하지만 초기값용)
 $today = date('Y-m-d');
-$default_start = date('Y-m-d', strtotime('-29 days'));
+$default_start = date('Y-m-d', strtotime('-1 month'));
 ?>
 
 <div class="local_desc01 local_desc mb-4">
@@ -156,18 +156,12 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
 </div>
 
 <!-- 차트 영역 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);">
+<!-- 첫 번째 줄: 기간별 예약 건수 추이, 시간대별 예약 건수, 요일별 예약 건수 -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">기간별 예약 건수 추이</h3>
         <canvas id="appointment_trend_chart" height="120"></canvas>
     </div>
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
-        <h3 class="mb-2 font-semibold">상태별 예약 분포</h3>
-        <canvas id="status_distribution_chart" height="120"></canvas>
-    </div>
-</div>
-
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">시간대별 예약 건수</h3>
         <canvas id="hourly_appointment_chart" height="120"></canvas>
@@ -178,10 +172,15 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
     </div>
 </div>
 
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);">
+<!-- 두 번째 줄: 취소율 추이, 상태별 예약 분포, 상세 통계 요약 -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">취소율 추이</h3>
         <canvas id="cancel_trend_chart" height="120"></canvas>
+    </div>
+    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+        <h3 class="mb-2 font-semibold">상태별 예약 분포</h3>
+        <canvas id="status_distribution_chart" height="120"></canvas>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm overflow-x-auto">
         <h3 class="mb-2 font-semibold">상세 통계 요약</h3>

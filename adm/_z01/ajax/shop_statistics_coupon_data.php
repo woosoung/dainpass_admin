@@ -144,23 +144,59 @@ function get_coupon_summary($shop_id, $range_start, $range_end)
 
 // 기간별 쿠폰 발급/사용 추이
 if (!function_exists('get_coupon_issue_use_trend')) {
-function get_coupon_issue_use_trend($shop_id, $range_start, $range_end)
+function get_coupon_issue_use_trend($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        // PostgreSQL의 DATE_TRUNC('week')는 월요일을 주의 시작으로 간주
+        $date_group_expr = "DATE_TRUNC('week', CAST(cc.issued_at AS DATE))::DATE";
+        $date_group_expr_used = "DATE_TRUNC('week', CAST(cc.used_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        // 각 주의 월요일만 추출 (DOW: 0=일요일, 1=월요일, ..., 6=토요일)
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(cc.issued_at AS DATE))::DATE";
+        $date_group_expr_used = "DATE_TRUNC('month', CAST(cc.used_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(cc.issued_at AS DATE)";
+        $date_group_expr_used = "CAST(cc.used_at AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
-        WITH issued_daily AS (
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        issued_data AS (
             SELECT 
-                CAST(cc.issued_at AS DATE) AS date,
+                {$date_group_expr} AS period_date,
                 COUNT(*) AS issued_count
             FROM customer_coupons cc
             INNER JOIN shop_coupons sc ON cc.coupon_id = sc.coupon_id
             WHERE sc.shop_id = {$shop_id}
               AND cc.issued_at >= '{$range_start} 00:00:00'
               AND cc.issued_at <= '{$range_end} 23:59:59'
-            GROUP BY CAST(cc.issued_at AS DATE)
+            GROUP BY {$date_group_expr}
         ),
-        used_daily AS (
+        used_data AS (
             SELECT 
-                CAST(cc.used_at AS DATE) AS date,
+                {$date_group_expr_used} AS period_date,
                 COUNT(*) AS used_count
             FROM customer_coupons cc
             INNER JOIN shop_coupons sc ON cc.coupon_id = sc.coupon_id
@@ -168,15 +204,16 @@ function get_coupon_issue_use_trend($shop_id, $range_start, $range_end)
               AND cc.used_at >= '{$range_start} 00:00:00'
               AND cc.used_at <= '{$range_end} 23:59:59'
               AND (cc.status = 'USED' OR cc.used_at IS NOT NULL)
-            GROUP BY CAST(cc.used_at AS DATE)
+            GROUP BY {$date_group_expr_used}
         )
         SELECT 
-            COALESCE(i.date, u.date) AS date,
+            dp.period_date AS date,
             COALESCE(i.issued_count, 0) AS issued_count,
             COALESCE(u.used_count, 0) AS used_count
-        FROM issued_daily i
-        FULL OUTER JOIN used_daily u ON i.date = u.date
-        ORDER BY date ASC
+        FROM date_periods dp
+        LEFT JOIN issued_data i ON dp.period_date = i.period_date
+        LEFT JOIN used_data u ON dp.period_date = u.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -243,21 +280,59 @@ function get_coupon_usage_rate($shop_id, $range_start, $range_end)
 
 // 기간별 할인 금액 추이
 if (!function_exists('get_discount_amount_trend')) {
-function get_discount_amount_trend($shop_id, $range_start, $range_end)
+function get_discount_amount_trend($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(appointment_datetime AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(appointment_datetime AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        discount_data AS (
+            SELECT 
+                {$date_group_expr} AS period_date,
+                COALESCE(SUM(coupon_amount), 0) AS discount_amount
+            FROM appointment_shop_detail
+            WHERE shop_id = {$shop_id}
+              AND coupon_amount IS NOT NULL
+              AND coupon_amount > 0
+              AND appointment_datetime >= '{$range_start} 00:00:00'
+              AND appointment_datetime <= '{$range_end} 23:59:59'
+              AND status != 'BOOKED'
+            GROUP BY {$date_group_expr}
+        )
         SELECT 
-            CAST(appointment_datetime AS DATE) AS date,
-            COALESCE(SUM(coupon_amount), 0) AS discount_amount
-        FROM appointment_shop_detail
-        WHERE shop_id = {$shop_id}
-          AND coupon_amount IS NOT NULL
-          AND coupon_amount > 0
-          AND appointment_datetime >= '{$range_start} 00:00:00'
-          AND appointment_datetime <= '{$range_end} 23:59:59'
-          AND status != 'BOOKED'
-        GROUP BY CAST(appointment_datetime AS DATE)
-        ORDER BY date ASC
+            dp.period_date AS date,
+            COALESCE(d.discount_amount, 0) AS discount_amount
+        FROM date_periods dp
+        LEFT JOIN discount_data d ON dp.period_date = d.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -389,9 +464,9 @@ try {
 
     // 통계 데이터 조회
     $coupon_summary = get_coupon_summary($shop_id, $range_start, $range_end);
-    $coupon_issue_use_trend = get_coupon_issue_use_trend($shop_id, $range_start, $range_end);
+    $coupon_issue_use_trend = get_coupon_issue_use_trend($shop_id, $range_start, $range_end, $period_type);
     $coupon_usage_rate = get_coupon_usage_rate($shop_id, $range_start, $range_end);
-    $discount_amount_trend = get_discount_amount_trend($shop_id, $range_start, $range_end);
+    $discount_amount_trend = get_discount_amount_trend($shop_id, $range_start, $range_end, $period_type);
     $coupon_detail_statistics = get_coupon_detail_statistics($shop_id, $range_start, $range_end);
 
     // 쿠폰 사용률 계산

@@ -268,20 +268,60 @@ function get_review_summary($shop_id, $range_start, $range_end)
 
 // 기간별 리뷰 추이
 if (!function_exists('get_review_trend')) {
-function get_review_trend($shop_id, $range_start, $range_end)
+function get_review_trend($shop_id, $range_start, $range_end, $period_type = 'daily')
 {
+    // period_type에 따라 날짜 그룹화 방식 결정
+    if ($period_type == 'weekly') {
+        // 주별: 해당 주의 첫 번째 날짜로 그룹화 (월요일 기준)
+        $date_group_expr = "DATE_TRUNC('week', CAST(sr_created_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('week', date_series.date)::DATE";
+        // 각 주의 월요일만 추출 (DOW: 0=일요일, 1=월요일, ..., 6=토요일)
+        $date_series_filter = "AND EXTRACT(DOW FROM date_series.date) = 1"; // 월요일만
+    } elseif ($period_type == 'monthly') {
+        // 월별: 해당 월의 첫 번째 날짜로 그룹화
+        $date_group_expr = "DATE_TRUNC('month', CAST(sr_created_at AS DATE))::DATE";
+        $date_series_expr = "DATE_TRUNC('month', date_series.date)::DATE";
+        $date_series_filter = "AND EXTRACT(DAY FROM date_series.date) = 1"; // 매월 1일만
+    } else {
+        // 일별
+        $date_group_expr = "CAST(sr_created_at AS DATE)";
+        $date_series_expr = "date_series.date";
+        $date_series_filter = "";
+    }
+    
     $sql = "
+        WITH date_series AS (
+            SELECT generate_series(
+                '{$range_start}'::DATE,
+                '{$range_end}'::DATE,
+                '1 day'::INTERVAL
+            )::DATE AS date
+        ),
+        date_periods AS (
+            SELECT DISTINCT {$date_series_expr} AS period_date
+            FROM date_series
+            WHERE 1=1 {$date_series_filter}
+            ORDER BY period_date
+        ),
+        review_data AS (
+            SELECT 
+                {$date_group_expr} AS period_date,
+                COUNT(*) AS review_count,
+                AVG(sr_score) AS avg_rating
+            FROM shop_review
+            WHERE shop_id = {$shop_id}
+              AND sr_deleted = 'N'
+              AND sr_created_at >= '{$range_start} 00:00:00'
+              AND sr_created_at <= '{$range_end} 23:59:59'
+            GROUP BY {$date_group_expr}
+        )
         SELECT 
-            CAST(sr_created_at AS DATE) AS date,
-            COUNT(*) AS review_count,
-            AVG(sr_score) AS avg_rating
-        FROM shop_review
-        WHERE shop_id = {$shop_id}
-          AND sr_deleted = 'N'
-          AND sr_created_at >= '{$range_start} 00:00:00'
-          AND sr_created_at <= '{$range_end} 23:59:59'
-        GROUP BY CAST(sr_created_at AS DATE)
-        ORDER BY date ASC
+            dp.period_date AS date,
+            COALESCE(r.review_count, 0) AS review_count,
+            COALESCE(r.avg_rating, 0) AS avg_rating
+        FROM date_periods dp
+        LEFT JOIN review_data r ON dp.period_date = r.period_date
+        ORDER BY dp.period_date ASC
     ";
 
     $result = sql_query_pg($sql);
@@ -448,7 +488,7 @@ try {
     $service_popularity = get_service_popularity($shop_id, $range_start, $range_end);
     $service_sales = get_service_sales($shop_id, $range_start, $range_end);
     $review_summary = get_review_summary($shop_id, $range_start, $range_end);
-    $review_trend = get_review_trend($shop_id, $range_start, $range_end);
+    $review_trend = get_review_trend($shop_id, $range_start, $range_end, $period_type);
     $rating_distribution = get_rating_distribution($shop_id, $range_start, $range_end);
     $service_details = get_service_details($shop_id, $range_start, $range_end);
 
