@@ -383,6 +383,21 @@ unitsData.forEach(unit => {
     group.add(text);
     layer.add(group);
     
+    // 드래그 경계 제한: 캔버스 밖으로 나가지 못하도록 제한
+    group.dragBoundFunc(function(pos) {
+        const rectWidth = rect.width();
+        const rectHeight = rect.height();
+        
+        // 캔버스 경계 내로 제한
+        let newX = Math.max(0, Math.min(pos.x, canvasWidth - rectWidth));
+        let newY = Math.max(0, Math.min(pos.y, canvasHeight - rectHeight));
+        
+        return {
+            x: newX,
+            y: newY
+        };
+    });
+    
     // 이벤트
     group.on('click tap', function(e) {
         selectShape(group, unit);
