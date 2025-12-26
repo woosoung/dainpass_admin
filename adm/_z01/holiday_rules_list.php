@@ -135,7 +135,6 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 정기휴무 규칙을 관리합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 

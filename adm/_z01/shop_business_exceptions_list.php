@@ -185,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 특별휴무/영업일을 관리합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 

@@ -280,7 +280,6 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 특별휴무/영업일을 달력에서 확인하고 관리할 수 있습니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 
