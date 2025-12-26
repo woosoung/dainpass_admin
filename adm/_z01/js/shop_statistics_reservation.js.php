@@ -14,6 +14,18 @@ if (!defined('_GNUBOARD_')) exit;
         return Number(num).toLocaleString('ko-KR');
     }
 
+    function getStatusLabel(status) {
+        if (!status) return '기타';
+        var statusMap = {
+            'CANCELLED': '취소됨',
+            'COMPLETED': '완료',
+            'CONFIRMED': '확인됨',
+            'PENDING': '대기중',
+            'BOOKED': '예약됨'  // 통계에서 제외되지만 혹시 모르니 포함
+        };
+        return statusMap[status] || status;
+    }
+
     function loadStatistics() {
         var periodType = $('#period_type').val();
         var startDate  = $('#start_date').val();
@@ -180,7 +192,8 @@ if (!defined('_GNUBOARD_')) exit;
         if (statusDistribution && statusDistribution.length) {
             for (var i = 0; i < statusDistribution.length; i++) {
                 var row = statusDistribution[i];
-                labels.push(row.status || '기타');
+                // 상태값을 한국어로 변환 (BOOKED는 이미 제외되어 있음)
+                labels.push(getStatusLabel(row.status));
                 data.push(row.count || 0);
             }
         }

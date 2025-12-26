@@ -139,7 +139,9 @@ if (!defined('_GNUBOARD_')) exit;
         // 고객 통계
         $('#new_customer_count').text(formatNumber(customer.new_customer_count || 0) + ' 명');
         $('#existing_customer_count').text(formatNumber(customer.existing_customer_count || 0));
-        $('#avg_amount_per_customer').text(formatCurrency(customer.avg_amount_per_customer || 0));
+        // 평균 예약 금액: 소수점 이하 제거
+        var avgAmount = customer.avg_amount_per_customer || 0;
+        $('#avg_amount_per_customer').text(formatCurrency(Math.floor(avgAmount)));
         $('#avg_appointment_frequency').text((customer.avg_appointment_frequency || 0).toFixed(1) + ' 회');
 
         // 서비스/리뷰 통계

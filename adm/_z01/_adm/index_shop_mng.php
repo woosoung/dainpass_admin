@@ -160,10 +160,29 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">기간별 매출 추이</h3>
         <canvas id="sales_trend_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>총 매출</strong>: 예약 기준 실제 결제된 금액의 합계입니다.</li>
+                <li><strong>순 매출</strong>: 총 매출에서 취소금액을 뺀 실제 매출입니다.</li>
+                <li>두 선의 차이가 크면 취소율이 높은 기간을 의미합니다.</li>
+                <li>상승 추세는 매출 증가, 하락 추세는 매출 감소를 나타냅니다.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">기간별 예약 건수 추이</h3>
         <canvas id="appointment_trend_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>전체 예약</strong>: 해당 기간 내 실제 발생한 예약 건수입니다.</li>
+                <li><strong>취소 예약</strong>: 해당 기간 내 취소된 예약 건수입니다.</li>
+                <li>두 선의 차이가 크면 취소율이 높은 기간을 의미합니다.</li>
+                <li>상승 추세는 예약 증가, 하락 추세는 예약 감소를 나타냅니다.</li>
+                <li>일별/주별/월별 선택에 따라 집계 단위가 달라집니다.</li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -172,14 +191,41 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">시간대별 예약 건수</h3>
         <canvas id="hourly_appointment_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>0시부터 23시까지 각 시간대별 예약 건수를 보여줍니다.</li>
+                <li>피크 시간대를 파악하여 인력 배치를 최적화하세요.</li>
+                <li>비수기 시간대에는 할인 이벤트나 프로모션을 고려해보세요.</li>
+                <li>특정 시간대에 예약이 집중되면 해당 시간대의 서비스 품질 관리가 중요합니다.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">요일별 예약 건수</h3>
         <canvas id="weekly_appointment_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>일요일부터 토요일까지 각 요일별 예약 건수를 보여줍니다.</li>
+                <li>주중과 주말의 예약 패턴을 비교하세요.</li>
+                <li>특정 요일에 예약이 집중된다면 해당 요일의 운영 전략을 세우세요.</li>
+                <li>예약이 적은 요일에는 마케팅 강화나 프로모션을 검토하세요.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">신규/기존 고객 비율</h3>
         <canvas id="customer_type_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>신규 고객</strong>: 선택한 기간 동안 첫 예약을 한 고객입니다.</li>
+                <li><strong>기존 고객</strong>: 선택한 기간 이전에 이미 예약한 경험이 있는 고객입니다.</li>
+                <li>신규 고객 비율이 높으면 신규 유입이 활발함을 의미합니다.</li>
+                <li>기존 고객 비율이 높으면 재방문 고객이 많아 고객 충성도가 높음을 의미합니다.</li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -188,14 +234,41 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">서비스별 예약 건수 (상위 10개)</h3>
         <canvas id="service_popularity_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>선택한 기간 동안 예약이 가장 많이 발생한 서비스 상위 10개를 보여줍니다.</li>
+                <li>예약 건수가 많은 서비스는 고객들이 선호하는 인기 서비스입니다.</li>
+                <li>상위 서비스의 특징을 분석하여 다른 서비스에도 적용할 수 있습니다.</li>
+                <li>예약 건수가 적은 서비스는 가격 조정이나 홍보 전략 수립이 필요할 수 있습니다.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">서비스별 매출 (상위 10개)</h3>
         <canvas id="service_sales_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>선택한 기간 동안 매출이 가장 높은 서비스 상위 10개를 보여줍니다.</li>
+                <li>매출이 높은 서비스는 수익성 있는 핵심 서비스입니다.</li>
+                <li>예약 건수와 매출을 비교하여 고가 서비스와 저가 서비스의 특성을 파악할 수 있습니다.</li>
+                <li>매출 비중이 높은 서비스에 집중하여 마케팅 전략을 수립하세요.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">고객별 예약 금액 분포 (상위 10명)</h3>
         <canvas id="customer_amount_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>선택한 기간 동안 예약 금액이 높은 상위 10명의 고객을 보여줍니다.</li>
+                <li>고객별 총 예약 금액을 기준으로 순위가 결정됩니다.</li>
+                <li>상위 고객들의 예약 패턴을 분석하여 맞춤형 서비스를 제공할 수 있습니다.</li>
+                <li>특정 고객의 금액이 비정상적으로 높으면 VIP 관리 대상으로 고려하세요.</li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -204,10 +277,30 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">기간별 쿠폰 발급/사용 추이</h3>
         <canvas id="coupon_issue_use_trend_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>발급</strong>: 해당 기간에 고객에게 발급된 쿠폰의 총 개수입니다.</li>
+                <li><strong>사용</strong>: 해당 기간에 실제로 사용된 쿠폰의 총 개수입니다.</li>
+                <li>발급 수 대비 사용 수가 높으면 쿠폰 활용도가 좋음을 의미합니다.</li>
+                <li>두 선의 차이가 크면 발급은 많지만 사용이 적은 쿠폰 정책을 검토해야 합니다.</li>
+                <li>상승 추세는 쿠폰 인기도 증가, 하락 추세는 쿠폰 관심도 감소를 나타냅니다.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">기간별 할인 금액 추이</h3>
         <canvas id="discount_amount_trend_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>기간별로 쿠폰 사용으로 인해 할인된 금액의 합계를 보여줍니다.</li>
+                <li>할인 금액이 높으면 쿠폰 마케팅 효과가 크지만, 순수익에는 영향을 줍니다.</li>
+                <li>할인 금액 추이와 매출 추이를 함께 비교하여 쿠폰의 실질적 효과를 파악하세요.</li>
+                <li>급격한 증가는 프로모션 기간의 효과, 급격한 감소는 프로모션 종료를 의미합니다.</li>
+                <li>안정적인 할인 금액은 고객의 쿠폰 사용 습관이 정착되었음을 나타냅니다.</li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -230,6 +323,15 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </tr>
             </tbody>
         </table>
+    </div>
+    <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <p class="mb-1"><strong>해석 방법:</strong></p>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>정산일</strong>: 플랫폼에서 정산을 처리한 날짜입니다.</li>
+            <li><strong>정산기간</strong>: 해당 정산에 포함된 매출 발생 기간입니다.</li>
+            <li><strong>상태</strong>: 완료(정산 완료), 대기(정산 대기), 실패(정산 실패)를 의미합니다.</li>
+            <li>정산 금액은 해당 기간의 매출에서 수수료를 차감한 최종 입금액입니다.</li>
+        </ul>
     </div>
 </div>
 

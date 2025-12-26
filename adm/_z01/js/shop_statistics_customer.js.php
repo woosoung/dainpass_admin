@@ -19,6 +19,11 @@ if (!defined('_GNUBOARD_')) exit;
         return Number(num).toLocaleString('ko-KR') + '원';
     }
 
+    function formatCurrencyInteger(num) {
+        if (num === null || num === undefined || isNaN(num)) return '-';
+        return Math.floor(Number(num)).toLocaleString('ko-KR') + '원';
+    }
+
     function loadStatistics() {
         var periodType = $('#period_type').val();
         var startDate  = $('#start_date').val();
@@ -80,7 +85,7 @@ if (!defined('_GNUBOARD_')) exit;
         $('#new_customer_rate').text((summary.new_customer_rate || 0).toFixed(2));
         $('#existing_customer_count').text(formatNumber(summary.existing_customer_count || 0) + ' 명');
         $('#existing_customer_rate').text((summary.existing_customer_rate || 0).toFixed(2));
-        $('#avg_amount_per_customer').text(formatCurrency(summary.avg_amount_per_customer || 0));
+        $('#avg_amount_per_customer').text(formatCurrencyInteger(summary.avg_amount_per_customer || 0));
         $('#avg_appointment_frequency').text((summary.avg_appointment_frequency || 0).toFixed(2) + ' 회');
         $('#vip_customer_count').text(formatNumber(summary.vip_customer_count || 0) + ' 명');
         $('#wish_conversion_rate').text((summary.wish_conversion_rate || 0).toFixed(2) + ' %');
@@ -395,8 +400,8 @@ if (!defined('_GNUBOARD_')) exit;
                 '<td class="text-center">' + (row.rank || '-') + '</td>' +
                 '<td class="text-center">' + customerDisplay + '</td>' +
                 '<td class="text-center">' + formatNumber(row.appointment_count || 0) + '회</td>' +
-                '<td class="text-center">' + formatCurrency(row.total_amount || 0) + '</td>' +
-                '<td class="text-center">' + formatCurrency(row.avg_amount || 0) + '</td>' +
+                '<td class="text-center">' + formatCurrencyInteger(row.total_amount || 0) + '</td>' +
+                '<td class="text-center">' + formatCurrencyInteger(row.avg_amount || 0) + '</td>' +
                 '</tr>';
             $tbody.append(tr);
         });

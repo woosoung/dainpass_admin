@@ -77,8 +77,8 @@ if (!defined('_GNUBOARD_')) exit;
         if (!summary) summary = {};
 
         $('#total_services').text(formatNumber(summary.total_services || 0) + ' 개');
-        $('#avg_service_price').text(formatCurrency(summary.avg_service_price || 0));
-        $('#total_service_sales').text(formatCurrency(summary.total_service_sales || 0));
+        $('#avg_service_price').text(formatCurrency(Math.floor(summary.avg_service_price || 0)));
+        $('#total_service_sales').text(formatCurrency(Math.floor(summary.total_service_sales || 0)));
         $('#avg_rating').text((summary.avg_rating || 0).toFixed(2) + ' 점');
         $('#review_count').text(formatNumber(summary.review_count || 0) + ' 건');
         $('#avg_appointment_per_service').text((summary.avg_appointment_per_service || 0).toFixed(2) + ' 건');
@@ -410,7 +410,7 @@ if (!defined('_GNUBOARD_')) exit;
                 '<td class="text-center">' + formatCurrency(row.service_price || 0) + '</td>' +
                 '<td class="text-center">' + formatNumber(row.appointment_count || 0) + '건</td>' +
                 '<td class="text-center">' + formatCurrency(row.total_sales || 0) + '</td>' +
-                '<td class="text-center">' + formatCurrency(row.avg_sales_per_appointment || 0) + '</td>' +
+                '<td class="text-center">' + formatCurrency(Math.floor(row.avg_sales_per_appointment || 0)) + '</td>' +
                 '</tr>';
             $tbody.append(tr);
         });

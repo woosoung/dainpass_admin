@@ -160,10 +160,28 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">기간별 매출 추이</h3>
         <canvas id="sales_trend_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>총 매출</strong>: 예약 기준 실제 결제된 금액의 합계입니다.</li>
+                <li><strong>순 매출</strong>: 총 매출에서 취소금액을 뺀 실제 매출입니다.</li>
+                <li>두 선의 차이가 크면 취소율이 높은 기간을 의미합니다.</li>
+                <li>상승 추세는 매출 증가, 하락 추세는 매출 감소를 나타냅니다.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">정산 금액 추이</h3>
         <canvas id="settlement_trend_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>플랫폼에서 가맹점으로 정산한 금액의 추이를 보여줍니다.</li>
+                <li>정산 금액은 수수료 및 기타 차감 후 실제 입금되는 금액입니다.</li>
+                <li>매출 추이와 비교하여 수수료 차감 규모를 파악할 수 있습니다.</li>
+                <li>정산 주기는 월별 또는 설정된 주기에 따라 진행됩니다.</li>
+            </ul>
+        </div>
     </div>
 </div>
 
@@ -186,15 +204,42 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </tr>
             </tbody>
         </table>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>정산일</strong>: 플랫폼에서 정산을 처리한 날짜입니다.</li>
+                <li><strong>정산기간</strong>: 해당 정산에 포함된 매출 발생 기간입니다.</li>
+                <li><strong>상태</strong>: 완료(정산 완료), 대기(정산 대기), 실패(정산 실패)를 의미합니다.</li>
+                <li>정산 금액은 해당 기간의 매출에서 수수료를 차감한 최종 입금액입니다.</li>
+            </ul>
+        </div>
     </div>
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">결제 수단별 통계</h3>
         <canvas id="payment_method_chart" height="120"></canvas>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>고객들이 주로 사용하는 결제 수단의 비율을 보여줍니다.</li>
+                <li>각 결제 수단의 비율(%)과 금액을 확인할 수 있습니다.</li>
+                <li>카드 결제 비율이 높으면 신용카드 사용 고객이 많음을 의미합니다.</li>
+                <li>결제 수단별 선호도를 파악하여 마케팅 전략 수립에 활용하세요.</li>
+            </ul>
+        </div>
     </div>
     <div class="statistics-tables border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">상세 통계 요약</h3>
         <div id="sales_detail_summary" class="text-sm text-gray-700">
             선택한 기간의 매출, 예약건수, 평균 객단가, 취소금액/취소율이 이곳에 요약으로 표시됩니다.
+        </div>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>총 매출액</strong>: 선택한 기간의 전체 매출 합계입니다.</li>
+                <li><strong>평균 객단가</strong>: 예약 1건당 평균 결제 금액입니다.</li>
+                <li><strong>취소율</strong>: 전체 예약 대비 취소 비율로, 높으면 개선이 필요합니다.</li>
+                <li>기간을 변경하여 다양한 시점의 통계를 비교 분석하세요.</li>
+            </ul>
         </div>
     </div>
 </div>
