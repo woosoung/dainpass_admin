@@ -34,13 +34,16 @@ if ($category_ids_str) {
     });
 
     if (count($category_ids_arr) > 0) {
-        $category_ids_for_query = implode(',', array_map('intval', $category_ids_arr));
+        // 문자열로 SQL 쿼리 생성 (PostgreSQL varchar 타입과 매칭)
+        $category_ids_for_query = implode(',', array_map(function($id) {
+            return "'" . sql_escape_string($id) . "'";
+        }, $category_ids_arr));
         $cat_check_sql = " SELECT category_id FROM {$g5['shop_categories_table']} WHERE category_id IN ({$category_ids_for_query}) ";
         $cat_check_result = sql_query_pg($cat_check_sql);
 
         $existing_category_ids = array();
-        while ($cat_row = sql_fetch_array_pg($cat_check_result)) {
-            $existing_category_ids[] = (string)$cat_row['category_id'];
+        while ($cat_row = sql_fetch_array_pg($cat_check_result->result)) {
+            $existing_category_ids[] = $cat_row['category_id'];
         }
 
         // 존재하지 않는 카테고리 ID 찾기
@@ -578,8 +581,6 @@ foreach($_REQUEST as $key => $value ) {
         }
     }
 }
-
-exit;
 
 if($w == 'u') {
     goto_url('./store_form.php?'.$qstr.'&w=u&shop_id='.$shop_id, false);
