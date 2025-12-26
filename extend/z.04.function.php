@@ -3776,6 +3776,8 @@ function _shop_access_error($message, $opts) {
     switch ($opts['output_mode']) {
         case 'json':
             header('Content-Type: application/json; charset=utf-8');
+            // \n을 실제 줄바꿈으로 변환
+            $message = str_replace('\\n', "\n", $message);
             echo json_encode(array('success' => false, 'message' => $message));
             exit;
 
