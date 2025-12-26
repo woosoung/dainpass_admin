@@ -13,7 +13,6 @@ check_admin_token();
 $action = isset($_POST['action']) ? trim($_POST['action']) : '';
 
 if ($action == 'add' || $action == 'edit') {
-    // check_shop_access()로 검증된 shop_id 사용 (POST 값 무시)
     $weekday = isset($_POST['weekday']) ? (int)$_POST['weekday'] : -1;
     $slot_seq = isset($_POST['slot_seq']) ? (int)$_POST['slot_seq'] : 0;
     $open_time = isset($_POST['open_time']) ? trim($_POST['open_time']) : '';
@@ -108,7 +107,6 @@ if ($action == 'add' || $action == 'edit') {
     alert($msg, './shop_weeks_slot_list.php');
     
 } else if ($action == 'delete') {
-    // check_shop_access()로 검증된 shop_id 사용 (POST 값 무시)
     $weekday = isset($_POST['weekday']) ? (int)$_POST['weekday'] : -1;
     $slot_seq = isset($_POST['slot_seq']) ? (int)$_POST['slot_seq'] : 0;
 

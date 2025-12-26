@@ -84,7 +84,6 @@ function deleteSlot(shop_id, weekday, slot_seq) {
         return;
     }
 
-    // shop_id는 서버에서 check_shop_access()로 결정되므로 전송하지 않음
     var fields = {
         'token': token.value,
         'action': 'delete',
@@ -161,7 +160,6 @@ function saveSlot() {
         return;
     }
 
-    // shop_id는 서버에서 check_shop_access()로 결정되므로 전송하지 않음
     var fields = {
         'token': token.value,
         'action': document.getElementById('action').value,
