@@ -42,9 +42,10 @@ if ($img_row && isset($img_row['fle_path'])) {
     }
 }
 
-// 공간 유닛 목록
-$units_sql = " SELECT * FROM {$g5['shop_space_unit_table']} 
-               WHERE group_id = {$group_id} AND shop_id = {$shop_id} 
+// 공간 유닛 목록 (활성화된 유닛만)
+$units_sql = " SELECT * FROM {$g5['shop_space_unit_table']}
+               WHERE group_id = {$group_id} AND shop_id = {$shop_id}
+               AND is_active = true
                ORDER BY sort_order, unit_id ";
 $units_result = sql_query_pg($units_sql);
 $units = array();
