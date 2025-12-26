@@ -10,13 +10,13 @@ require_once G5_ADMIN_PATH.'/admin.head.php';
 
 if ($is_member && $member['mb_id']) {
 
-    if($is_ultra == false){ // 작업 완료되면 이 조건문은 주석처리 해야 한다.
-        echo '<div class="local_desc01 local_desc text-center py-[200px]">';
-        echo '<p>작업중인 페이지 입니다.</p>';
-        echo '</div>';
-        include_once(G5_ADMIN_PATH.'/admin.tail.php');
-        exit;
-    }
+    // if($is_ultra == false){ // 작업 완료되면 이 조건문은 주석처리 해야 한다.
+    //     echo '<div class="local_desc01 local_desc text-center py-[200px]">';
+    //     echo '<p>작업중인 페이지 입니다.</p>';
+    //     echo '</div>';
+    //     include_once(G5_ADMIN_PATH.'/admin.tail.php');
+    //     exit;
+    // }
     // MySQL에서 회원 정보 확인
     // 플랫폼 관리자(mb_level >= 6)는 mb_2 = 'N'일 수 있으므로 mb_2 조건을 다르게 적용
     $mb_sql = " SELECT mb_id, mb_level, mb_1, mb_2, mb_leave_date, mb_intercept_date ".
