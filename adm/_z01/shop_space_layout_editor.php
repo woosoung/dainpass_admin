@@ -300,32 +300,65 @@ layer.add(transformer);
 transformer.on('transformend', function() {
     const nodes = transformer.nodes();
     if (nodes.length === 0) return;
-    
+
     const node = nodes[0];
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
-    
+
     const rect = node.findOne('Rect');
     const text = node.findOne('Text');
-    
+
     if (rect && text) {
         // 새 크기 계산
         const newWidth = Math.max(20, Math.abs(rect.width() * scaleX));
         const newHeight = Math.max(20, Math.abs(rect.height() * scaleY));
-        
+
         // rect와 text 크기 업데이트
         rect.width(newWidth);
         rect.height(newHeight);
         text.width(newWidth);
         text.height(newHeight);
-        
+
         // scale 초기화
         node.scaleX(1);
         node.scaleY(1);
-        
+
+        // position을 dragBoundFunc 제한 내로 조정
+        const currentPos = {
+            x: node.x(),
+            y: node.y()
+        };
+
+        // dragBoundFunc와 동일한 로직 적용
+        const minVisibleX = Math.min(newWidth * 0.4, 40);
+        const minVisibleY = Math.min(newHeight * 0.4, 40);
+
+        let newX = currentPos.x;
+        let newY = currentPos.y;
+
+        // X 좌표 제한 (최소 minVisibleX는 보여야 함)
+        if (newX < minVisibleX - newWidth) {
+            newX = minVisibleX - newWidth;
+        }
+        if (newX > canvasWidth - minVisibleX) {
+            newX = canvasWidth - minVisibleX;
+        }
+
+        // Y 좌표 제한 (최소 minVisibleY는 보여야 함)
+        if (newY < minVisibleY - newHeight) {
+            newY = minVisibleY - newHeight;
+        }
+        if (newY > canvasHeight - minVisibleY) {
+            newY = canvasHeight - minVisibleY;
+        }
+
+        // position 업데이트
+        node.x(newX);
+        node.y(newY);
+
         // 레이어 다시 그리기
         layer.draw();
-        
+
         // 정보 패널 업데이트 (선택된 유닛 찾기)
         for (const unitId in shapes) {
             if (shapes[unitId].group === node) {
@@ -404,26 +437,27 @@ unitsData.forEach(unit => {
             const rectWidth = rect.width();
             const rectHeight = rect.height();
 
-            // 최소한 100px는 캔버스 안에 보이도록 제한
-            const minVisible = 100;
+            // 유닛 크기의 40% 또는 최소 40px 중 작은 값을 항상 보이게 함
+            const minVisibleX = Math.min(rectWidth * 0.4, 40);
+            const minVisibleY = Math.min(rectHeight * 0.4, 40);
 
             let newX = pos.x;
             let newY = pos.y;
 
-            // X 좌표 제한 (최소 100px는 보여야 함)
-            if (newX < minVisible - rectWidth) {
-                newX = minVisible - rectWidth;
+            // X 좌표 제한 (최소 minVisibleX는 보여야 함)
+            if (newX < minVisibleX - rectWidth) {
+                newX = minVisibleX - rectWidth;
             }
-            if (newX > canvasWidth - minVisible) {
-                newX = canvasWidth - minVisible;
+            if (newX > canvasWidth - minVisibleX) {
+                newX = canvasWidth - minVisibleX;
             }
 
-            // Y 좌표 제한 (최소 100px는 보여야 함)
-            if (newY < minVisible - rectHeight) {
-                newY = minVisible - rectHeight;
+            // Y 좌표 제한 (최소 minVisibleY는 보여야 함)
+            if (newY < minVisibleY - rectHeight) {
+                newY = minVisibleY - rectHeight;
             }
-            if (newY > canvasHeight - minVisible) {
-                newY = canvasHeight - minVisible;
+            if (newY > canvasHeight - minVisibleY) {
+                newY = canvasHeight - minVisibleY;
             }
 
             return {
