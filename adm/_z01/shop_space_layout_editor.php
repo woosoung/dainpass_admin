@@ -287,6 +287,10 @@ const transformer = new Konva.Transformer({
         if (Math.abs(newBox.width) < 20 || Math.abs(newBox.height) < 20) {
             return oldBox;
         }
+        // 최대 크기 제한 (캔버스 크기)
+        if (Math.abs(newBox.width) > canvasWidth || Math.abs(newBox.height) > canvasHeight) {
+            return oldBox;
+        }
         return newBox;
     }
 });
@@ -363,15 +367,22 @@ unitsData.forEach(unit => {
         y = Math.random() * (canvasHeight - 80);
     }
 
-    // 크기 검증 및 기본값 설정
+    // 크기 검증 및 기본값 설정 (캔버스 크기 제한)
     let width = parseFloat(unit.width) || 100;
     let height = parseFloat(unit.height) || 80;
 
-    if (isNaN(width) || width < 20 || width > canvasWidth) {
+    if (isNaN(width) || width < 20) {
         width = 100;
     }
-    if (isNaN(height) || height < 20 || height > canvasHeight) {
+    if (width > canvasWidth) {
+        width = Math.min(100, canvasWidth);
+    }
+
+    if (isNaN(height) || height < 20) {
         height = 80;
+    }
+    if (height > canvasHeight) {
+        height = Math.min(80, canvasHeight);
     }
 
     // 회전 각도 검증 및 기본값 설정
@@ -607,12 +618,12 @@ document.getElementById('btn-save').addEventListener('click', async function() {
             pos_y = 0;
         }
 
-        // 크기 범위 검증
-        if (isNaN(width) || width < 20 || width > 10000) {
+        // 크기 범위 검증 (캔버스 크기 제한)
+        if (isNaN(width) || width < 20 || width > canvasWidth) {
             console.error('유효하지 않은 width:', width);
             width = 100;
         }
-        if (isNaN(height) || height < 20 || height > 10000) {
+        if (isNaN(height) || height < 20 || height > canvasHeight) {
             console.error('유효하지 않은 height:', height);
             height = 80;
         }
