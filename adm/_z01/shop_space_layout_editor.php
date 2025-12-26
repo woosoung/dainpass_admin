@@ -360,10 +360,11 @@ unitsData.forEach(unit => {
     let x = parseFloat(unit.pos_x);
     let y = parseFloat(unit.pos_y);
 
-    if (isNaN(x) || x < 0 || x > canvasWidth) {
+    // 저장된 값이 유효하면 그대로 사용 (음수 및 캔버스 밖 포함)
+    if (isNaN(x)) {
         x = Math.random() * (canvasWidth - 100);
     }
-    if (isNaN(y) || y < 0 || y > canvasHeight) {
+    if (isNaN(y)) {
         y = Math.random() * (canvasHeight - 80);
     }
 
@@ -395,7 +396,41 @@ unitsData.forEach(unit => {
         x: x,
         y: y,
         rotation: rotation,
-        draggable: true
+        draggable: true,
+        dragBoundFunc: function(pos) {
+            const rect = this.findOne('Rect');
+            if (!rect) return pos;
+
+            const rectWidth = rect.width();
+            const rectHeight = rect.height();
+
+            // 최소한 100px는 캔버스 안에 보이도록 제한
+            const minVisible = 100;
+
+            let newX = pos.x;
+            let newY = pos.y;
+
+            // X 좌표 제한 (최소 100px는 보여야 함)
+            if (newX < minVisible - rectWidth) {
+                newX = minVisible - rectWidth;
+            }
+            if (newX > canvasWidth - minVisible) {
+                newX = canvasWidth - minVisible;
+            }
+
+            // Y 좌표 제한 (최소 100px는 보여야 함)
+            if (newY < minVisible - rectHeight) {
+                newY = minVisible - rectHeight;
+            }
+            if (newY > canvasHeight - minVisible) {
+                newY = canvasHeight - minVisible;
+            }
+
+            return {
+                x: newX,
+                y: newY
+            };
+        }
     });
     
     // 사각형
