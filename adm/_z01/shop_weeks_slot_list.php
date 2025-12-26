@@ -199,7 +199,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
                     <tr>
                         <th scope="row"><label for="modal_slot_seq">순서<strong class="sound_only">필수</strong></label></th>
                         <td>
-                            <input type="number" name="slot_seq" id="modal_slot_seq" class="frm_input required" min="1" required>
+                            <input type="number" name="slot_seq" id="modal_slot_seq" class="frm_input required" min="1" max="99" required>
                         </td>
                     </tr>
                     <tr>

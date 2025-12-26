@@ -12,29 +12,60 @@ check_admin_token();
 
 $action = isset($_POST['action']) ? trim($_POST['action']) : '';
 
+// action 화이트리스트 검증
+$action_whitelist = ['add', 'edit', 'delete'];
+if (!in_array($action, $action_whitelist)) {
+    alert('잘못된 요청입니다.');
+}
+
 if ($action == 'add' || $action == 'edit') {
     $weekday = isset($_POST['weekday']) ? (int)$_POST['weekday'] : -1;
     $slot_seq = isset($_POST['slot_seq']) ? (int)$_POST['slot_seq'] : 0;
     $open_time = isset($_POST['open_time']) ? trim($_POST['open_time']) : '';
     $close_time = isset($_POST['close_time']) ? trim($_POST['close_time']) : '';
-    $is_open = isset($_POST['is_open']) ? ($_POST['is_open'] == '1' ? 'true' : 'false') : 'false';
+    $is_open_input = isset($_POST['is_open']) ? trim($_POST['is_open']) : '';
 
     // 기존 값 (수정 시)
     $old_weekday = isset($_POST['old_weekday']) ? (int)$_POST['old_weekday'] : -1;
     $old_slot_seq = isset($_POST['old_slot_seq']) ? (int)$_POST['old_slot_seq'] : 0;
-    
-    // 유효성 검사
+
+    // 필수 입력값 검증
+    if (!isset($_POST['weekday'])) {
+        alert('요일을 선택해 주세요.');
+    }
+
+    if (!isset($_POST['slot_seq'])) {
+        alert('순서를 입력해 주세요.');
+    }
+
+    if (!isset($_POST['open_time']) || $open_time === '') {
+        alert('시작시간을 입력해 주세요.');
+    }
+
+    if (!isset($_POST['close_time']) || $close_time === '') {
+        alert('종료시간을 입력해 주세요.');
+    }
+
+    if (!isset($_POST['is_open'])) {
+        alert('영업여부를 선택해 주세요.');
+    }
+
+    // 요일 범위 검증
     if ($weekday < 0 || $weekday > 6) {
-        alert('요일을 선택하세요.');
+        alert('올바른 요일을 선택해 주세요.');
     }
 
-    if ($slot_seq < 1) {
-        alert('순서는 1 이상이어야 합니다.');
+    // 순서 범위 검증 (1-99)
+    if ($slot_seq < 1 || $slot_seq > 99) {
+        alert('순서는 1 이상 99 이하로 입력해 주세요.');
     }
 
-    if (empty($open_time) || empty($close_time)) {
-        alert('시작시간과 종료시간을 입력하세요.');
+    // is_open 값 검증 (0 또는 1만 허용)
+    if ($is_open_input !== '0' && $is_open_input !== '1') {
+        alert('올바른 영업여부 값이 아닙니다.');
     }
+
+    $is_open = $is_open_input == '1' ? 'true' : 'false';
 
     // 시간 형식 검증
     if (!preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/', $open_time)) {
@@ -42,7 +73,7 @@ if ($action == 'add' || $action == 'edit') {
         if (preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $open_time)) {
             $open_time .= ':00';
         } else {
-            alert('시작시간 형식이 올바르지 않습니다.');
+            alert('시작시간 형식이 올바르지 않습니다. (예: 09:00 또는 09:00:00)');
         }
     }
 
@@ -51,7 +82,17 @@ if ($action == 'add' || $action == 'edit') {
         if (preg_match('/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/', $close_time)) {
             $close_time .= ':00';
         } else {
-            alert('종료시간 형식이 올바르지 않습니다.');
+            alert('종료시간 형식이 올바르지 않습니다. (예: 18:00 또는 18:00:00)');
+        }
+    }
+
+    // 수정 모드일 경우 기존 값 검증
+    if ($action == 'edit') {
+        if ($old_weekday < 0 || $old_weekday > 6) {
+            alert('기존 요일 정보가 올바르지 않습니다.');
+        }
+        if ($old_slot_seq < 1 || $old_slot_seq > 99) {
+            alert('기존 순서 정보가 올바르지 않습니다.');
         }
     }
 
@@ -110,13 +151,22 @@ if ($action == 'add' || $action == 'edit') {
     $weekday = isset($_POST['weekday']) ? (int)$_POST['weekday'] : -1;
     $slot_seq = isset($_POST['slot_seq']) ? (int)$_POST['slot_seq'] : 0;
 
-    // 유효성 검사
-    if ($weekday < 0 || $weekday > 6) {
-        alert('삭제할 시간대 정보가 올바르지 않습니다.');
+    // 필수 입력값 검증
+    if (!isset($_POST['weekday'])) {
+        alert('삭제할 요일 정보가 없습니다.');
     }
 
-    if ($slot_seq < 1) {
-        alert('삭제할 시간대 정보가 올바르지 않습니다.');
+    if (!isset($_POST['slot_seq'])) {
+        alert('삭제할 순서 정보가 없습니다.');
+    }
+
+    // 유효성 검사
+    if ($weekday < 0 || $weekday > 6) {
+        alert('올바른 요일 정보가 아닙니다.');
+    }
+
+    if ($slot_seq < 1 || $slot_seq > 99) {
+        alert('올바른 순서 정보가 아닙니다.');
     }
 
     $sql = " DELETE FROM business_hour_slots

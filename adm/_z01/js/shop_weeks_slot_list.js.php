@@ -112,40 +112,69 @@ function saveSlot() {
 
     // 유효성 검사
     if (!weekday || weekday === '') {
-        alert('요일을 선택하세요.');
+        alert('요일을 선택해 주세요.');
         document.getElementById('modal_weekday').focus();
         return;
     }
 
-    if (!slot_seq || slot_seq < 1) {
-        alert('순서는 1 이상이어야 합니다.');
+    // 요일 범위 검증 (0-6)
+    var weekdayNum = parseInt(weekday);
+    if (isNaN(weekdayNum) || weekdayNum < 0 || weekdayNum > 6) {
+        alert('올바른 요일을 선택해 주세요.');
+        document.getElementById('modal_weekday').focus();
+        return;
+    }
+
+    if (!slot_seq || slot_seq === '') {
+        alert('순서를 입력해 주세요.');
         document.getElementById('modal_slot_seq').focus();
         return;
     }
 
-    if (!open_time) {
-        alert('시작시간을 입력하세요.');
+    // 순서 범위 검증 (1-99)
+    var slotSeqNum = parseInt(slot_seq);
+    if (isNaN(slotSeqNum) || slotSeqNum < 1 || slotSeqNum > 99) {
+        alert('순서는 1 이상 99 이하로 입력해 주세요.');
+        document.getElementById('modal_slot_seq').focus();
+        return;
+    }
+
+    if (!open_time || open_time === '') {
+        alert('시작시간을 입력해 주세요.');
         document.getElementById('modal_open_time').focus();
         return;
     }
 
-    if (!close_time) {
-        alert('종료시간을 입력하세요.');
+    // 시작시간 형식 검증 (HH:MM)
+    if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(open_time)) {
+        alert('시작시간 형식이 올바르지 않습니다. (예: 09:00)');
+        document.getElementById('modal_open_time').focus();
+        return;
+    }
+
+    if (!close_time || close_time === '') {
+        alert('종료시간을 입력해 주세요.');
         document.getElementById('modal_close_time').focus();
         return;
     }
 
-    // 시간 비교
-    if (open_time >= close_time) {
-        alert('시작시간은 종료시간보다 빨라야 합니다.');
-        document.getElementById('modal_open_time').focus();
+    // 종료시간 형식 검증 (HH:MM)
+    if (!/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/.test(close_time)) {
+        alert('종료시간 형식이 올바르지 않습니다. (예: 18:00)');
+        document.getElementById('modal_close_time').focus();
         return;
     }
 
     // 영업여부 확인
     var is_open_checked = document.querySelector('input[name="is_open"]:checked');
     if (!is_open_checked) {
-        alert('영업여부를 선택하세요.');
+        alert('영업여부를 선택해 주세요.');
+        return;
+    }
+
+    // is_open 값 검증 (0 또는 1만 허용)
+    if (is_open_checked.value !== '0' && is_open_checked.value !== '1') {
+        alert('올바른 영업여부 값이 아닙니다.');
         return;
     }
 
