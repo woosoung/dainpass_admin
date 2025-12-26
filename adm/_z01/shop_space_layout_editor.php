@@ -10,7 +10,8 @@ $shop_id = $result['shop_id'];
 
 $group_id = isset($_GET['group_id']) ? (int)$_GET['group_id'] : 0;
 
-if (!$group_id) {
+// group_id 검증
+if ($group_id <= 0) {
     alert('공간 그룹을 선택해 주세요.');
 }
 
@@ -51,6 +52,18 @@ if ($units_result && is_object($units_result) && isset($units_result->result)) {
     while ($u_row = sql_fetch_array_pg($units_result->result)) {
         $units[] = $u_row;
     }
+}
+
+// 캔버스 크기 검증 및 기본값 설정
+$canvas_width = isset($group['canvas_width']) ? (int)$group['canvas_width'] : 1000;
+$canvas_height = isset($group['canvas_height']) ? (int)$group['canvas_height'] : 800;
+
+// 캔버스 크기 범위 검증
+if ($canvas_width < 100 || $canvas_width > 10000) {
+    $canvas_width = 1000;
+}
+if ($canvas_height < 100 || $canvas_height > 10000) {
+    $canvas_height = 800;
 }
 
 $g5['title'] = '도면 편집 - '.htmlspecialchars($group['name']);
@@ -186,7 +199,7 @@ body {
 <div class="header">
     <h1><?php echo $g5['title'] ?></h1>
     <div class="info">
-        캔버스 크기: <?php echo $group['canvas_width'] ?? 1000 ?> × <?php echo $group['canvas_height'] ?? 800 ?> px
+        캔버스 크기: <?php echo $canvas_width ?> × <?php echo $canvas_height ?> px
         | 공간 유닛: <?php echo count($units) ?>개
     </div>
 </div>
@@ -235,8 +248,8 @@ body {
 <script src="https://unpkg.com/konva@9/konva.min.js"></script>
 <script>
 const groupId = <?php echo $group_id ?>;
-const canvasWidth = <?php echo $group['canvas_width'] ?? 1000 ?>;
-const canvasHeight = <?php echo $group['canvas_height'] ?? 800 ?>;
+const canvasWidth = <?php echo $canvas_width ?>;
+const canvasHeight = <?php echo $canvas_height ?>;
 const backgroundImgUrl = <?php echo json_encode($background_img_url) ?>;
 const unitsData = <?php echo json_encode($units) ?>;
 
@@ -339,11 +352,33 @@ if (backgroundImgUrl) {
 
 // 공간 유닛 렌더링
 unitsData.forEach(unit => {
-    const x = parseFloat(unit.pos_x) || (Math.random() * (canvasWidth - 100));
-    const y = parseFloat(unit.pos_y) || (Math.random() * (canvasHeight - 80));
-    const width = parseFloat(unit.width) || 100;
-    const height = parseFloat(unit.height) || 80;
-    const rotation = parseFloat(unit.rotation_deg) || 0;
+    // 좌표 검증 및 기본값 설정
+    let x = parseFloat(unit.pos_x);
+    let y = parseFloat(unit.pos_y);
+
+    if (isNaN(x) || x < 0 || x > canvasWidth) {
+        x = Math.random() * (canvasWidth - 100);
+    }
+    if (isNaN(y) || y < 0 || y > canvasHeight) {
+        y = Math.random() * (canvasHeight - 80);
+    }
+
+    // 크기 검증 및 기본값 설정
+    let width = parseFloat(unit.width) || 100;
+    let height = parseFloat(unit.height) || 80;
+
+    if (isNaN(width) || width < 20 || width > canvasWidth) {
+        width = 100;
+    }
+    if (isNaN(height) || height < 20 || height > canvasHeight) {
+        height = 80;
+    }
+
+    // 회전 각도 검증 및 기본값 설정
+    let rotation = parseFloat(unit.rotation_deg) || 0;
+    if (isNaN(rotation) || rotation < -360 || rotation > 360) {
+        rotation = 0;
+    }
     
     const group = new Konva.Group({
         x: x,
@@ -445,50 +480,92 @@ function getColorByType(type) {
 }
 
 function selectShape(group, unit) {
+    if (!group || !unit) {
+        console.error('유효하지 않은 그룹 또는 유닛:', group, unit);
+        return;
+    }
+
+    if (!unit.unit_id || isNaN(unit.unit_id) || unit.unit_id <= 0) {
+        console.error('유효하지 않은 unit_id:', unit.unit_id);
+        return;
+    }
+
     // 이전 선택 해제
-    if (selectedShape) {
+    if (selectedShape && selectedShape.rect) {
         selectedShape.rect.stroke('#333');
         selectedShape.rect.strokeWidth(2);
     }
-    
+
     // 새로운 선택
     selectedShape = shapes[unit.unit_id];
+    if (!selectedShape) {
+        console.error('Shape를 찾을 수 없습니다:', unit.unit_id);
+        return;
+    }
+
     transformer.nodes([group]);
-    selectedShape.rect.stroke('#0066cc');
-    selectedShape.rect.strokeWidth(3);
-    
+    if (selectedShape.rect) {
+        selectedShape.rect.stroke('#0066cc');
+        selectedShape.rect.strokeWidth(3);
+    }
+
     layer.draw();
-    
+
     // 사이드바 UI 업데이트
     document.querySelectorAll('.unit-item').forEach(item => {
         item.classList.remove('selected');
     });
-    document.querySelector(`.unit-item[data-unit-id="${unit.unit_id}"]`).classList.add('selected');
-    
+
+    const selectedItem = document.querySelector(`.unit-item[data-unit-id="${unit.unit_id}"]`);
+    if (selectedItem) {
+        selectedItem.classList.add('selected');
+    }
+
     updateInfo(group, unit);
 }
 
 function updateInfo(group, unit) {
+    if (!group || !unit) {
+        console.error('유효하지 않은 그룹 또는 유닛:', group, unit);
+        return;
+    }
+
     const infoPanel = document.getElementById('info-panel');
+    if (!infoPanel) return;
+
     infoPanel.style.display = 'block';
-    
-    document.getElementById('info-unit-id').textContent = unit.unit_id;
-    document.getElementById('info-name').textContent = unit.name;
-    document.getElementById('info-x').textContent = Math.round(group.x() * 100) / 100;
-    document.getElementById('info-y').textContent = Math.round(group.y() * 100) / 100;
-    document.getElementById('info-width').textContent = Math.round(group.findOne('Rect').width() * 100) / 100;
-    document.getElementById('info-height').textContent = Math.round(group.findOne('Rect').height() * 100) / 100;
-    document.getElementById('info-rotation').textContent = Math.round(group.rotation() * 100) / 100;
+
+    const rect = group.findOne('Rect');
+    if (!rect) {
+        console.error('Rect 요소를 찾을 수 없습니다.');
+        return;
+    }
+
+    // 안전하게 값 추출 및 표시
+    document.getElementById('info-unit-id').textContent = unit.unit_id || '-';
+    document.getElementById('info-name').textContent = unit.name || '-';
+    document.getElementById('info-x').textContent = Math.round((group.x() || 0) * 100) / 100;
+    document.getElementById('info-y').textContent = Math.round((group.y() || 0) * 100) / 100;
+    document.getElementById('info-width').textContent = Math.round((rect.width() || 0) * 100) / 100;
+    document.getElementById('info-height').textContent = Math.round((rect.height() || 0) * 100) / 100;
+    document.getElementById('info-rotation').textContent = Math.round((group.rotation() || 0) * 100) / 100;
 }
 
 // 사이드바 유닛 클릭
 document.querySelectorAll('.unit-item').forEach(item => {
     item.addEventListener('click', function() {
         const unitId = parseInt(this.getAttribute('data-unit-id'));
+
+        // unitId 검증
+        if (isNaN(unitId) || unitId <= 0) {
+            console.error('유효하지 않은 unit_id:', this.getAttribute('data-unit-id'));
+            return;
+        }
+
         const shapeData = shapes[unitId];
         if (shapeData) {
             selectShape(shapeData.group, shapeData.unit);
-            
+
             // 캔버스 스크롤 조정
             const containerEl = document.getElementById('container');
             const groupPos = shapeData.group.getAbsolutePosition();
@@ -500,48 +577,75 @@ document.querySelectorAll('.unit-item').forEach(item => {
 // 저장 버튼
 document.getElementById('btn-save').addEventListener('click', async function() {
     const updates = [];
-    
+
     for (const unitId in shapes) {
         const shapeData = shapes[unitId];
         const group = shapeData.group;
         const rect = shapeData.rect;
-        
+
+        // 값 추출 및 검증
+        const unit_id = parseInt(unitId);
+        let pos_x = Math.round(group.x() * 100) / 100;
+        let pos_y = Math.round(group.y() * 100) / 100;
+        let width = Math.round(rect.width() * 100) / 100;
+        let height = Math.round(rect.height() * 100) / 100;
+        let rotation_deg = Math.round(group.rotation() * 100) / 100;
+
+        // 유효성 검증
+        if (isNaN(unit_id) || unit_id <= 0) {
+            console.error('유효하지 않은 unit_id:', unitId);
+            continue;
+        }
+
+        // 좌표 범위 검증
+        if (isNaN(pos_x) || pos_x < -10000 || pos_x > 10000) {
+            console.error('유효하지 않은 pos_x:', pos_x);
+            pos_x = 0;
+        }
+        if (isNaN(pos_y) || pos_y < -10000 || pos_y > 10000) {
+            console.error('유효하지 않은 pos_y:', pos_y);
+            pos_y = 0;
+        }
+
+        // 크기 범위 검증
+        if (isNaN(width) || width < 20 || width > 10000) {
+            console.error('유효하지 않은 width:', width);
+            width = 100;
+        }
+        if (isNaN(height) || height < 20 || height > 10000) {
+            console.error('유효하지 않은 height:', height);
+            height = 80;
+        }
+
+        // 회전 각도 범위 검증 (-360 ~ 360)
+        if (isNaN(rotation_deg) || rotation_deg < -360 || rotation_deg > 360) {
+            console.error('유효하지 않은 rotation_deg:', rotation_deg);
+            rotation_deg = 0;
+        }
+
         updates.push({
-            unit_id: parseInt(unitId),
-            pos_x: Math.round(group.x() * 100) / 100,
-            pos_y: Math.round(group.y() * 100) / 100,
-            width: Math.round(rect.width() * 100) / 100,
-            height: Math.round(rect.height() * 100) / 100,
-            rotation_deg: Math.round(group.rotation() * 100) / 100
+            unit_id: unit_id,
+            pos_x: pos_x,
+            pos_y: pos_y,
+            width: width,
+            height: height,
+            rotation_deg: rotation_deg
         });
     }
-    
+
+    // 저장할 데이터가 없으면 종료
+    if (updates.length === 0) {
+        alert('저장할 공간 유닛이 없습니다.');
+        return;
+    }
+
+    // groupId 검증
+    if (isNaN(groupId) || groupId <= 0) {
+        alert('유효하지 않은 공간 그룹 ID입니다.');
+        return;
+    }
+
     try {
-        console.log('저장 요청 데이터:', {
-            group_id: groupId,
-            units: updates
-        });
-        
-        // === 디버깅: 기본 연결 테스트 ===
-        console.log('%c=== 기본 테스트 시작 ===', 'color: blue; font-weight: bold;');
-        try {
-            const testResp = await fetch('./ajax/test_basic.php');
-            console.log('기본 테스트 상태:', testResp.status);
-            const testText = await testResp.text();
-            console.log('기본 테스트 응답:', testText);
-            console.log('%c=== 기본 테스트 성공 ===', 'color: green; font-weight: bold;');
-        } catch (err) {
-            console.error('%c=== 기본 테스트 실패 ===', 'color: red; font-weight: bold;', err);
-            alert('기본 연결 테스트 실패:\n' + err.message);
-            return;
-        }
-        
-        // === 실제 저장 요청 ===
-        console.log('%c=== 실제 저장 시작 ===', 'color: blue; font-weight: bold;');
-        console.log('요청 URL:', './ajax/shop_space_layout_update.php');
-        console.log('요청 메서드:', 'POST');
-        console.log('요청 바디:', JSON.stringify({group_id: groupId, units: updates}, null, 2));
-        
         const response = await fetch('./ajax/shop_space_layout_update.php', {
             method: 'POST',
             headers: {
@@ -552,43 +656,23 @@ document.getElementById('btn-save').addEventListener('click', async function() {
                 units: updates
             })
         });
-        
-        console.log('응답 상태:', response.status, response.statusText);
-        console.log('응답 헤더:', [...response.headers.entries()]);
-        
-        // 응답 텍스트를 먼저 확인
+
         const responseText = await response.text();
-        console.log('응답 길이:', responseText.length);
-        console.log('응답 내용 타입:', typeof responseText);
-        console.log('응답 내용 (전체):', responseText);
-        console.log('첫 200자:', responseText.substring(0, 200));
-        console.log('마지막 200자:', responseText.substring(Math.max(0, responseText.length - 200)));
-        
-        // JSON 파싱 시도
+
         let result;
         try {
             result = JSON.parse(responseText);
         } catch (parseError) {
-            console.error('JSON 파싱 오류:', parseError);
-            console.error('파싱 실패한 응답:', responseText);
-            
-            // 더 상세한 오류 메시지
-            let errorMsg = '서버 응답 파싱 오류\n\n';
-            errorMsg += '응답 길이: ' + responseText.length + '자\n\n';
-            errorMsg += '응답 내용 (처음 500자):\n';
-            errorMsg += responseText.substring(0, 500);
-            
-            alert(errorMsg);
+            alert('서버 응답 파싱 오류\n\n응답 내용 (처음 500자):\n' + responseText.substring(0, 500));
             return;
         }
-        
+
         if (result.success) {
             alert('저장되었습니다.\n' + (result.message || ''));
         } else {
             alert('저장 중 오류가 발생했습니다:\n' + (result.message || '알 수 없는 오류'));
         }
     } catch (error) {
-        console.error('저장 요청 오류:', error);
         alert('저장 중 네트워크 오류가 발생했습니다:\n' + error.message);
     }
 });

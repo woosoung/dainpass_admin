@@ -1,33 +1,20 @@
 <?php
+$sub_menu = "930600";
 include_once('./_common.php');
 
 header('Content-Type: application/json; charset=utf-8');
 
-// 관리자 체크
-if (!$is_admin) {
-    echo json_encode(['success' => false, 'message' => '관리자 권한이 필요합니다.']);
+// 권한 체크 (AJAX용) - 쓰기 권한 필요
+if (!isset($auth[$sub_menu]) || strpos($auth[$sub_menu], 'w') === false) {
+    echo json_encode(['success' => false, 'message' => '쓰기 권한이 없습니다.']);
     exit;
 }
 
-// 가맹점 shop_id 가져오기
-$shop_id = 0;
-
-if ($is_member && $member['mb_id']) {
-    $mb_sql = " SELECT mb_1 FROM {$g5['member_table']} WHERE mb_id = '{$member['mb_id']}' ";
-    $mb_row = sql_fetch($mb_sql, 1);
-    
-    if ($mb_row && isset($mb_row['mb_1'])) {
-        $mb_1_value = trim($mb_row['mb_1']);
-        if (!empty($mb_1_value) && $mb_1_value !== '0') {
-            $shop_id = (int)$mb_1_value;
-        }
-    }
-}
-
-if (!$shop_id) {
-    echo json_encode(['success' => false, 'message' => '가맹점 정보가 없습니다.']);
-    exit;
-}
+// 가맹점 접근 권한 체크 (JSON 모드)
+$result = check_shop_access(array(
+    'output_mode' => 'json',
+));
+$shop_id = $result['shop_id'];
 
 // JSON 입력 받기
 $input = file_get_contents('php://input');
