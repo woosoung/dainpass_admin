@@ -4,22 +4,23 @@ include_once('./_common.php');
 
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
-$shop_id = $result['shop_id'];
+$shop_id = (int)$result['shop_id'];
 $shop_info = $result['shop_info'];
 
 @auth_check($auth[$sub_menu], 'r');
 
 // 현재 년월 가져오기
-$current_year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
-$current_month = isset($_GET['month']) ? (int)$_GET['month'] : date('n');
+$current_year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+$current_month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('n');
 
-// 년월 유효성 체크
-if ($current_month < 1) {
-    $current_month = 12;
-    $current_year--;
-} elseif ($current_month > 12) {
-    $current_month = 1;
-    $current_year++;
+// year 범위 검증 (1900-2100)
+if ($current_year < 1900 || $current_year > 2100) {
+    $current_year = (int)date('Y');
+}
+
+// month 범위 검증 (1-12)
+if ($current_month < 1 || $current_month > 12) {
+    $current_month = (int)date('n');
 }
 
 // 해당 월의 첫날과 마지막 날
@@ -28,12 +29,13 @@ $last_day = mktime(0, 0, 0, $current_month + 1, 0, $current_year);
 $days_in_month = date('t', $first_day);
 $first_weekday = date('w', $first_day); // 0(일) ~ 6(토)
 
-// 해당 월의 모든 예외일 가져오기
+// 해당 월의 모든 예외일 가져오기 (date() 함수로 생성되므로 안전)
 $start_date = date('Y-m-01', $first_day);
 $end_date = date('Y-m-t', $first_day);
 
+// SQL 쿼리 ($shop_id는 정수형, 날짜는 date() 함수로 생성되어 안전)
 $exceptions_sql = "
-    SELECT 
+    SELECT
         shop_id,
         date,
         is_open,
@@ -197,7 +199,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 
 .exception-label {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     border-radius: 4px;
     padding: 4px 8px;
@@ -205,6 +207,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
     cursor: pointer;
     transition: all 0.2s;
     margin-bottom: 4px;
+    gap: 4px;
 }
 
 .exception-label.open {
@@ -224,8 +227,10 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 .exception-info {
     flex: 1;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    word-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.4;
 }
 
 .exception-delete {
@@ -234,6 +239,8 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
     padding: 0 4px;
     margin-left: 4px;
     font-weight: bold;
+    flex-shrink: 0;
+    line-height: 1.4;
 }
 
 .exception-delete:hover {
@@ -489,7 +496,10 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
                     <tr>
                         <th scope="row"><label for="modal_reason">사유</label></th>
                         <td>
-                            <textarea name="reason" id="modal_reason" class="frm_input" rows="3" style="width:100%;"></textarea>
+                            <textarea name="reason" id="modal_reason" class="frm_input" rows="3" style="width:100%;" maxlength="200" placeholder="최대 200자까지 입력 가능합니다."></textarea>
+                            <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                                <span id="reason_length">0</span> / 200자
+                            </div>
                         </td>
                     </tr>
                     </tbody>

@@ -4,8 +4,13 @@ include_once('./_common.php');
 
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
-$shop_id = $result['shop_id'];
+$shop_id = (int)$result['shop_id'];
 $shop_info = $result['shop_info'];
+
+// shop_id 유효성 검증
+if ($shop_id <= 0) {
+    alert('유효하지 않은 가맹점 정보입니다.');
+}
 
 @auth_check($auth[$sub_menu], 'r');
 
@@ -15,26 +20,57 @@ $page = $page > 0 ? $page : 1;
 $rows_per_page = 30;
 $offset = ($page - 1) * $rows_per_page;
 
-// 검색 조건
-$sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'date';
-$sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'desc';
-$sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
+// 검색 조건 - 화이트리스트 방식으로 검증
+$allowed_sst = ['date', 'is_open'];
+$sst = isset($_GET['sst']) && in_array($_GET['sst'], $allowed_sst) ? $_GET['sst'] : 'date';
+
+$allowed_sod = ['asc', 'desc'];
+$sod = isset($_GET['sod']) && in_array($_GET['sod'], $allowed_sod) ? $_GET['sod'] : 'desc';
+
+$allowed_sfl = ['', 'date', 'reason'];
+$sfl = isset($_GET['sfl']) && in_array($_GET['sfl'], $allowed_sfl) ? $_GET['sfl'] : '';
+
 $stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
-$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; // is_open 필터
+
+$allowed_sfl2 = ['', 'open', 'close'];
+$sfl2 = isset($_GET['sfl2']) && in_array($_GET['sfl2'], $allowed_sfl2) ? $_GET['sfl2'] : ''; // is_open 필터
 
 // 달력에서 전달된 날짜 파라미터
 $add_date = isset($_GET['add_date']) ? clean_xss_tags($_GET['add_date']) : '';
 $edit_date = isset($_GET['edit_date']) ? clean_xss_tags($_GET['edit_date']) : '';
 
+// add_date 형식 및 범위 검증
+if ($add_date) {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $add_date)) {
+        $add_date = ''; // 형식 오류 시 초기화
+    } else {
+        // 년도 범위 검증 (1900-2100)
+        $date_parts = explode('-', $add_date);
+        if (count($date_parts) === 3) {
+            $year = (int)$date_parts[0];
+            if ($year < 1900 || $year > 2100) {
+                $add_date = '';
+            }
+        }
+    }
+}
+
 // edit_date가 있으면 해당 데이터 가져오기
 $edit_exception_data = null;
 if ($edit_date && preg_match('/^\d{4}-\d{2}-\d{2}$/', $edit_date)) {
-    $edit_sql = " SELECT * FROM business_exceptions 
-                  WHERE shop_id = {$shop_id} 
-                  AND date = '{$edit_date}' ";
-    $edit_result = sql_fetch_pg($edit_sql);
-    if ($edit_result) {
-        $edit_exception_data = $edit_result;
+    // 년도 범위 검증 (1900-2100)
+    $date_parts = explode('-', $edit_date);
+    if (count($date_parts) === 3) {
+        $year = (int)$date_parts[0];
+        if ($year >= 1900 && $year <= 2100) {
+            $edit_sql = " SELECT * FROM business_exceptions
+                          WHERE shop_id = {$shop_id}
+                          AND date = '{$edit_date}' ";
+            $edit_result = sql_fetch_pg($edit_sql);
+            if ($edit_result) {
+                $edit_exception_data = $edit_result;
+            }
+        }
     }
 }
 
@@ -358,7 +394,10 @@ echo $write_pages;
                     <tr>
                         <th scope="row"><label for="modal_reason">사유</label></th>
                         <td>
-                            <textarea name="reason" id="modal_reason" class="frm_input" rows="3" style="width:100%;"></textarea>
+                            <textarea name="reason" id="modal_reason" class="frm_input" rows="3" style="width:100%;" maxlength="200" placeholder="최대 200자까지 입력 가능합니다."></textarea>
+                            <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                                <span id="reason_length">0</span> / 200자
+                            </div>
                         </td>
                     </tr>
                     </tbody>
