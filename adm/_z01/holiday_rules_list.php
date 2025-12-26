@@ -170,7 +170,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         <th scope="col">규칙ID</th>
         <th scope="col">휴무유형</th>
         <th scope="col">요일</th>
-        <th scope="col">주차</th>
+        <th scope="col">주 차</th>
         <th scope="col">설명</th>
         <th scope="col">관리</th>
     </tr>
@@ -188,7 +188,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             
             $holiday_type_text = ($holiday_type == 'weekly') ? '매주' : '매월';
             $weekday_text = isset($weekdays[$weekday]) ? $weekdays[$weekday] : '-';
-            $week_of_month_text = $week_of_month ? $week_of_month . '째 주' : '-';
+            $week_of_month_text = $week_of_month ? $week_of_month . '주 차' : '-';
     ?>
     <tr>
         <td class="td_chk">
@@ -300,7 +300,6 @@ echo $write_pages;
                 <h2 id="modalTitle">정기휴무 규칙 등록</h2>
             <form name="frmRule" id="frmRule">
                 <input type="hidden" name="action" id="action" value="add">
-                <input type="hidden" name="shop_id" id="modal_shop_id" value="<?php echo $shop_id; ?>">
                 <input type="hidden" name="holiday_rule_id" id="modal_holiday_rule_id" value="">
                 
                 <div class="tbl_frm01 tbl_wrap">
@@ -332,23 +331,24 @@ echo $write_pages;
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><label for="modal_week_of_month">주차</label></th>
+                        <th scope="row"><label for="modal_week_of_month">주 차</label></th>
                         <td>
                             <select name="week_of_month" id="modal_week_of_month" class="frm_input" disabled>
-                                <option value="">::주차선택::</option>
-                                <option value="1">1째 주</option>
-                                <option value="2">2째 주</option>
-                                <option value="3">3째 주</option>
-                                <option value="4">4째 주</option>
-                                <option value="5">5째 주</option>
-                                <option value="6">6째 주</option>
+                                <option value="">::주 차 선택::</option>
+                                <option value="1">1주 차</option>
+                                <option value="2">2주 차</option>
+                                <option value="3">3주 차</option>
+                                <option value="4">4주 차</option>
+                                <option value="5">5주 차</option>
+                                <option value="6">6주 차</option>
                             </select>
                         </td>
                     </tr>
                     <tr>
                         <th scope="row"><label for="modal_description">설명</label></th>
                         <td>
-                            <textarea name="description" id="modal_description" class="frm_input" rows="3" style="width:100%;"></textarea>
+                            <textarea name="description" id="modal_description" class="frm_input" rows="3" style="width:100%;" maxlength="1000"></textarea>
+                            <span class="frm_info">최대 1000자까지 입력 가능합니다.</span>
                         </td>
                     </tr>
                     </tbody>
