@@ -175,8 +175,6 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
                 <h2 id="modalTitle">시간대 추가</h2>
             <form name="frmSlot" id="frmSlot">
                 <input type="hidden" name="action" id="action" value="add">
-                <input type="hidden" name="shop_id" id="modal_shop_id" value="<?php echo $shop_id; ?>">
-                <input type="hidden" name="old_shop_id" id="old_shop_id" value="">
                 <input type="hidden" name="old_weekday" id="old_weekday" value="">
                 <input type="hidden" name="old_slot_seq" id="old_slot_seq" value="">
                 
