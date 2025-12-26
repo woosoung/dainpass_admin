@@ -6,7 +6,12 @@ include_once('./_common.php');
 
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
-$shop_id = $result['shop_id'];
+$shop_id = (int)$result['shop_id'];
+
+// shop_id 유효성 검증
+if ($shop_id <= 0) {
+    alert('유효하지 않은 가맹점 정보입니다.');
+}
 
 // 토큰 체크
 check_admin_token();
@@ -42,6 +47,12 @@ if ($action == 'add' || $action == 'edit') {
     $post_open_time = isset($_POST['open_time']) && $_POST['open_time'] !== '' ? clean_xss_tags($_POST['open_time']) : null;
     $post_close_time = isset($_POST['close_time']) && $_POST['close_time'] !== '' ? clean_xss_tags($_POST['close_time']) : null;
     $post_reason = isset($_POST['reason']) ? clean_xss_tags($_POST['reason']) : '';
+
+    // reason 길이 제한 (200자)
+    if ($post_reason && mb_strlen($post_reason) > 200) {
+        alert('사유는 최대 200자까지 입력 가능합니다.', './shop_business_exceptions_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
     
     // shop_id 검증
     if ($post_shop_id != $shop_id) {
@@ -52,6 +63,23 @@ if ($action == 'add' || $action == 'edit') {
     // 필수값 검증
     if (!$post_date || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $post_date)) {
         alert('날짜를 올바르게 입력해주세요.', './shop_business_exceptions_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+
+    // 날짜 년도 범위 검증 (1900-2100)
+    $date_parts = explode('-', $post_date);
+    if (count($date_parts) === 3) {
+        $year = (int)$date_parts[0];
+        if ($year < 1900 || $year > 2100) {
+            alert('유효하지 않은 날짜입니다.', './shop_business_exceptions_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+            exit;
+        }
+    }
+
+    // 날짜 유효성 검증 (실제 존재하는 날짜인지)
+    $timestamp = strtotime($post_date);
+    if ($timestamp === false || date('Y-m-d', $timestamp) !== $post_date) {
+        alert('유효하지 않은 날짜입니다.', './shop_business_exceptions_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
         exit;
     }
     
@@ -110,10 +138,20 @@ if ($action == 'add' || $action == 'edit') {
         
     } else if ($action == 'edit') {
         $post_original_date = isset($_POST['original_date']) ? clean_xss_tags($_POST['original_date']) : '';
-        
+
         if (!$post_original_date || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $post_original_date)) {
             alert('원본 날짜가 올바르지 않습니다.', './shop_business_exceptions_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
             exit;
+        }
+
+        // 원본 날짜 년도 범위 검증 (1900-2100)
+        $original_date_parts = explode('-', $post_original_date);
+        if (count($original_date_parts) === 3) {
+            $original_year = (int)$original_date_parts[0];
+            if ($original_year < 1900 || $original_year > 2100) {
+                alert('유효하지 않은 날짜입니다.', './shop_business_exceptions_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+                exit;
+            }
         }
         
         // 기존 데이터 확인
@@ -179,7 +217,14 @@ if ($action == 'add' || $action == 'edit') {
     foreach ($chk as $date) {
         $date = clean_xss_tags($date);
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-            $chk_dates[] = "'{$date}'";
+            // 년도 범위 검증 (1900-2100)
+            $date_parts = explode('-', $date);
+            if (count($date_parts) === 3) {
+                $year = (int)$date_parts[0];
+                if ($year >= 1900 && $year <= 2100) {
+                    $chk_dates[] = "'{$date}'";
+                }
+            }
         }
     }
     

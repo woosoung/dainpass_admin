@@ -32,7 +32,13 @@ function addException() {
         document.getElementById('modal_open_time').value = '';
         document.getElementById('modal_close_time').value = '';
         document.getElementById('modal_reason').value = '';
-        
+
+        // 사유 글자 수 초기화
+        var reasonLengthEl = document.getElementById('reason_length');
+        if (reasonLengthEl) {
+            reasonLengthEl.innerText = '0';
+        }
+
         // 영업시간 필드 초기 상태
         toggleBusinessHours();
         
@@ -44,20 +50,42 @@ function addException() {
 }
 
 function editException(date, is_open, open_time, close_time, reason) {
+    // date 유효성 검증
+    if (!date || date === '') {
+        alert('날짜 정보가 없습니다.');
+        return;
+    }
+
+    // date 형식 검증 (YYYY-MM-DD)
+    var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+        alert('올바른 날짜 형식이 아닙니다.');
+        return;
+    }
+
     document.getElementById('action').value = 'edit';
     document.getElementById('modalTitle').innerText = '특별휴무/영업일 수정';
     document.getElementById('modal_original_date').value = date;
-    
+
     // 기존 값 설정
     document.getElementById('modal_date').value = date;
     document.getElementById('modal_is_open').value = is_open ? 'true' : 'false';
     document.getElementById('modal_open_time').value = open_time || '';
     document.getElementById('modal_close_time').value = close_time || '';
-    document.getElementById('modal_reason').value = reason || '';
-    
+
+    // reason 값 설정 및 글자 수 업데이트
+    var reasonValue = reason || '';
+    document.getElementById('modal_reason').value = reasonValue;
+
+    // 사유 글자 수 업데이트
+    var reasonLengthEl = document.getElementById('reason_length');
+    if (reasonLengthEl) {
+        reasonLengthEl.innerText = reasonValue.length;
+    }
+
     // 영업여부에 따라 영업시간 필드 활성화/비활성화
     toggleBusinessHours();
-    
+
     document.getElementById('exceptionModal').style.display = 'block';
 }
 
@@ -99,15 +127,46 @@ function saveException() {
     var reason = document.getElementById('modal_reason').value;
     var action = document.getElementById('action').value;
     var original_date = document.getElementById('modal_original_date').value;
-    
-    // 유효성 검사
+
+    // shop_id 유효성 검사
     if (!shop_id || shop_id === '') {
         alert('가맹점 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
         return;
     }
-    
+
+    var shop_id_int = parseInt(shop_id);
+    if (isNaN(shop_id_int) || shop_id_int <= 0) {
+        alert('유효하지 않은 가맹점 정보입니다. 페이지를 새로고침해주세요.');
+        return;
+    }
+
+    // date 유효성 검사
     if (!date || date === '') {
         alert('날짜를 선택하세요.');
+        document.getElementById('modal_date').focus();
+        return;
+    }
+
+    // date 형식 검증 (YYYY-MM-DD)
+    var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+        alert('올바른 날짜 형식이 아닙니다. (YYYY-MM-DD)');
+        document.getElementById('modal_date').focus();
+        return;
+    }
+
+    // 날짜 유효성 검증 (실제 존재하는 날짜인지)
+    var dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) {
+        alert('유효하지 않은 날짜입니다.');
+        document.getElementById('modal_date').focus();
+        return;
+    }
+
+    // 년도 범위 검증 (1900-2100)
+    var year = dateObj.getFullYear();
+    if (year < 1900 || year > 2100) {
+        alert('날짜의 년도는 1900년에서 2100년 사이여야 합니다.');
         document.getElementById('modal_date').focus();
         return;
     }
@@ -141,7 +200,14 @@ function saveException() {
         open_time = '';
         close_time = '';
     }
-    
+
+    // reason 길이 제한 (200자)
+    if (reason && reason.length > 200) {
+        alert('사유는 최대 200자까지 입력 가능합니다.');
+        document.getElementById('modal_reason').focus();
+        return;
+    }
+
     // disabled된 필드가 있으면 제거하고 값을 명시적으로 설정하여 전송되도록 함
     var openTimeInput = document.getElementById('modal_open_time');
     var closeTimeInput = document.getElementById('modal_close_time');
@@ -184,7 +250,7 @@ function saveException() {
     var fields = {
         'token': token.value,
         'action': action,
-        'shop_id': shop_id,
+        'shop_id': shop_id_int,  // 정수형으로 전송
         'date': date,
         'is_open': is_open === 'true' ? '1' : '0',
         'open_time': open_time || '',
@@ -264,6 +330,18 @@ window.onclick = function(event) {
 
 // 페이지 로드 시 URL 파라미터 확인하여 모달 자동 열기
 $(document).ready(function() {
+    // 사유 입력 실시간 글자 수 카운터
+    $('#modal_reason').on('input', function() {
+        var length = $(this).val().length;
+        $('#reason_length').text(length);
+
+        // 200자 초과 방지
+        if (length > 200) {
+            $(this).val($(this).val().substring(0, 200));
+            $('#reason_length').text(200);
+        }
+    });
+
     if (typeof addDateParam !== 'undefined' && addDateParam) {
         // 날짜가 전달된 경우 신규등록 모달 열기
         setTimeout(function() {
