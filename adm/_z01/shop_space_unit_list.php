@@ -179,7 +179,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <table>
     <caption><?php echo $g5['title'] ?> 목록</caption>
     <colgroup>
+        <?php if ($group_id > 0): ?>
         <col style="width: 50px;">
+        <?php endif; ?>
         <col style="width: 80px;">
         <col style="width: 150px;">
         <col style="width: 100px;">
@@ -194,10 +196,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     </colgroup>
     <thead>
     <tr>
+        <?php if ($group_id > 0): ?>
         <th scope="col">
             <label for="chkall" class="sound_only">전체</label>
             <input type="checkbox" name="chkall" id="chkall" onclick="check_all(this.form)">
         </th>
+        <?php endif; ?>
         <th scope="col">공간유닛ID</th>
         <th scope="col">공간그룹</th>
         <th scope="col">유닛타입</th>
@@ -249,9 +253,11 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             $has_coord = ($row['pos_x'] !== null && $row['pos_y'] !== null) ? 'O' : '-';
     ?>
     <tr>
+        <?php if ($group_id > 0): ?>
         <td class="td_chk">
             <input type="checkbox" name="chk[]" value="<?php echo $unit_id ?>" id="chk_<?php echo $i ?>">
         </td>
+        <?php endif; ?>
         <td class="td_num"><?php echo $unit_id ?></td>
         <td class="td_left"><?php echo htmlspecialchars($row['group_name']) ?></td>
         <td class="td_left"><?php echo $unit_type_text ?></td>
@@ -259,7 +265,11 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <td class="td_left"><?php echo htmlspecialchars($row['code']) ?></td>
         <td class="td_num"><?php echo $row['capacity'] ?></td>
         <td class="td_num">
+            <?php if ($group_id > 0): ?>
             <input type="text" name="sort_order[<?php echo $unit_id ?>]" value="<?php echo $row['sort_order'] ?>" class="frm_input text-center w-[60px]">
+            <?php else: ?>
+            <?php echo $row['sort_order'] ?>
+            <?php endif; ?>
         </td>
         <td class="td_center"><?php echo $has_coord ?></td>
         <td class="td_center"><?php echo $img_html ?></td>
@@ -274,7 +284,8 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     }
     
     if ($i == 0) {
-        echo '<tr><td colspan="12" class="td_empty">등록된 공간 유닛이 없습니다.</td></tr>';
+        $colspan = $group_id > 0 ? 12 : 11;
+        echo '<tr><td colspan="'.$colspan.'" class="td_empty">등록된 공간 유닛이 없습니다.</td></tr>';
     }
     ?>
     </tbody>

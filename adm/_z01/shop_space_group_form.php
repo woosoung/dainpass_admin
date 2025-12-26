@@ -12,11 +12,25 @@ $shop_id = $result['shop_id'];
 $w = isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '';
 $group_id = isset($_REQUEST['group_id']) ? (int)$_REQUEST['group_id'] : 0;
 
-// qstr 생성
+// w 값 화이트리스트 검증
+$w_whitelist = ['', 'u'];
+if (!in_array($w, $w_whitelist)) {
+    $w = '';
+}
+
+// qstr 생성 시 화이트리스트 검증 및 이스케이프
 $qstr = '';
+$allowed_params = ['sst', 'sod', 'sfl', 'stx', 'page'];
+
 foreach ($_GET as $key => $value) {
-    if (in_array($key, ['sst', 'sod', 'sfl', 'stx', 'page'])) {
-        $qstr .= '&'.$key.'='.$value;
+    if (in_array($key, $allowed_params)) {
+        if ($key == 'stx') {
+            $qstr .= '&'.$key.'='.urlencode($value);
+        } else if ($key == 'page') {
+            $qstr .= '&'.$key.'='.(int)$value;
+        } else {
+            $qstr .= '&'.$key.'='.clean_xss_tags($value);
+        }
     }
 }
 

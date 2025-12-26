@@ -73,63 +73,113 @@ function toggleWeekOfMonth() {
 
 function saveRule() {
     var form = document.getElementById('frmRule');
-    var shop_id = document.getElementById('modal_shop_id') ? document.getElementById('modal_shop_id').value : '';
     var holiday_type = document.getElementById('modal_holiday_type').value;
     var weekday = document.getElementById('modal_weekday').value;
     var week_of_month = document.getElementById('modal_week_of_month').value;
     var description = document.getElementById('modal_description').value;
     var action = document.getElementById('action').value;
     var holiday_rule_id = document.getElementById('modal_holiday_rule_id').value;
-    
+
     // 유효성 검사
-    if (!shop_id || shop_id === '') {
-        alert('가맹점 정보를 찾을 수 없습니다. 페이지를 새로고침해주세요.');
-        return;
-    }
-    
     if (!holiday_type || holiday_type === '') {
-        alert('휴무유형을 선택하세요.');
+        alert('휴무유형을 선택해 주세요.');
         document.getElementById('modal_holiday_type').focus();
         return;
     }
-    
+
+    // holiday_type 화이트리스트 검증
+    if (holiday_type !== 'weekly' && holiday_type !== 'monthly') {
+        alert('올바른 휴무유형이 아닙니다.');
+        document.getElementById('modal_holiday_type').focus();
+        return;
+    }
+
     if (!weekday || weekday === '') {
-        alert('요일을 선택하세요.');
+        alert('요일을 선택해 주세요.');
         document.getElementById('modal_weekday').focus();
         return;
     }
-    
+
+    // 요일 범위 검증 (0-6)
+    var weekdayNum = parseInt(weekday);
+    if (isNaN(weekdayNum) || weekdayNum < 0 || weekdayNum > 6) {
+        alert('올바른 요일을 선택해 주세요.');
+        document.getElementById('modal_weekday').focus();
+        return;
+    }
+
     // 매주인 경우 week_of_month는 빈 문자열로 강제 설정
     if (holiday_type === 'weekly') {
         week_of_month = '';
+    } else if (holiday_type === 'monthly' && week_of_month !== '') {
+        // 매월인 경우 week_of_month 범위 검증 (1-6)
+        var weekOfMonthNum = parseInt(week_of_month);
+        if (isNaN(weekOfMonthNum) || weekOfMonthNum < 1 || weekOfMonthNum > 6) {
+            alert('주차는 1 이상 6 이하로 입력해 주세요.');
+            document.getElementById('modal_week_of_month').focus();
+            return;
+        }
+    }
+
+    // description 길이 검증 (최대 1000자)
+    if (description.length > 1000) {
+        alert('설명은 최대 1000자까지 입력 가능합니다.');
+        document.getElementById('modal_description').focus();
+        return;
+    }
+
+    // 수정 모드일 경우 holiday_rule_id 검증
+    if (action === 'edit') {
+        if (!holiday_rule_id || holiday_rule_id === '') {
+            alert('규칙 ID를 찾을 수 없습니다. 페이지를 새로고침해 주세요.');
+            return;
+        }
+        var holidayRuleIdNum = parseInt(holiday_rule_id);
+        if (isNaN(holidayRuleIdNum) || holidayRuleIdNum < 1) {
+            alert('올바른 규칙 ID가 아닙니다.');
+            return;
+        }
     }
     
     // 폼 생성하여 제출
     var submitForm = document.createElement('form');
     submitForm.method = 'POST';
     submitForm.action = './holiday_rules_list_update.php';
-    
+
     var token = document.querySelector('input[name="token"]');
     if (!token) {
-        alert('토큰을 찾을 수 없습니다. 페이지를 새로고침해주세요.');
+        alert('토큰을 찾을 수 없습니다. 페이지를 새로고침해 주세요.');
         return;
     }
-    
+
+    // shop_id는 서버에서 check_shop_access()로 결정되므로 전송하지 않음
     var fields = {
         'token': token.value,
         'action': action,
-        'shop_id': shop_id,
         'holiday_type': holiday_type,
         'weekday': weekday,
         'week_of_month': week_of_month || '',  // 빈 문자열이면 NULL로 처리됨
         'description': description
     };
-    
+
     // 수정 모드인 경우 holiday_rule_id 추가
     if (action == 'edit') {
         fields['holiday_rule_id'] = holiday_rule_id;
     }
-    
+
+    // qstr 파라미터 추가 (검색 조건 유지)
+    var qstrFields = ['page', 'sst', 'sod', 'sfl', 'stx', 'sfl2'];
+    var flist = document.getElementById('flist');
+    if (flist) {
+        for (var i = 0; i < qstrFields.length; i++) {
+            var fieldName = qstrFields[i];
+            var fieldEl = flist.querySelector('input[name="' + fieldName + '"]');
+            if (fieldEl && fieldEl.value) {
+                fields[fieldName] = fieldEl.value;
+            }
+        }
+    }
+
     for (var key in fields) {
         var input = document.createElement('input');
         input.type = 'hidden';
@@ -137,7 +187,7 @@ function saveRule() {
         input.value = fields[key];
         submitForm.appendChild(input);
     }
-    
+
     document.body.appendChild(submitForm);
     submitForm.submit();
 }

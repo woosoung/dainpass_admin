@@ -163,7 +163,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     <tr>
         <th scope="row"><label for="capacity">수용 인원<strong class="sound_only">필수</strong></label></th>
         <td>
-            <input type="number" name="capacity" id="capacity" value="<?php echo htmlspecialchars($unit['capacity'] ?? 1) ?>" class="frm_input text-center w-[100px]" min="1" required>
+            <input type="number" name="capacity" id="capacity" value="<?php echo htmlspecialchars($unit['capacity'] ?? 1) ?>" class="frm_input text-center w-[100px]" min="1" max="9999" required>
             <?php echo help("이 공간의 최대 수용 인원"); ?>
         </td>
     </tr>
@@ -205,22 +205,22 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
             <div class="mb-2">
                 <?php echo help("x좌표, y좌표에 대한 정보는 '도면편집'에서 언제든 정밀하게 수정할 수 있으니 적당한 값으로 입력하거나, 기본값이 0.00 설정 그대로 두셔도 됩니다."); ?>
                 <label for="pos_x">X 좌표</label>
-                <input type="number" name="pos_x" id="pos_x" value="<?php echo htmlspecialchars($unit['pos_x'] ?? '0.00') ?>" class="frm_input text-center w-[100px]" step="0.01">
-                
+                <input type="number" name="pos_x" id="pos_x" value="<?php echo htmlspecialchars($unit['pos_x'] ?? '0.00') ?>" class="frm_input text-center w-[100px]" step="0.01" min="-10000" max="10000">
+
                 <label for="pos_y" class="ml-3">Y 좌표</label>
-                <input type="number" name="pos_y" id="pos_y" value="<?php echo htmlspecialchars($unit['pos_y'] ?? '0.00') ?>" class="frm_input text-center w-[100px]" step="0.01">
+                <input type="number" name="pos_y" id="pos_y" value="<?php echo htmlspecialchars($unit['pos_y'] ?? '0.00') ?>" class="frm_input text-center w-[100px]" step="0.01" min="-10000" max="10000">
             </div>
             <div class="mb-2">
                 <?php echo help("가로/세로(너비/높이)에 대한 정보는 '도면편집'에서 언제든 정밀하게 수정할 수 있으니 적당한 값으로 입력하거나, 기본값이 50.00 설정 그대로 두셔도 됩니다."); ?>
                 <label for="width">가로</label>
-                <input type="number" name="width" id="width" value="<?php echo htmlspecialchars($unit['width'] ?? '50.00') ?>" class="frm_input text-center w-[100px]" step="0.01">
-                
+                <input type="number" name="width" id="width" value="<?php echo htmlspecialchars($unit['width'] ?? '50.00') ?>" class="frm_input text-center w-[100px]" step="0.01" min="20" max="10000">
+
                 <label for="height" class="ml-3">세로</label>
-                <input type="number" name="height" id="height" value="<?php echo htmlspecialchars($unit['height'] ?? '50.00') ?>" class="frm_input text-center w-[100px]" step="0.01">
+                <input type="number" name="height" id="height" value="<?php echo htmlspecialchars($unit['height'] ?? '50.00') ?>" class="frm_input text-center w-[100px]" step="0.01" min="20" max="10000">
             </div>
             <div>
                 <label for="rotation_deg">회전 각도 (degree)</label>
-                <input type="number" name="rotation_deg" id="rotation_deg" value="<?php echo htmlspecialchars($unit['rotation_deg'] ?? '') ?>" class="frm_input text-center w-[100px]" step="0.01">
+                <input type="number" name="rotation_deg" id="rotation_deg" value="<?php echo htmlspecialchars($unit['rotation_deg'] ?? '') ?>" class="frm_input text-center w-[100px]" step="0.01" min="-360" max="360">
             </div>
             <?php echo help("도면 상의 위치와 크기를 수동으로 입력하거나, 도면 에디터를 통해 자동으로 저장됩니다."); ?>
         </td>
@@ -228,7 +228,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
     <tr>
         <th scope="row"><label for="sort_order">정렬순서</label></th>
         <td>
-            <input type="number" name="sort_order" id="sort_order" value="<?php echo htmlspecialchars($unit['sort_order'] ?? 0) ?>" class="frm_input text-center w-[100px]">
+            <input type="number" name="sort_order" id="sort_order" value="<?php echo htmlspecialchars($unit['sort_order'] ?? 0) ?>" class="frm_input text-center w-[100px]" min="0" max="9999">
             <?php echo help("낮은 숫자가 먼저 표시됩니다."); ?>
         </td>
     </tr>

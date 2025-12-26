@@ -22,15 +22,35 @@ $sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'asc';
 $sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
 $stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
 
+// 정렬 필드 화이트리스트 검증
+$sst_whitelist = ['group_id', 'name', 'group_type', 'level_no', 'sort_order', 'is_active', 'created_at'];
+$sst = in_array($sst, $sst_whitelist) ? $sst : 'sort_order';
+
+// 정렬 방향 화이트리스트 검증
+$sod_whitelist = ['asc', 'desc'];
+$sod = in_array(strtolower($sod), $sod_whitelist) ? strtolower($sod) : 'asc';
+
+// 검색 필드 화이트리스트 검증
+$sfl_whitelist = ['name', 'group_type'];
+if ($sfl && !in_array($sfl, $sfl_whitelist)) {
+    $sfl = '';
+}
+
 $where_sql = " WHERE shop_id = {$shop_id} ";
 
 if ($sfl && $stx) {
     switch ($sfl) {
         case 'name':
-            $where_sql .= " AND name LIKE '%{$stx}%' ";
+            $stx_escaped = pg_escape_string($stx);
+            $where_sql .= " AND name LIKE '%{$stx_escaped}%' ";
             break;
         case 'group_type':
-            $where_sql .= " AND group_type = '{$stx}' ";
+            // group_type 화이트리스트 검증
+            $group_type_whitelist = ['FLOOR', 'HALL', 'ZONE'];
+            $stx_upper = strtoupper(trim($stx));
+            if (in_array($stx_upper, $group_type_whitelist)) {
+                $where_sql .= " AND group_type = '{$stx_upper}' ";
+            }
             break;
     }
 }
