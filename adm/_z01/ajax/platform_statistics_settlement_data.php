@@ -278,25 +278,43 @@ try {
     }
     
     // 4. 정산 주기별 분포 (shop 테이블의 settlement_cycle 사용)
+    // 검색 필터와 상관없이 모든 주기(일일, 주간, 월간)를 항상 표시
     $sql = " SELECT s.settlement_cycle, 
                     COUNT(*) as count, 
                     SUM(ss.net_settlement_amount) as total_amount
              FROM shop_settlements ss
              JOIN {$g5['shop_table']} s ON ss.shop_id = s.shop_id
              WHERE ss.settlement_status = 'COMPLETED'
-               {$status_filter_sql}
              GROUP BY s.settlement_cycle
-             ORDER BY total_amount DESC ";
+             ORDER BY 
+                CASE s.settlement_cycle
+                    WHEN 'daily' THEN 1
+                    WHEN 'weekly' THEN 2
+                    WHEN 'monthly' THEN 3
+                    ELSE 4
+                END ";
     $result = sql_query_pg($sql);
     $cycle_distribution = [];
+    // 모든 주기를 기본값으로 초기화
+    $all_cycles = ['daily' => ['count' => 0, 'amount' => 0], 'weekly' => ['count' => 0, 'amount' => 0], 'monthly' => ['count' => 0, 'amount' => 0]];
+    
     if ($result && is_object($result) && isset($result->result)) {
         while ($row = sql_fetch_array_pg($result->result)) {
-            $cycle_distribution[] = [
-                'cycle' => $row['settlement_cycle'] ?? '',
-                'count' => (int)$row['count'],
-                'amount' => (int)$row['total_amount']
-            ];
+            $cycle = strtolower($row['settlement_cycle'] ?? '');
+            if (isset($all_cycles[$cycle])) {
+                $all_cycles[$cycle]['count'] = (int)$row['count'];
+                $all_cycles[$cycle]['amount'] = (int)$row['total_amount'];
+            }
         }
+    }
+    
+    // 모든 주기를 순서대로 배열에 추가
+    foreach (['daily', 'weekly', 'monthly'] as $cycle) {
+        $cycle_distribution[] = [
+            'cycle' => $cycle,
+            'count' => $all_cycles[$cycle]['count'],
+            'amount' => $all_cycles[$cycle]['amount']
+        ];
     }
     
     // 5. 가맹점별 정산 금액 순위 (상위 20개) - appointment_datetime 기준
