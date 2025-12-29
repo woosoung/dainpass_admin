@@ -149,7 +149,8 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <col style="width: 120px;">
         <col style="width: 120px;">
         <col style="width: 80px;">
-        <col style="width: 120px;">
+        <col style="width: 80px;">
+        <col style="width: 80px;">
     </colgroup>
     <thead>
     <tr>
@@ -165,7 +166,8 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <th scope="col">발급현황</th>
         <th scope="col">상태</th>
         <th scope="col">정렬</th>
-        <th scope="col">관리</th>
+        <th scope="col">조회</th>
+        <th scope="col">수정</th>
     </tr>
     </thead>
     <tbody>
@@ -235,6 +237,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <td class="td_left"><?php echo $is_active_text ?></td>
         <td class="td_num"><?php echo $num ?></td>
         <td class="td_mng">
+            <a href="./shop_coupon_issued_list.php?sfl=coupon_code&stx=<?php echo urlencode($coupon_code); ?>" class="btn btn_03">조회</a>
+        </td>
+        <td class="td_mng">
             <a href="./shop_coupons_form.php?w=u&coupon_id=<?php echo $coupon_id; ?>&<?php echo $qstr; ?>" class="btn btn_03">수정</a>
         </td>
     </tr>
@@ -244,7 +249,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     }
     
     if ($i == 0) {
-        echo '<tr><td colspan="10" class="td_empty">등록된 쿠폰이 없습니다.</td></tr>';
+        echo '<tr><td colspan="11" class="td_empty">등록된 쿠폰이 없습니다.</td></tr>';
     }
     ?>
     </tbody>
