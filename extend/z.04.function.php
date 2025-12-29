@@ -3798,3 +3798,44 @@ function _shop_access_error($message, $opts) {
 }
 }
 
+/**
+ * 가맹점 표시 이름 생성 (HTML 포함, 권한 체크 내장)
+ *
+ * @param array $shop_info shop 테이블 정보
+ * @param int $shop_id 가맹점 ID
+ * @param string $tag 'p' 또는 'span' (기본값: 'p')
+ * @return string HTML 문자열 (권한 없으면 빈 문자열)
+ */
+if (!function_exists('get_shop_display_name')) {
+function get_shop_display_name($shop_info, $shop_id, $tag = 'p') {
+    global $member;
+
+    // 권한 체크 - mb_level >= 8만 표시
+    if (!isset($member['mb_level']) || $member['mb_level'] < 8) {
+        return '';
+    }
+
+    // 가맹점명 추출
+    $name = '';
+    if (isset($shop_info['shop_name']) && $shop_info['shop_name']) {
+        $name = $shop_info['shop_name'];
+    } elseif (isset($shop_info['name']) && $shop_info['name']) {
+        $name = $shop_info['name'];
+    }
+
+    // 표시 텍스트 생성
+    if ($name) {
+        $display_text = '가맹점: ' . get_text($name) . ' (ID: ' . (int)$shop_id . ')';
+    } else {
+        $display_text = '가맹점 ID: ' . (int)$shop_id;
+    }
+
+    // HTML 태그 선택
+    if ($tag === 'span') {
+        return '<span class="btn_ov01"><strong>' . $display_text . '</strong></span>';
+    } else {
+        return '<p><strong>' . $display_text . '</strong></p>';
+    }
+}
+}
+
