@@ -147,16 +147,14 @@ if (isset($_GET['to_date']) && $_GET['to_date']) {
 $g5['title'] = '예약(주문) 상세';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_desc01 local_desc">
     <p>예약(주문) 상세 정보를 확인합니다.</p>
-    <p><strong>가맹점: <?php echo get_text($shop_display_name); ?></strong></p>
     <?php if (!$can_cancel && $appointment['status'] == 'COMPLETED') { ?>
     <p style="color:red;"><strong>취소 가능 시간이 지났습니다. (취소 가능 시간: 예약 시간 <b class="text-blue-500"><?=$cancellation_period?>시간</b> 전까지)</strong></p>
     <?php } ?>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <!-- 예약 기본 정보 -->

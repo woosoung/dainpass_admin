@@ -134,8 +134,6 @@ $colspan = 10;
 $g5['title'] = '고객문의관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 <div class="local_ov01 local_ov">
     <?php echo $listall ?>
@@ -166,8 +164,8 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <div class="local_desc01 local_desc">
     <p>
         고객 문의를 관리하고 답변할 수 있습니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <form name="form01" id="form01" action="./shop_customer_qa_list_update.php" onsubmit="return form01_submit(this);" method="post">

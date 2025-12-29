@@ -9,6 +9,7 @@ include_once(G5_ZSQL_PATH.'/term_rank.php');
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 // 접근 권한이 있으면 기존 로직 계속 진행
 $form_input = '';
@@ -166,6 +167,7 @@ $g5['title'] = '가맹점 '.$html_title;
 
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
+
 // add_javascript('js 구문', 출력순서); 숫자가 작을 수록 먼저 출력됨
 add_javascript(G5_POSTCODE_JS, 0);    //다음 주소 js
 add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js"></script>',0);
@@ -188,6 +190,7 @@ include_once('./js/store_form.js.php');
 <?=$form_input??''?>
 <div class="local_desc01 local_desc">
     <p>가맹점정보를 관리해 주세요.</p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <div class="tbl_frm01 tbl_wrap">

@@ -7,6 +7,7 @@ include_once('./_common.php');
 // 가맹점측 관리자 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 // 검색 조건
 $sfl = isset($_REQUEST['sfl']) ? trim($_REQUEST['sfl']) : '';
@@ -76,12 +77,14 @@ $status_arr = array(
 $g5['title'] = '서비스/메뉴 관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
+
 include_once('./js/store_service_list.js.php');
 ?>
 
 <div class="local_ov01 local_ov">
     <?php echo $listall ?>
     <span class="btn_ov01"><span class="ov_txt">전체 </span><span class="ov_num"> <?php echo number_format($total_count) ?>건</span></span>
+    <?php echo get_shop_display_name($shop_info, $shop_id, 'span'); ?>
 </div>
 
 <form name="fsearch" method="get" class="local_sch01 local_sch">

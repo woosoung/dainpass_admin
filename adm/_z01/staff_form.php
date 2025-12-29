@@ -7,6 +7,7 @@ include_once('./_common.php');
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 // 검색 조건 및 페이징 정보
 $sfl = isset($_REQUEST['sfl']) ? trim($_REQUEST['sfl']) : '';
@@ -144,6 +145,7 @@ include_once('./js/staff_form.js.php');
 <?=$form_input??''?>
 <div class="local_desc01 local_desc">
     <p>직원 정보를 관리해 주세요.</p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <div class="tbl_frm01 tbl_wrap">

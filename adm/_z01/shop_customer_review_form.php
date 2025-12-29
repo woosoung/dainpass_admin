@@ -74,15 +74,9 @@ if (isset($_GET['sfl'])) $qstr .= ($qstr ? '&' : '') . 'sfl='.urlencode($_GET['s
 if (isset($_GET['stx'])) $qstr .= ($qstr ? '&' : '') . 'stx='.urlencode($_GET['stx']);
 if (isset($_GET['sfl2'])) $qstr .= ($qstr ? '&' : '') . 'sfl2='.urlencode($_GET['sfl2']);
 if (isset($_GET['page'])) $qstr .= ($qstr ? '&' : '') . 'page='.urlencode($_GET['page']);
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
-<div class="local_desc01 local_desc">
-    <p>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
-    </p>
-</div>
+<?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 
 <form name="freviewform" id="freviewform" method="post" action="./shop_customer_review_form_update.php" enctype="multipart/form-data" onsubmit="return freviewform_submit(this);">
 <input type="hidden" name="w" value="<?php echo $w; ?>">

@@ -122,6 +122,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 <div class="local_desc01 local_desc">
     <p>쿠폰 정보를 <?php echo $html_title; ?>해 주세요.</p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <form name="form01" id="form01" action="./shop_coupons_form_update.php" onsubmit="return form01_submit(this);" method="post">

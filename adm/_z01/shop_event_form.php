@@ -81,13 +81,11 @@ $g5['title'] = '이벤트 ' . $html_title;
 
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_desc01 local_desc">
     <p>이벤트 정보를 <?php echo $html_title; ?>해 주세요.</p>
-    <p><strong>가맹점: <?php echo get_text($shop_display_name); ?></strong></p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <form name="form01" id="form01" action="./shop_event_form_update.php" onsubmit="return form01_submit(this);" method="post">

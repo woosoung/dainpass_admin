@@ -7,6 +7,7 @@ include_once('./_common.php');
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 // w: write mode (등록/수정)
 $w = isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '';
@@ -87,6 +88,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/multifile/jquery.MultiFile.min.js">
 
 <div class="local_desc01 local_desc">
     <p>공간 그룹(층/홀/존)을 <?php echo $html_title ?>합니다. 도면 이미지를 업로드하면 해당 그룹의 공간 유닛을 배치할 수 있습니다.</p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <form name="fgroup" id="fgroup" action="./shop_space_group_form_update.php" method="post" enctype="multipart/form-data" onsubmit="return fgroup_submit(this);">

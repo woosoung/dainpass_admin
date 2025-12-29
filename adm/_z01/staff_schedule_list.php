@@ -7,6 +7,7 @@ include_once('./_common.php');
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 // 검색 조건
 $ser_staff_id = isset($_GET['ser_staff_id']) ? (int)$_GET['ser_staff_id'] : 0;
@@ -151,6 +152,7 @@ include_once('./js/staff_schedule_list.js.php');
 
 <div class="local_desc01 local_desc">
     <p>직원별 근무 일정을 목록으로 확인하고 관리할 수 있습니다.</p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <!-- 목록 -->

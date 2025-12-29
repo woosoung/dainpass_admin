@@ -79,8 +79,8 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
 <div class="local_desc01 local_desc">
     <p>
         해당 가맹점의 FAQ 마스터를 관리합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
     <ol class="mt-2">
         <li>FAQ 마스터는 가맹점별로 별도 관리됩니다.</li>
         <li>마스터 제목을 클릭하면 해당 마스터에 속한 FAQ 항목을 관리할 수 있습니다.</li>

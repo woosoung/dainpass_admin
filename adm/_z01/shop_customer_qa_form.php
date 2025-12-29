@@ -88,13 +88,11 @@ $pg_anchor ='<ul class="anchor">
 <li><a href="#anc_qa_reply_form">답변 작성</a></li>
 <li><a href="#anc_qa_replies">답변 목록</a></li>
 </ul>';
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_desc01 local_desc">
     <p>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
+        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
     </p>
 </div>
 

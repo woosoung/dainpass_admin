@@ -124,6 +124,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <p>
         가맹점의 쿠폰을 관리합니다.<br>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <form name="flist" id="flist" action="./shop_coupons_list_update.php" method="post" onsubmit="return flist_submit(this);">

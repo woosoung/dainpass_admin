@@ -53,8 +53,8 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 FAQ 마스터를 <?php echo $w === 'u' ? '수정' : '등록'; ?>합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <form name="frmshopfaqmasterform" action="./shop_faqmasterformupdate.php" method="post" onsubmit="return frmshopfaqmasterform_check(this);">

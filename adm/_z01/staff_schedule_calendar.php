@@ -7,6 +7,7 @@ include_once('./_common.php');
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 // 현재 년월 가져오기
 $current_year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
@@ -268,6 +269,7 @@ include_once('./js/staff_schedule_calendar.js.php');
 
 <div class="local_desc01 local_desc">
     <p>직원별 근무 일정을 달력에서 확인하고 관리할 수 있습니다.</p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <div class="calendar-container">

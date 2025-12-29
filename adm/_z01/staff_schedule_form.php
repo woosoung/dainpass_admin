@@ -7,6 +7,7 @@ include_once('./_common.php');
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
 
 // 검색 조건 및 페이징 정보
 $ser_staff_id = isset($_REQUEST['ser_staff_id']) ? (int)$_REQUEST['ser_staff_id'] : 0;
@@ -152,6 +153,7 @@ include_once('./js/staff_schedule_form.js.php');
 
 <div class="local_desc01 local_desc">
     <p>직원의 근무일정을 등록하거나 수정합니다.</p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <div class="tbl_frm01 tbl_wrap">

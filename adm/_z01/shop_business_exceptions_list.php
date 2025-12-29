@@ -122,13 +122,12 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
 $g5['title'] = '특별휴무/영업';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_ov01 local_ov">
     <?php echo $listall ?>
     <span class="btn_ov01"><span class="ov_txt">전체 </span><span class="ov_num"> <?php echo number_format($total_count) ?>건 </span></span>
+    <?php echo get_shop_display_name($shop_info, $shop_id, 'span'); ?>
 </div>
 
 <form name="fsearch" id="fsearch" method="get">
@@ -185,6 +184,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 특별휴무/영업일을 관리합니다.<br>
+        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
     </p>
 </div>
 

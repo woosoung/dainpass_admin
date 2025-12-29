@@ -62,14 +62,12 @@ if ($w == 'u') {
 $g5['title'] = $html_title;
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_desc01 local_desc">
     <p>
         개인결제 청구 정보를 <?php echo $w == 'u' ? '수정' : '등록'; ?>합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
+        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
     </p>
 </div>
 

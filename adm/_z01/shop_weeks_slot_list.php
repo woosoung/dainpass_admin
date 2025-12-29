@@ -39,13 +39,12 @@ if ($result && $result->result) {
 $g5['title'] = '가맹점별 요일별 영업시간 관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_desc01 local_desc">
     <p>
         가맹점별 요일별 영업시간을 관리합니다.<br>
+        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
     </p>
 </div>
 

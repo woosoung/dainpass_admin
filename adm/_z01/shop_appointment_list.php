@@ -112,8 +112,6 @@ $g5['title'] = '예약(주문)관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_ov01 local_ov">
@@ -158,8 +156,8 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 예약(주문)을 관리합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <form name="flist" id="flist" action="./shop_appointment_list_update.php" method="post" onsubmit="return flist_submit(this);">

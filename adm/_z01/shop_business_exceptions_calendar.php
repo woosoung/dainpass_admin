@@ -66,8 +66,6 @@ $g5['title'] = '특별휴무/영업 (달력)';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 include_once('./js/shop_business_exceptions_calendar.js.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <style>
@@ -280,6 +278,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 특별휴무/영업일을 달력에서 확인하고 관리할 수 있습니다.<br>
+        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
     </p>
 </div>
 
