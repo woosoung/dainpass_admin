@@ -15,20 +15,29 @@ $page = $page > 0 ? $page : 1;
 $rows_per_page = 30;
 $offset = ($page - 1) * $rows_per_page;
 
-// 검색 조건
-$sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'coupon_id';
-$sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'desc';
-$sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
-$stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
-$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; // is_active 필터
+// 검색 조건 - 화이트리스트 검증
+// sst (정렬 필드)
+$allowed_sst = array('coupon_id', 'coupon_code', 'coupon_name', 'discount_type', 'valid_from', 'valid_until', 'is_active', 'created_at');
+$sst = isset($_GET['sst']) && in_array($_GET['sst'], $allowed_sst) ? $_GET['sst'] : 'coupon_id';
 
-// ORDER BY 필드에 테이블 별칭이 없으면 추가
+// sod (정렬 방향)
+$allowed_sod = array('asc', 'desc');
+$sod = isset($_GET['sod']) && in_array($_GET['sod'], $allowed_sod) ? $_GET['sod'] : 'desc';
+
+// sfl (검색 필드)
+$allowed_sfl = array('', 'coupon_code', 'coupon_name', 'description');
+$sfl = isset($_GET['sfl']) && in_array($_GET['sfl'], $allowed_sfl) ? $_GET['sfl'] : '';
+
+// stx (검색어)
+$stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
+
+// sfl2 (활성화 상태 필터)
+$allowed_sfl2 = array('', 'active', 'inactive');
+$sfl2 = isset($_GET['sfl2']) && in_array($_GET['sfl2'], $allowed_sfl2) ? $_GET['sfl2'] : '';
+
+// ORDER BY 필드에 테이블 별칭 추가
 if ($sst && strpos($sst, '.') === false) {
-    // 허용된 필드 목록
-    $allowed_fields = array('coupon_id', 'coupon_code', 'coupon_name', 'discount_type', 'valid_from', 'valid_until', 'is_active', 'created_at');
-    if (in_array($sst, $allowed_fields)) {
-        $sst = 'c.' . $sst;
-    }
+    $sst = 'c.' . $sst;
 }
 
 $where_sql = " WHERE c.shop_id = {$shop_id} ";
@@ -76,8 +85,6 @@ $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목�
 $g5['title'] = '쿠폰관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 ?>
 
 <div class="local_ov01 local_ov">
@@ -116,7 +123,6 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <div class="local_desc01 local_desc">
     <p>
         가맹점의 쿠폰을 관리합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 
@@ -169,6 +175,14 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         for ($i=0; $row=sql_fetch_array_pg($result->result); $i++) {
             $coupon_id = $row['coupon_id'];
             $coupon_code = $row['coupon_code'];
+
+            // 쿠폰코드 4-4-4 형식으로 표시 (12자리인 경우만)
+            if (strlen($coupon_code) == 12 && ctype_alnum($coupon_code)) {
+                $coupon_code_display = substr($coupon_code, 0, 4) . '-' . substr($coupon_code, 4, 4) . '-' . substr($coupon_code, 8, 4);
+            } else {
+                $coupon_code_display = $coupon_code;
+            }
+
             $coupon_name = $row['coupon_name'];
             $discount_type = $row['discount_type'];
             $discount_value = $row['discount_value'];
@@ -212,7 +226,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         <td class="td_chk">
             <input type="checkbox" name="chk[]" value="<?php echo $coupon_id ?>" id="chk_<?php echo $i ?>">
         </td>
-        <td class="td_left"><?php echo htmlspecialchars($coupon_code) ?></td>
+        <td class="td_left"><?php echo htmlspecialchars($coupon_code_display) ?></td>
         <td class="td_left"><?php echo htmlspecialchars($coupon_name) ?></td>
         <td class="td_left"><?php echo $discount_text ?></td>
         <td class="td_left"><?php echo $valid_from_text ?></td>

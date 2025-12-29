@@ -11,27 +11,48 @@ $shop_id = $result['shop_id'];
 // 토큰 체크
 check_admin_token();
 
-// action 또는 act 필드 확인 (flist 폼에서는 act 사용)
-$action = isset($_POST['action']) ? clean_xss_tags($_POST['action']) : (isset($_POST['act']) ? clean_xss_tags($_POST['act']) : '');
+// action 또는 act 필드 확인 - 화이트리스트 검증
+$action_input = isset($_POST['action']) ? clean_xss_tags($_POST['action']) : (isset($_POST['act']) ? clean_xss_tags($_POST['act']) : '');
+$allowed_actions = array('delete');
+$action = in_array($action_input, $allowed_actions) ? $action_input : '';
 
-// qstr 생성
+// qstr 생성 - 화이트리스트 검증
 $qstr = '';
+
+// page
 if (isset($_POST['page']) && $_POST['page']) {
-    $qstr .= '&page=' . (int)$_POST['page'];
+    $page = (int)$_POST['page'];
+    if ($page > 0) {
+        $qstr .= '&page=' . $page;
+    }
 }
-if (isset($_POST['sst']) && $_POST['sst']) {
+
+// sst (정렬 필드)
+$allowed_sst = array('coupon_id', 'coupon_code', 'coupon_name', 'discount_type', 'valid_from', 'valid_until', 'is_active', 'created_at');
+if (isset($_POST['sst']) && in_array($_POST['sst'], $allowed_sst)) {
     $qstr .= '&sst=' . urlencode($_POST['sst']);
 }
-if (isset($_POST['sod']) && $_POST['sod']) {
+
+// sod (정렬 방향)
+$allowed_sod = array('asc', 'desc');
+if (isset($_POST['sod']) && in_array($_POST['sod'], $allowed_sod)) {
     $qstr .= '&sod=' . urlencode($_POST['sod']);
 }
-if (isset($_POST['sfl']) && $_POST['sfl']) {
+
+// sfl (검색 필드)
+$allowed_sfl = array('', 'coupon_code', 'coupon_name', 'description');
+if (isset($_POST['sfl']) && in_array($_POST['sfl'], $allowed_sfl)) {
     $qstr .= '&sfl=' . urlencode($_POST['sfl']);
 }
+
+// stx (검색어)
 if (isset($_POST['stx']) && $_POST['stx']) {
-    $qstr .= '&stx=' . urlencode($_POST['stx']);
+    $qstr .= '&stx=' . urlencode(clean_xss_tags($_POST['stx']));
 }
-if (isset($_POST['sfl2']) && $_POST['sfl2']) {
+
+// sfl2 (활성화 상태 필터)
+$allowed_sfl2 = array('', 'active', 'inactive');
+if (isset($_POST['sfl2']) && in_array($_POST['sfl2'], $allowed_sfl2)) {
     $qstr .= '&sfl2=' . urlencode($_POST['sfl2']);
 }
 

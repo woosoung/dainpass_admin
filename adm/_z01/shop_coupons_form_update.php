@@ -6,13 +6,17 @@ include_once('./_common.php');
 
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
-$shop_id = $result['shop_id'];
+$shop_id = (int)$result['shop_id'];
 
 // 토큰 체크
 check_admin_token();
 
-// 파라미터 수신
-$w = isset($_POST['w']) ? clean_xss_tags($_POST['w']) : '';
+// 파라미터 수신 - 화이트리스트 검증
+// w (모드: u=수정, 그 외=신규)
+$w_input = isset($_POST['w']) ? clean_xss_tags($_POST['w']) : '';
+$allowed_w = array('u');
+$w = in_array($w_input, $allowed_w) ? $w_input : '';
+
 $coupon_id = isset($_POST['coupon_id']) ? (int)$_POST['coupon_id'] : 0;
 $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
 $qstr = isset($_POST['qstr']) ? $_POST['qstr'] : '';
@@ -25,8 +29,25 @@ if ($post_shop_id != $shop_id) {
 
 // 입력값 수신 및 검증
 $coupon_code = isset($_POST['coupon_code']) ? trim(clean_xss_tags($_POST['coupon_code'])) : '';
+
+// 쿠폰코드에서 하이픈 제거 (DB에는 하이픈 없이 저장)
+$coupon_code = str_replace('-', '', $coupon_code);
+
 $coupon_name = isset($_POST['coupon_name']) ? trim(clean_xss_tags($_POST['coupon_name'])) : '';
 $description = isset($_POST['description']) ? trim(clean_xss_tags($_POST['description'])) : '';
+
+// coupon_name 길이 검증 (최대 50자)
+if ($coupon_name && mb_strlen($coupon_name) > 50) {
+    alert('쿠폰명은 최대 50자까지 입력 가능합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+    exit;
+}
+
+// description 길이 검증 (최대 1000자)
+if ($description && mb_strlen($description) > 1000) {
+    alert('상세설명은 최대 1000자까지 입력 가능합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+    exit;
+}
+
 $discount_type = isset($_POST['discount_type']) ? clean_xss_tags($_POST['discount_type']) : '';
 $discount_value = isset($_POST['discount_value']) ? (int)$_POST['discount_value'] : 0;
 $min_purchase_amt = isset($_POST['min_purchase_amt']) && $_POST['min_purchase_amt'] !== '' ? (int)$_POST['min_purchase_amt'] : null;
@@ -35,7 +56,11 @@ $valid_from = isset($_POST['valid_from']) ? clean_xss_tags($_POST['valid_from'])
 $valid_until = isset($_POST['valid_until']) && $_POST['valid_until'] !== '' ? clean_xss_tags($_POST['valid_until']) : null;
 $total_limit = isset($_POST['total_limit']) && $_POST['total_limit'] !== '' ? (int)$_POST['total_limit'] : null;
 $issued_limit = isset($_POST['issued_limit']) ? (int)$_POST['issued_limit'] : 1;
-$is_active = isset($_POST['is_active']) ? ($_POST['is_active'] == '1' ? true : false) : true;
+
+// is_active 검증 - '0' 또는 '1'만 허용
+$is_active_input = isset($_POST['is_active']) ? $_POST['is_active'] : '1';
+$allowed_is_active = array('0', '1');
+$is_active = in_array($is_active_input, $allowed_is_active) ? ($is_active_input == '1') : true;
 
 // 필수값 검증
 if (!$coupon_code) {
@@ -43,12 +68,17 @@ if (!$coupon_code) {
     exit;
 }
 
+// coupon_code 길이 검증 (최대 50자)
+if (strlen($coupon_code) > 50) {
+    alert('쿠폰코드는 최대 50자까지 입력 가능합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+    exit;
+}
+
 // 쿠폰코드 형식 검증
 if ($w != 'u') {
-    // 신규 등록 모드: SHOP{shop_id}-{8자리영문숫자} 형식 검증
-    $expected_pattern = '/^SHOP' . $shop_id . '-[A-Z0-9]{8}$/';
-    if (!preg_match($expected_pattern, $coupon_code)) {
-        alert('쿠폰코드 형식이 올바르지 않습니다. (형식: SHOP' . $shop_id . '-{8자리영문숫자})', './shop_coupons_form.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+    // 신규 등록 모드: 12자리 영문숫자 형식 검증 (혼동되는 문자 제외: I, O, 0, 1)
+    if (!preg_match('/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{12}$/', $coupon_code)) {
+        alert('쿠폰코드 형식이 올바르지 않습니다. (형식: 12자리 영문숫자)', './shop_coupons_form.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
         exit;
     }
 } else {
@@ -74,10 +104,20 @@ if (!$discount_value || $discount_value < 1) {
     exit;
 }
 
-// 백분율 할인인 경우 할인값이 100 이하여야 함
-if ($discount_type == 'PERCENT' && $discount_value > 100) {
-    alert('백분율 할인은 100%를 초과할 수 없습니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
-    exit;
+// 백분율 할인인 경우 할인값이 1~100 범위여야 함
+if ($discount_type == 'PERCENT') {
+    if ($discount_value < 1 || $discount_value > 100) {
+        alert('백분율 할인은 1%에서 100% 사이여야 합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+        exit;
+    }
+}
+
+// 정액 할인인 경우 합리적인 범위 검증 (최대 1억원)
+if ($discount_type == 'AMOUNT') {
+    if ($discount_value > 100000000) {
+        alert('할인금액은 1억원을 초과할 수 없습니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+        exit;
+    }
 }
 
 if (!$valid_from || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $valid_from)) {
@@ -100,8 +140,20 @@ if (!$issued_limit || $issued_limit < 1) {
     exit;
 }
 
+// 1인당 발급한도 최대값 검증 (최대 1000장)
+if ($issued_limit > 1000) {
+    alert('1인당 발급한도는 최대 1,000장까지 가능합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+    exit;
+}
+
 if ($total_limit !== null && $total_limit < 1) {
     alert('전체 발급한도는 1 이상이어야 합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+    exit;
+}
+
+// 전체 발급한도 최대값 검증 (최대 100만장)
+if ($total_limit !== null && $total_limit > 1000000) {
+    alert('전체 발급한도는 최대 1,000,000장까지 가능합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
     exit;
 }
 
@@ -110,8 +162,20 @@ if ($max_discount_amt !== null && $max_discount_amt < 0) {
     exit;
 }
 
+// 최대할인금액 최대값 검증 (최대 1억원)
+if ($max_discount_amt !== null && $max_discount_amt > 100000000) {
+    alert('최대할인금액은 1억원을 초과할 수 없습니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+    exit;
+}
+
 if ($min_purchase_amt !== null && $min_purchase_amt < 0) {
     alert('최소결제금액은 0 이상이어야 합니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
+    exit;
+}
+
+// 최소결제금액 최대값 검증 (최대 1억원)
+if ($min_purchase_amt !== null && $min_purchase_amt > 100000000) {
+    alert('최소결제금액은 1억원을 초과할 수 없습니다.', './shop_coupons_form.php?w=' . $w . ($coupon_id ? '&coupon_id=' . $coupon_id : '') . ($qstr ? '&' . $qstr : ''));
     exit;
 }
 
@@ -131,11 +195,11 @@ if ($w == 'u') {
         exit;
     }
     
-    // 쿠폰코드 중복 체크 (자기 자신 제외)
+    // 쿠폰코드 중복 체크 (자기 자신 제외, 전체 시스템에서 유일해야 함)
     if ($exist_row['coupon_code'] != $coupon_code) {
-        $check_sql = " SELECT coupon_id FROM shop_coupons WHERE coupon_code = '{$coupon_code}' AND shop_id = {$shop_id} ";
+        $check_sql = " SELECT coupon_id FROM shop_coupons WHERE coupon_code = '{$coupon_code}' ";
         $check_row = sql_fetch_pg($check_sql);
-        
+
         if ($check_row && $check_row['coupon_id']) {
             alert('이미 사용 중인 쿠폰코드입니다.', './shop_coupons_form.php?w=u&coupon_id=' . $coupon_id . ($qstr ? '&' . $qstr : ''));
             exit;
@@ -169,16 +233,15 @@ if ($w == 'u') {
 } else {
     // 신규 등록 모드
     // 쿠폰코드 형식 재검증 (서버 측)
-    $expected_pattern = '/^SHOP' . $shop_id . '-[A-Z0-9]{8}$/';
-    if (!preg_match($expected_pattern, $coupon_code)) {
-        alert('쿠폰코드 형식이 올바르지 않습니다. (형식: SHOP' . $shop_id . '-{8자리영문숫자})', './shop_coupons_form.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+    if (!preg_match('/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{12}$/', $coupon_code)) {
+        alert('쿠폰코드 형식이 올바르지 않습니다. (형식: 12자리 영문숫자)', './shop_coupons_form.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
         exit;
     }
-    
-    // 쿠폰코드 중복 체크
-    $check_sql = " SELECT coupon_id FROM shop_coupons WHERE coupon_code = '{$coupon_code}' AND shop_id = {$shop_id} ";
+
+    // 쿠폰코드 중복 체크 (전체 시스템에서 유일해야 함)
+    $check_sql = " SELECT coupon_id FROM shop_coupons WHERE coupon_code = '{$coupon_code}' ";
     $check_row = sql_fetch_pg($check_sql);
-    
+
     if ($check_row && $check_row['coupon_id']) {
         alert('이미 사용 중인 쿠폰코드입니다. 쿠폰코드를 재생성해주세요.', './shop_coupons_form.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
         exit;
