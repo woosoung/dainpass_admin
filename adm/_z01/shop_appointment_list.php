@@ -266,7 +266,12 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
         <td class="td_left"><?php echo $appointment_datetime_text ?></td>
         <td class="td_num"><?php echo number_format($total_payment_amount) ?>원</td>
         <td class="td_num"><?php echo number_format($total_cancel_amount) ?>원</td>
-        <td class="td_left"><?php echo $status_text ?></td>
+        <td class="td_left">
+            <select name="status[<?php echo $appointment_id ?>]" class="frm_input">
+                <option value="COMPLETED"<?php echo $status == 'COMPLETED' ? ' selected' : '' ?>>결제완료</option>
+                <option value="CANCELLED"<?php echo $status == 'CANCELLED' ? ' selected' : '' ?>>취소됨</option>
+            </select>
+        </td>
         <td class="td_left"><?php echo $created_at_text ?></td>
         <td class="td_num"><?php echo $num ?></td>
         <td class="td_mng">
@@ -287,7 +292,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
 </div>
 
 <div class="btn_fixed_top btn_confirm">
-    <button type="button" onclick="flist_status_update_submit();" class="btn btn_02">상태변경</button>
+    <button type="button" onclick="flist_status_update_submit();" class="btn btn_02">선택항목 상태변경</button>
 </div>
 
 </form>

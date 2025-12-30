@@ -43,69 +43,90 @@ if (isset($_POST['to_date']) && $_POST['to_date']) {
 
 if ($action == 'status_update') {
     $chk = isset($_POST['chk']) ? $_POST['chk'] : array();
-    $new_status = isset($_POST['new_status']) ? clean_xss_tags($_POST['new_status']) : '';
-    
+    $status_array = isset($_POST['status']) ? $_POST['status'] : array();
+
+    // 검증
     if (empty($chk) || !is_array($chk)) {
         alert('선택된 항목이 없습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
         exit;
     }
-    
-    if (empty($new_status)) {
-        alert('변경할 상태를 선택하세요.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+
+    if (empty($status_array) || !is_array($status_array)) {
+        alert('상태 정보가 없습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
         exit;
     }
-    
-    $chk_count = count($chk);
-    $chk_ids = array();
-    
+
+    // 배열 크기 제한 (최대 100개)
+    if (count($chk) > 100) {
+        alert('한 번에 최대 100개까지만 변경할 수 있습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+        exit;
+    }
+
+    $allowed_status = array('COMPLETED', 'CANCELLED');
+    $update_data = array();
+
     foreach ($chk as $appointment_id) {
         $appointment_id = (int)$appointment_id;
-        if ($appointment_id > 0) {
-            // shop_id 검증 (해당 예약이 이 가맹점의 예약인지 확인, BOOKED 상태 제외)
-            $check_sql = " SELECT COUNT(*) as cnt 
-                          FROM appointment_shop_detail asd
-                          INNER JOIN shop_appointments sa ON asd.appointment_id = sa.appointment_id
-                          WHERE asd.appointment_id = {$appointment_id} 
-                          AND sa.status != 'BOOKED'
-                          AND asd.shop_id = {$shop_id}
-                          AND asd.status != 'BOOKED' ";
-            $check_row = sql_fetch_pg($check_sql);
-            
-            if ($check_row && $check_row['cnt'] > 0) {
-                $chk_ids[] = $appointment_id;
-            }
+
+        if ($appointment_id <= 0 || $appointment_id > 2147483647) {
+            continue;
+        }
+
+        if (!isset($status_array[$appointment_id])) {
+            continue;
+        }
+
+        $new_status = $status_array[$appointment_id];
+
+        // 상태값 화이트리스트 검증
+        if (!in_array($new_status, $allowed_status)) {
+            continue;
+        }
+
+        // shop_id 검증 (해당 예약이 이 가맹점의 예약인지 확인, BOOKED 상태 제외)
+        $check_sql = " SELECT COUNT(*) as cnt
+                      FROM appointment_shop_detail asd
+                      INNER JOIN shop_appointments sa ON asd.appointment_id = sa.appointment_id
+                      WHERE asd.appointment_id = " . (int)$appointment_id . "
+                      AND sa.status != 'BOOKED'
+                      AND asd.shop_id = " . (int)$shop_id . "
+                      AND asd.status != 'BOOKED' ";
+        $check_row = sql_fetch_pg($check_sql);
+
+        if ($check_row && $check_row['cnt'] > 0) {
+            $update_data[] = array(
+                'id' => (int)$appointment_id,
+                'status' => $new_status
+            );
         }
     }
-    
-    if (empty($chk_ids)) {
-        alert('선택한 예약 중 해당 가맹점의 예약이 없습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+
+    if (empty($update_data)) {
+        alert('선택한 예약 중 변경 가능한 항목이 없습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
         exit;
     }
-    
-    // 상태 변경 (BOOKED 상태는 변경 불가)
-    if ($new_status == 'BOOKED') {
-        alert('BOOKED 상태로는 변경할 수 없습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
-        exit;
-    }
-    
-    $ids_str = implode(',', $chk_ids);
-    
-    $update_sql = " UPDATE shop_appointments 
-                    SET status = '{$new_status}', 
-                        updated_at = NOW() 
-                    WHERE appointment_id IN ({$ids_str}) 
-                    AND status != 'BOOKED'
-                    AND EXISTS (
-                        SELECT 1 FROM appointment_shop_detail 
-                        WHERE appointment_id = shop_appointments.appointment_id 
-                        AND shop_id = {$shop_id}
+
+    // 각 항목별로 상태 업데이트
+    $updated_count = 0;
+    foreach ($update_data as $data) {
+        $update_sql = " UPDATE shop_appointments
+                        SET status = '" . $data['status'] . "',
+                            updated_at = NOW()
+                        WHERE appointment_id = " . (int)$data['id'] . "
                         AND status != 'BOOKED'
-                    ) ";
-    
-    sql_query_pg($update_sql);
-    
-    alert('선택한 ' . count($chk_ids) . '개의 예약 상태가 변경되었습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
-    
+                        AND EXISTS (
+                            SELECT 1 FROM appointment_shop_detail
+                            WHERE appointment_id = shop_appointments.appointment_id
+                            AND shop_id = " . (int)$shop_id . "
+                            AND status != 'BOOKED'
+                        ) ";
+
+        sql_query_pg($update_sql);
+        $updated_count++;
+    }
+
+    alert('선택한 ' . $updated_count . '개의 예약 상태가 변경되었습니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
+
 } else {
     alert('잘못된 요청입니다.', './shop_appointment_list.php' . ($qstr ? '?' . ltrim($qstr, '&') : ''));
 }
