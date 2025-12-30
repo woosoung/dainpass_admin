@@ -11,56 +11,76 @@ $shop_info = $result['shop_info'];
 
 // 페이징 설정
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$page = $page > 0 ? $page : 1;
+$page = ($page > 0 && $page <= 10000) ? $page : 1; // 최대 페이지 제한
 $rows_per_page = 30;
 $offset = ($page - 1) * $rows_per_page;
 
-// 검색 조건
+// 검색 조건 - 화이트리스트 방식으로 검증 강화
+$allowed_sst = array('appointment_id', 'appointment_no', 'status', 'created_at');
+$allowed_sod = array('asc', 'desc');
+$allowed_sfl = array('', 'appointment_no', 'user_id', 'customer_name');
+$allowed_sfl2 = array('', 'COMPLETED', 'CANCELLED');
+
 $sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'appointment_id';
+$sst = in_array($sst, $allowed_sst) ? $sst : 'appointment_id';
+
 $sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'desc';
+$sod = in_array($sod, $allowed_sod) ? $sod : 'desc';
+
 $sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
+$sfl = in_array($sfl, $allowed_sfl) ? $sfl : '';
+
 $stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
-$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; // status 필터
+$stx = substr($stx, 0, 100); // 최대 길이 제한
+$stx = str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $stx); // SQL 특수문자 이스케이프
+
+$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : '';
+$sfl2 = in_array($sfl2, $allowed_sfl2) ? $sfl2 : '';
+
 $fr_date = isset($_GET['fr_date']) ? clean_xss_tags($_GET['fr_date']) : '';
 $to_date = isset($_GET['to_date']) ? clean_xss_tags($_GET['to_date']) : '';
 
-// ORDER BY 필드에 테이블 별칭이 없으면 추가
-if ($sst && strpos($sst, '.') === false) {
-    // 허용된 필드 목록
-    $allowed_fields = array('appointment_id', 'appointment_no', 'status', 'created_at');
-    if (in_array($sst, $allowed_fields)) {
-        $sst = 'sa.' . $sst;
-    }
+// 날짜 형식 검증 (YYYY-MM-DD)
+if ($fr_date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fr_date)) {
+    $fr_date = '';
+}
+if ($to_date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $to_date)) {
+    $to_date = '';
 }
 
-$where_sql = " WHERE asd.shop_id = {$shop_id} 
-               AND sa.status != 'BOOKED' 
+// ORDER BY 필드에 테이블 별칭 추가
+$sst = 'sa.' . $sst;
+
+$where_sql = " WHERE asd.shop_id = " . (int)$shop_id . "
+               AND sa.status != 'BOOKED'
                AND asd.status != 'BOOKED' ";
 
 if ($sfl && $stx) {
     switch ($sfl) {
         case 'appointment_no':
-            $where_sql .= " AND sa.appointment_no LIKE '%{$stx}%' ";
+            // 이미 이스케이프된 $stx 사용
+            $where_sql .= " AND sa.appointment_no ILIKE '%" . $stx . "%' ";
             break;
         case 'user_id':
-            $where_sql .= " AND c.user_id LIKE '%{$stx}%' ";
+            $where_sql .= " AND c.user_id ILIKE '%" . $stx . "%' ";
             break;
         case 'customer_name':
-            $where_sql .= " AND c.name LIKE '%{$stx}%' ";
+            $where_sql .= " AND c.name ILIKE '%" . $stx . "%' ";
             break;
     }
 }
 
 if ($sfl2 !== '') {
-    $where_sql .= " AND sa.status = '{$sfl2}' ";
+    // 이미 화이트리스트로 검증된 값만 사용
+    $where_sql .= " AND sa.status = '" . $sfl2 . "' ";
 }
 
 if ($fr_date && $to_date) {
-    $where_sql .= " AND asd.appointment_datetime >= '{$fr_date} 00:00:00' AND asd.appointment_datetime <= '{$to_date} 23:59:59' ";
+    $where_sql .= " AND asd.appointment_datetime >= '" . $fr_date . " 00:00:00' AND asd.appointment_datetime <= '" . $to_date . " 23:59:59' ";
 } else if ($fr_date) {
-    $where_sql .= " AND asd.appointment_datetime >= '{$fr_date} 00:00:00' ";
+    $where_sql .= " AND asd.appointment_datetime >= '" . $fr_date . " 00:00:00' ";
 } else if ($to_date) {
-    $where_sql .= " AND asd.appointment_datetime <= '{$to_date} 23:59:59' ";
+    $where_sql .= " AND asd.appointment_datetime <= '" . $to_date . " 23:59:59' ";
 }
 
 // 전체 레코드 수 (중복 제거를 위해 DISTINCT 사용)
@@ -122,7 +142,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
     <?php } ?>
 </div>
 
-<form name="fsearch" id="fsearch" method="get" class="local_sch01 local_sch">
+<form name="fsearch" id="fsearch" method="get" class="local_sch01 local_sch" onsubmit="return fsearch_submit(this);">
 <input type="hidden" name="sst" value="<?php echo $sst ?>">
 <input type="hidden" name="sod" value="<?php echo $sod ?>">
 
@@ -142,12 +162,12 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
         <option value="customer_name"<?php echo $sfl == 'customer_name' ? ' selected' : '' ?>>회원명</option>
     </select>
     <label for="stx" class="sound_only">검색어</label>
-    <input type="text" name="stx" value="<?php echo $stx ?>" id="stx" class="frm_input">
+    <input type="text" name="stx" value="<?php echo htmlspecialchars($stx, ENT_QUOTES, 'UTF-8') ?>" id="stx" class="frm_input" maxlength="100">
     
     <label for="fr_date" class="sound_only">예약일시 시작</label>
-    <input type="text" name="fr_date" value="<?php echo $fr_date ?>" id="fr_date" class="frm_input" size="10" placeholder="시작일">
+    <input type="text" name="fr_date" value="<?php echo htmlspecialchars($fr_date, ENT_QUOTES, 'UTF-8') ?>" id="fr_date" class="frm_input" size="10" placeholder="시작일" maxlength="10" readonly>
     <label for="to_date" class="sound_only">예약일시 종료</label>
-    <input type="text" name="to_date" value="<?php echo $to_date ?>" id="to_date" class="frm_input" size="10" placeholder="종료일">
+    <input type="text" name="to_date" value="<?php echo htmlspecialchars($to_date, ENT_QUOTES, 'UTF-8') ?>" id="to_date" class="frm_input" size="10" placeholder="종료일" maxlength="10" readonly>
     
     <input type="submit" value="검색" class="btn_submit">
 </div>
@@ -305,7 +325,35 @@ echo $write_pages;
 
 <script>
 $(function(){
-    $("#fr_date, #to_date").datepicker({ changeMonth: true, changeYear: true, dateFormat: "yy-mm-dd", showButtonPanel: true, yearRange: "c-99:c+99" });
+    // 시작일 datepicker
+    $("#fr_date").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        showButtonPanel: true,
+        yearRange: "c-10:c+1",
+        maxDate: "+1y",
+        onClose: function(selectedDate) {
+            if (selectedDate) {
+                $("#to_date").datepicker("option", "minDate", selectedDate);
+            }
+        }
+    });
+
+    // 종료일 datepicker
+    $("#to_date").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        showButtonPanel: true,
+        yearRange: "c-10:c+1",
+        maxDate: "+1y",
+        onClose: function(selectedDate) {
+            if (selectedDate) {
+                $("#fr_date").datepicker("option", "maxDate", selectedDate);
+            }
+        }
+    });
 });
 </script>
 

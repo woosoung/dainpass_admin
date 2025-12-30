@@ -1,11 +1,11 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; // 개별 페이지 접근 불가
 
-add_stylesheet('<link type="text/css" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/themes/base/jquery-ui.css" rel="stylesheet" />', 0);
+add_stylesheet('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css" />', 0);
 add_stylesheet('<link type="text/css" href="'.G5_PLUGIN_URL.'/jquery-ui/style.css">', 0);
 ?>
 
-<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
 <script>
 jQuery(function($){
     $.datepicker.regional["ko"] = {
@@ -19,7 +19,7 @@ jQuery(function($){
         dayNamesShort: ["일","월","화","수","목","금","토"],
         dayNamesMin: ["일","월","화","수","목","금","토"],
         weekHeader: "Wk",
-        dateFormat: "yymmdd",
+        dateFormat: "yy-mm-dd",
         firstDay: 0,
         isRTL: false,
         showMonthAfterYear: true,

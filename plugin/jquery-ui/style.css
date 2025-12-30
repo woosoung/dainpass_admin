@@ -1,6 +1,15 @@
 @charset "utf-8";
 
-.ui-datepicker { font:12px dotum; }
+.ui-datepicker { font:12px dotum; z-index: 9999 !important; }
 .ui-datepicker select.ui-datepicker-month,
 .ui-datepicker select.ui-datepicker-year { width: 70px;}
 .ui-datepicker-trigger { margin:0 0 -5px 2px; }
+
+/* 날짜 입력 필드 옆에 달력 아이콘 표시 */
+input.hasDatepicker {
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="%23666" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 5px center;
+    padding-right: 25px;
+    cursor: pointer;
+}
