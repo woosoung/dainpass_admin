@@ -11,53 +11,64 @@ $shop_info = $result['shop_info'];
 
 // 페이징 설정
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$page = $page > 0 ? $page : 1;
+$page = ($page > 0 && $page <= 10000) ? $page : 1; // 최대 페이지 제한
 $rows_per_page = 30;
 $offset = ($page - 1) * $rows_per_page;
 
-// 검색 조건
+// 검색 조건 - 화이트리스트 방식으로 검증 강화
+$allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
+$allowed_sod = array('asc', 'desc');
+$allowed_sfl = array('', 'personal_id', 'order_id', 'user_id', 'name', 'phone', 'email');
+$allowed_sfl2 = array('', 'CHARGE', 'PAID');
+
 $sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'personal_id';
+$sst = in_array($sst, $allowed_sst) ? $sst : 'personal_id';
+
 $sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'desc';
+$sod = in_array($sod, $allowed_sod) ? $sod : 'desc';
+
 $sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
+$sfl = in_array($sfl, $allowed_sfl) ? $sfl : '';
+
 $stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
-$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; // status 필터
+$stx = substr($stx, 0, 100); // 최대 길이 제한
+$stx = str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $stx); // SQL 특수문자 이스케이프
 
-// ORDER BY 필드에 테이블 별칭이 없으면 추가
-if ($sst && strpos($sst, '.') === false) {
-    // 허용된 필드 목록
-    $allowed_fields = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
-    if (in_array($sst, $allowed_fields)) {
-        $sst = 'pp.' . $sst;
-    }
-}
+$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : '';
+$sfl2 = in_array($sfl2, $allowed_sfl2) ? $sfl2 : '';
 
-$where_sql = " WHERE pp.shop_id = {$shop_id} ";
+// ORDER BY 필드에 테이블 별칭 추가
+$sst = 'pp.' . $sst;
+
+$where_sql = " WHERE pp.shop_id = " . (int)$shop_id . " ";
 
 if ($sfl && $stx) {
+    // 이미 화이트리스트로 검증된 $sfl과 이스케이프된 $stx 사용
     switch ($sfl) {
         case 'personal_id':
             $where_sql .= " AND pp.personal_id = " . (int)$stx . " ";
             break;
         case 'order_id':
-            $where_sql .= " AND pp.order_id LIKE '%{$stx}%' ";
+            $where_sql .= " AND pp.order_id ILIKE '%" . $stx . "%' ";
             break;
         case 'user_id':
-            $where_sql .= " AND pp.user_id LIKE '%{$stx}%' ";
+            $where_sql .= " AND pp.user_id ILIKE '%" . $stx . "%' ";
             break;
         case 'name':
-            $where_sql .= " AND pp.name LIKE '%{$stx}%' ";
+            $where_sql .= " AND pp.name ILIKE '%" . $stx . "%' ";
             break;
         case 'phone':
-            $where_sql .= " AND pp.phone LIKE '%{$stx}%' ";
+            $where_sql .= " AND pp.phone ILIKE '%" . $stx . "%' ";
             break;
         case 'email':
-            $where_sql .= " AND pp.email LIKE '%{$stx}%' ";
+            $where_sql .= " AND pp.email ILIKE '%" . $stx . "%' ";
             break;
     }
 }
 
 if ($sfl2 !== '') {
-    $where_sql .= " AND pp.status = '{$sfl2}' ";
+    // 이미 화이트리스트로 검증된 값만 사용
+    $where_sql .= " AND pp.status = '" . $sfl2 . "' ";
 }
 
 // 전체 레코드 수
@@ -129,7 +140,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <option value="email"<?php echo $sfl == 'email' ? ' selected' : '' ?>>이메일</option>
     </select>
     <label for="stx" class="sound_only">검색어</label>
-    <input type="text" name="stx" value="<?php echo $stx ?>" id="stx" class="frm_input">
+    <input type="text" name="stx" value="<?php echo htmlspecialchars($stx, ENT_QUOTES, 'UTF-8') ?>" id="stx" class="frm_input" maxlength="100">
     <input type="submit" value="검색" class="btn_submit">
 </div>
 </form>
