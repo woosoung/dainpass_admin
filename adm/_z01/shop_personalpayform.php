@@ -53,8 +53,16 @@ if ($w == 'u') {
     );
     
     // 결제 정보 조회
-    $payment_sql = " SELECT * FROM payments WHERE personal_id = {$personal_id} AND pay_flag = 'PERSONAL' ";
-    $payment_row = sql_fetch_pg($payment_sql);
+    $payment_sql = " SELECT * FROM payments WHERE personal_id = {$personal_id} AND pay_flag = 'PERSONAL' LIMIT 1 ";
+    $payment_result = sql_query_pg($payment_sql);
+    if ($payment_result && is_object($payment_result) && isset($payment_result->result)) {
+        $payment_row = sql_fetch_array_pg($payment_result->result);
+    } else {
+        $payment_row = false;
+    }
+    
+    // 결제완료 상태 확인
+    $is_paid = ($pp['status'] == 'PAID');
 } else {
     $html_title = '개인결제 입력';
 }
@@ -107,38 +115,54 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             </td>
         </tr>
         <?php } ?>
+        <?php 
+        $is_paid = ($w == 'u' && isset($pp['status']) && $pp['status'] == 'PAID');
+        $disabled_attr = $is_paid ? ' disabled' : '';
+        ?>
         <tr>
             <th scope="row"><label for="user_id">회원ID</label></th>
             <td>
-                <input type="text" name="user_id" value="<?php echo get_text($pp['user_id']); ?>" id="user_id" class="frm_input" size="30">
+                <input type="text" name="user_id" value="<?php echo get_text($pp['user_id']); ?>" id="user_id" class="frm_input" size="30"<?php echo $disabled_attr; ?>>
                 <small style="color: #666;">회원ID를 입력하면 고객 정보와 결제 내역이 자동으로 불러와집니다.</small>
                 <div id="user_id_check" class="user_id_check" style="margin-top: 5px;"></div>
             </td>
         </tr>
         <tr>
             <th scope="row"><label for="name">이름 <strong class="sound_only">필수</strong></label></th>
-            <td><input type="text" name="name" value="<?php echo get_text($pp['name']); ?>" id="name" required class="required frm_input" size="30"></td>
+            <td><input type="text" name="name" value="<?php echo get_text($pp['name']); ?>" id="name" required class="required frm_input" size="30"<?php echo $disabled_attr; ?>></td>
         </tr>
         <tr>
             <th scope="row"><label for="phone">휴대폰</label></th>
-            <td><input type="text" name="phone" value="<?php echo get_text($pp['phone']); ?>" id="phone" class="frm_input" size="30"></td>
+            <td><input type="text" name="phone" value="<?php echo get_text($pp['phone']); ?>" id="phone" class="frm_input" size="30"<?php echo $disabled_attr; ?>></td>
         </tr>
         <tr>
             <th scope="row"><label for="email">이메일</label></th>
-            <td><input type="text" name="email" value="<?php echo get_text($pp['email']); ?>" id="email" class="frm_input" size="30"></td>
+            <td><input type="text" name="email" value="<?php echo get_text($pp['email']); ?>" id="email" class="frm_input" size="30"<?php echo $disabled_attr; ?>></td>
         </tr>
         <tr>
             <th scope="row"><label for="reason">청구사유 <strong class="sound_only">필수</strong></label></th>
-            <td><textarea name="reason" id="reason" rows="5" required class="required"><?php echo html_purifier($pp['reason']); ?></textarea></td>
+            <td><textarea name="reason" id="reason" rows="5" required class="required"<?php echo $disabled_attr; ?>><?php echo html_purifier($pp['reason']); ?></textarea></td>
         </tr>
         <tr>
             <th scope="row"><label for="amount">청구금액 <strong class="sound_only">필수</strong></label></th>
-            <td><input type="text" name="amount" value="<?php echo $pp['amount']; ?>" id="amount" required class="required frm_input" size="15"> 원</td>
+            <td><input type="text" name="amount" value="<?php echo $pp['amount']; ?>" id="amount" required class="required frm_input" size="15"<?php echo $disabled_attr; ?>> 원</td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="status">상태</label></th>
+            <td>
+                <select name="status" id="status" class="frm_input"<?php echo $disabled_attr; ?>>
+                    <option value="CHARGE"<?php echo $pp['status'] == 'CHARGE' ? ' selected' : ''; ?>>청구</option>
+                    <option value="PAID"<?php echo $pp['status'] == 'PAID' ? ' selected' : ''; ?>>결제완료</option>
+                </select>
+                <?php if ($is_paid) { ?>
+                <small style="color: #666;">결제완료 상태에서는 수정할 수 없습니다.</small>
+                <?php } ?>
+            </td>
         </tr>
         <tr>
             <th scope="row"><label for="shopdetail_id">세부예약가맹점 ID</label></th>
             <td>
-                <select name="shopdetail_id" id="shopdetail_id" class="frm_input">
+                <select name="shopdetail_id" id="shopdetail_id" class="frm_input"<?php echo $disabled_attr; ?>>
                     <option value="">::세부예약ID없음::</option>
                     <?php if ($w == 'u' && $pp['shopdetail_id']) { ?>
                     <?php
@@ -165,7 +189,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
     </div>
 </section>
 
-<?php if ($w == 'u' && isset($payment_row) && $payment_row) { ?>
+<?php if ($w == 'u') { ?>
 <section id="anc_spp_pay" class="cbox">
     <h2 class="h2_frm">결제 정보</h2>
     <div class="local_desc02 local_desc">
@@ -180,6 +204,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             <col>
         </colgroup>
         <tbody>
+        <?php if (isset($payment_row) && $payment_row) { ?>
         <tr>
             <th scope="row">결제ID</th>
             <td><?php echo $payment_row['payment_id']; ?></td>
@@ -190,7 +215,18 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         </tr>
         <tr>
             <th scope="row">결제방법</th>
-            <td><?php echo htmlspecialchars($payment_row['payment_method']); ?></td>
+            <td>
+                <?php 
+                $payment_method = $payment_row['payment_method'];
+                if ($payment_method == 'MANUAL') {
+                    echo '수동';
+                } elseif ($payment_method == 'AUTO') {
+                    echo '자동';
+                } else {
+                    echo htmlspecialchars($payment_method);
+                }
+                ?>
+            </td>
         </tr>
         <tr>
             <th scope="row">결제금액</th>
@@ -198,11 +234,33 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
         </tr>
         <tr>
             <th scope="row">결제상태</th>
-            <td><?php echo htmlspecialchars($payment_row['status']); ?></td>
+            <td>
+                <?php 
+                $payment_status = $payment_row['status'];
+                if ($payment_status == 'DONE') {
+                    echo '결제완료';
+                } elseif ($payment_status == 'PARTIAL_CANCELED') {
+                    echo '부분취소';
+                } elseif ($payment_status == 'CANCELED') {
+                    echo '취소';
+                } else {
+                    echo htmlspecialchars($payment_status);
+                }
+                ?>
+            </td>
         </tr>
+        <?php } ?>
         <tr>
             <th scope="row">결제일시</th>
-            <td><?php echo $payment_row['paid_at'] ? date('Y-m-d H:i:s', strtotime($payment_row['paid_at'])) : '-'; ?></td>
+            <td>
+                <?php 
+                if (isset($payment_row) && $payment_row && $payment_row['paid_at']) {
+                    echo date('Y-m-d H:i:s', strtotime($payment_row['paid_at']));
+                } else {
+                    echo '-';
+                }
+                ?>
+            </td>
         </tr>
         </tbody>
         </table>
@@ -213,9 +271,17 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <div class="btn_fixed_top">
     <a href="./shop_personalpaylist.php?<?php echo isset($_GET['sst']) ? 'sst='.clean_xss_tags($_GET['sst']).'&' : ''; ?><?php echo isset($_GET['sod']) ? 'sod='.clean_xss_tags($_GET['sod']).'&' : ''; ?><?php echo isset($_GET['sfl']) ? 'sfl='.clean_xss_tags($_GET['sfl']).'&' : ''; ?><?php echo isset($_GET['stx']) ? 'stx='.urlencode($_GET['stx']).'&' : ''; ?><?php echo isset($_GET['sfl2']) ? 'sfl2='.clean_xss_tags($_GET['sfl2']).'&' : ''; ?><?php echo isset($_GET['page']) ? 'page='.(int)$_GET['page'] : ''; ?>" class="btn btn_02">목록</a>
     <?php if($w == 'u') { ?>
-        <a href="./shop_personalpayformupdate.php?w=d&amp;personal_id=<?php echo $pp['personal_id']; ?>" onclick="return delete_confirm(this);" class="btn btn_02">삭제</a>
+        <?php if (!$is_paid) { ?>
+            <a href="./shop_personalpayformupdate.php?w=d&amp;personal_id=<?php echo $pp['personal_id']; ?>" onclick="return delete_confirm(this);" class="btn btn_02">삭제</a>
+        <?php } else { ?>
+            <a href="javascript:" onclick="" class="btn btn_02">삭제불가</a>
+        <?php } ?>
     <?php } ?>
+    <?php if (!$is_paid) { ?>
     <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
+    <?php } else { ?>
+    <button type="button" class="btn_submit btn" disabled>수정불가</button>
+    <?php } ?>
 </div>
 
 </form>

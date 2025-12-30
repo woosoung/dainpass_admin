@@ -239,7 +239,18 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             
             $payment_info = '';
             if ($payment_id) {
-                $payment_info = $payment_method ? htmlspecialchars($payment_method) : '-';
+                // 결제방법 한글 표기
+                $payment_method_text = '-';
+                if ($payment_method) {
+                    if ($payment_method == 'MANUAL') {
+                        $payment_method_text = '수동';
+                    } elseif ($payment_method == 'AUTO') {
+                        $payment_method_text = '자동';
+                    } else {
+                        $payment_method_text = htmlspecialchars($payment_method);
+                    }
+                }
+                $payment_info = $payment_method_text;
                 if ($payment_amount) {
                     $payment_info .= '<br><small>' . number_format($payment_amount) . '원</small>';
                 }

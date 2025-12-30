@@ -175,20 +175,20 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 <input type="hidden" name="act" value="">
 
 <div class="tbl_head01 tbl_wrap">
-    <table>
+    <table style="width: 100%;">
     <caption><?php echo $g5['title'] ?> 목록</caption>
     <colgroup>
-        <col style="width: 50px;">
-        <col style="width: 120px;">
-        <col style="width: 150px;">
-        <col style="width: 200px;">
-    <col style="width: 150px;">
-    <col style="width: 150px;">
-    <col style="width: 120px;">
-    <col style="width: 120px;">
-    <col style="width: 100px;">
-    <col style="width: 120px;">
-    <col style="width: 80px;">
+        <col style="width: 3%;">
+        <col style="width: 9%;">
+        <col style="width: 8%;">
+        <col style="width: 10%;">
+        <col style="width: 12%;">
+        <col style="width: 11%;">
+        <col style="width: 11%;">
+        <col style="width: 7%;">
+        <col style="width: 14%;">
+        <col style="width: 5%;">
+        <col style="width: 8%;">
     </colgroup>
     <thead>
     <tr>
@@ -197,7 +197,8 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             <input type="checkbox" name="chkall" id="chkall" onclick="check_all(this.form)">
         </th>
         <th scope="col">예약번호</th>
-        <th scope="col">고객정보</th>
+        <th scope="col">고객ID</th>
+        <th scope="col">고객명</th>
         <th scope="col">예약일시</th>
         <th scope="col">결제금액</th>
         <th scope="col">취소금액</th>
@@ -247,13 +248,18 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
                     $status_text = htmlspecialchars($display_status);
             }
             
-            $customer_info = '';
+            // 고객ID와 고객명을 분리
+            $customer_id_text = '';
+            $customer_name_text = '';
             if ($customer_id) {
-                $customer_info = ($user_id ? htmlspecialchars($user_id) : 'ID: ' . $customer_id) . '<br><small>' . ($customer_name ? htmlspecialchars($customer_name) : '-') . '</small>';
+                $customer_id_text = $user_id ? htmlspecialchars($user_id) : ('ID: ' . $customer_id);
+                $customer_name_text = $customer_name ? htmlspecialchars($customer_name) : '-';
             } else if ($guest_id) {
-                $customer_info = '비회원<br><small>' . htmlspecialchars($guest_id) . '</small>';
+                $customer_id_text = '비회원';
+                $customer_name_text = htmlspecialchars($guest_id);
             } else {
-                $customer_info = '-';
+                $customer_id_text = '-';
+                $customer_name_text = '-';
             }
             
             $appointment_datetime_text = $first_appointment_datetime ? date('Y-m-d H:i', strtotime($first_appointment_datetime)) : '-';
@@ -264,7 +270,8 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
             <input type="checkbox" name="chk[]" value="<?php echo $appointment_id ?>" id="chk_<?php echo $i ?>">
         </td>
         <td class="td_left"><?php echo htmlspecialchars($appointment_no) ?></td>
-        <td class="td_left"><?php echo $customer_info ?></td>
+        <td class="td_left"><?php echo $customer_id_text ?></td>
+        <td class="td_left"><?php echo $customer_name_text ?></td>
         <td class="td_left"><?php echo $appointment_datetime_text ?></td>
         <td class="td_num"><?php echo number_format($total_payment_amount) ?>원</td>
         <td class="td_num"><?php echo number_format($total_cancel_amount) ?>원</td>
@@ -281,7 +288,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
     }
     
     if ($i == 0) {
-        echo '<tr><td colspan="10" class="td_empty">등록된 예약이 없습니다.</td></tr>';
+        echo '<tr><td colspan="11" class="td_empty">등록된 예약이 없습니다.</td></tr>';
     }
     ?>
     </tbody>

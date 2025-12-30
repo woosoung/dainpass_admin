@@ -185,35 +185,8 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
     </div>
 </div>
 
-<!-- 차트 영역: 두 번째 줄 - 정산 처리 내역, 결제 수단별 통계, 상세 통계 요약 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm overflow-x-auto">
-        <h3 class="mb-2 font-semibold">정산 처리 내역</h3>
-        <table class="tbl_head01 w-full text-sm" id="settlement_table">
-            <thead>
-            <tr>
-                <th scope="col">정산일</th>
-                <th scope="col">정산기간</th>
-                <th scope="col">정산금액</th>
-                <th scope="col">상태</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td colspan="4" class="text-center text-gray-500">조회된 정산 내역이 없습니다.</td>
-            </tr>
-            </tbody>
-        </table>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
-            <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
-                <li><strong>정산일</strong>: 플랫폼에서 정산을 처리한 날짜입니다.</li>
-                <li><strong>정산기간</strong>: 해당 정산에 포함된 매출 발생 기간입니다.</li>
-                <li><strong>상태</strong>: 완료(정산 완료), 대기(정산 대기), 실패(정산 실패)를 의미합니다.</li>
-                <li>정산 금액은 해당 기간의 매출에서 수수료를 차감한 최종 입금액입니다.</li>
-            </ul>
-        </div>
-    </div>
+<!-- 차트 영역: 두 번째 줄 - 결제 수단별 통계, 상세 통계 요약 -->
+<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);">
     <div class="chart-container border rounded p-4 bg-white shadow-sm">
         <h3 class="mb-2 font-semibold">결제 수단별 통계</h3>
         <canvas id="payment_method_chart" height="120"></canvas>
@@ -239,6 +212,37 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
                 <li><strong>평균 객단가</strong>: 예약 1건당 평균 결제 금액입니다.</li>
                 <li><strong>취소율</strong>: 전체 예약 대비 취소 비율로, 높으면 개선이 필요합니다.</li>
                 <li>기간을 변경하여 다양한 시점의 통계를 비교 분석하세요.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- 차트 영역: 세 번째 줄 - 정산 처리 내역 (100% 너비) -->
+<div class="charts-area mb-6">
+    <div class="chart-container border rounded p-4 bg-white shadow-sm overflow-x-auto">
+        <h3 class="mb-2 font-semibold">정산 처리 내역</h3>
+        <table class="tbl_head01 w-full text-sm" id="settlement_table">
+            <thead>
+            <tr>
+                <th scope="col">정산일</th>
+                <th scope="col">정산기간</th>
+                <th scope="col">정산금액</th>
+                <th scope="col">상태</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td colspan="4" class="text-center text-gray-500">조회된 정산 내역이 없습니다.</td>
+            </tr>
+            </tbody>
+        </table>
+        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+            <p class="mb-1"><strong>해석 방법:</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+                <li><strong>정산일</strong>: 플랫폼에서 정산을 처리한 날짜입니다.</li>
+                <li><strong>정산기간</strong>: 해당 정산에 포함된 매출 발생 기간입니다.</li>
+                <li><strong>상태</strong>: 완료(정산 완료), 대기(정산 대기), 실패(정산 실패)를 의미합니다.</li>
+                <li>정산 금액은 해당 기간의 매출에서 수수료를 차감한 최종 입금액입니다.</li>
             </ul>
         </div>
     </div>
