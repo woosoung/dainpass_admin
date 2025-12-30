@@ -154,18 +154,18 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <tr>
         <th scope="row">할인범위<strong class="sound_only">필수</strong></th>
         <td>
-            <?php echo help("할인 범위를 선택하세요. SHOP(가맹점 전체) 또는 SERVICE(서비스별)"); ?>
+            <?php echo help("할인을 적용할 범위를 선택하세요."); ?>
             <select name="discount_scope" id="discount_scope" class="frm_input required" required onchange="toggleServiceField();">
                 <option value="">선택하세요</option>
-                <option value="SHOP"<?php echo (isset($discount['discount_scope']) && $discount['discount_scope'] == 'SHOP') ? ' selected' : ''; ?>>가맹점 전체 (SHOP)</option>
-                <option value="SERVICE"<?php echo (isset($discount['discount_scope']) && $discount['discount_scope'] == 'SERVICE') ? ' selected' : ''; ?>>서비스별 (SERVICE)</option>
+                <option value="SHOP"<?php echo (isset($discount['discount_scope']) && $discount['discount_scope'] == 'SHOP') ? ' selected' : ''; ?>>가맹점 전체 서비스에 적용</option>
+                <option value="SERVICE"<?php echo (isset($discount['discount_scope']) && $discount['discount_scope'] == 'SERVICE') ? ' selected' : ''; ?>>특정 서비스에만 적용</option>
             </select>
         </td>
-        <th scope="row">서비스<strong class="sound_only">선택</strong></th>
-        <td>
-            <?php echo help("서비스별 할인인 경우 서비스를 선택하세요. 가맹점 전체 할인인 경우 선택하지 않아도 됩니다."); ?>
+        <th scope="row" id="service_header" style="display:none;">적용할 서비스<strong class="sound_only">필수</strong></th>
+        <td id="service_cell" style="display:none;">
+            <?php echo help("이벤트 할인을 적용할 서비스를 선택하세요."); ?>
             <select name="service_id" id="service_id" class="frm_input">
-                <option value="">전체 서비스</option>
+                <option value="">서비스를 선택하세요</option>
                 <?php
                 foreach ($services_list as $service) {
                     $selected = '';
@@ -176,7 +176,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                 }
                 ?>
             </select>
-            <small style="color:#999;">서비스별 할인인 경우에만 선택하세요.</small>
         </td>
     </tr>
     <tr>

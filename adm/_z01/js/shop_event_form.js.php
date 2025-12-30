@@ -4,16 +4,41 @@ if (!defined('_GNUBOARD_')) exit;
 <script>
 function toggleServiceField() {
     var discountScope = document.getElementById('discount_scope').value;
+    var serviceHeader = document.getElementById('service_header');
+    var serviceCell = document.getElementById('service_cell');
     var serviceIdField = document.getElementById('service_id');
-    
+
     if (discountScope === 'SERVICE') {
         // 서비스별 할인인 경우 서비스 선택 필수
+        if (serviceHeader) {
+            serviceHeader.style.display = 'table-cell';
+        }
+        if (serviceCell) {
+            serviceCell.style.display = 'table-cell';
+            // 부드러운 표시 효과
+            setTimeout(function() {
+                serviceCell.style.backgroundColor = '#fff9e6';
+                setTimeout(function() {
+                    serviceCell.style.backgroundColor = '';
+                }, 1000);
+            }, 50);
+        }
         if (serviceIdField) {
             serviceIdField.classList.add('required');
             serviceIdField.setAttribute('required', 'required');
+            // 포커스 이동
+            setTimeout(function() {
+                serviceIdField.focus();
+            }, 300);
         }
     } else {
         // 가맹점 전체 할인인 경우 서비스 선택 불필요
+        if (serviceHeader) {
+            serviceHeader.style.display = 'none';
+        }
+        if (serviceCell) {
+            serviceCell.style.display = 'none';
+        }
         if (serviceIdField) {
             serviceIdField.classList.remove('required');
             serviceIdField.removeAttribute('required');
@@ -25,7 +50,7 @@ function toggleServiceField() {
 function toggleDiscountFields() {
     var discountType = document.getElementById('discount_type').value;
     var discountUnit = document.getElementById('discount_unit');
-    
+
     if (discountType === 'PERCENT') {
         if (discountUnit) {
             discountUnit.textContent = '%';
@@ -180,9 +205,28 @@ function form01_submit(f) {
 
 // 페이지 로드 시 초기 설정
 document.addEventListener('DOMContentLoaded', function() {
-    toggleServiceField();
+    // 초기 상태 설정 (애니메이션 없이)
+    var discountScope = document.getElementById('discount_scope');
+    var serviceHeader = document.getElementById('service_header');
+    var serviceCell = document.getElementById('service_cell');
+
+    if (discountScope && discountScope.value === 'SERVICE') {
+        if (serviceHeader) {
+            serviceHeader.style.display = 'table-cell';
+        }
+        if (serviceCell) {
+            serviceCell.style.display = 'table-cell';
+        }
+        var serviceIdField = document.getElementById('service_id');
+        if (serviceIdField) {
+            serviceIdField.classList.add('required');
+            serviceIdField.setAttribute('required', 'required');
+        }
+    }
+
+    // 할인유형 초기값 설정
     toggleDiscountFields();
-    
+
     // 할인유형 변경 시 이벤트 리스너
     var discountTypeField = document.getElementById('discount_type');
     if (discountTypeField) {
