@@ -10,7 +10,11 @@ $shop_info = $result['shop_info'];
 @auth_check($auth[$sub_menu], 'w');
 
 $personal_id = isset($_REQUEST['personal_id']) ? (int)$_REQUEST['personal_id'] : 0;
+$personal_id = ($personal_id > 0 && $personal_id <= 2147483647) ? $personal_id : 0;
+
+$allowed_w = array('', 'u');
 $w = isset($_REQUEST['w']) ? clean_xss_tags($_REQUEST['w']) : '';
+$w = in_array($w, $allowed_w) ? $w : '';
 
 $pp = array(
     'personal_id' => 0,
@@ -30,7 +34,7 @@ $pp = array(
 if ($w == 'u') {
     $html_title = '개인결제 수정';
     
-    $sql = " SELECT * FROM personal_payment WHERE personal_id = {$personal_id} AND shop_id = {$shop_id} ";
+    $sql = " SELECT * FROM personal_payment WHERE personal_id = " . (int)$personal_id . " AND shop_id = " . (int)$shop_id . " ";
     $pp_row = sql_fetch_pg($sql);
     
     if (!$pp_row || !$pp_row['personal_id']) {
@@ -53,11 +57,35 @@ if ($w == 'u') {
     );
     
     // 결제 정보 조회
-    $payment_sql = " SELECT * FROM payments WHERE personal_id = {$personal_id} AND pay_flag = 'PERSONAL' ";
+    $payment_sql = " SELECT * FROM payments WHERE personal_id = " . (int)$personal_id . " AND pay_flag = 'PERSONAL' ";
     $payment_row = sql_fetch_pg($payment_sql);
 } else {
     $html_title = '개인결제 입력';
 }
+
+// qstr 파라미터 화이트리스트 검증
+$allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
+$allowed_sod = array('asc', 'desc');
+$allowed_sfl = array('', 'personal_id', 'order_id', 'user_id', 'name', 'phone', 'email');
+$allowed_sfl2 = array('', 'CHARGE', 'PAID');
+
+$qstr_sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : '';
+$qstr_sst = in_array($qstr_sst, $allowed_sst) ? $qstr_sst : '';
+
+$qstr_sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : '';
+$qstr_sod = in_array($qstr_sod, $allowed_sod) ? $qstr_sod : '';
+
+$qstr_sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
+$qstr_sfl = in_array($qstr_sfl, $allowed_sfl) ? $qstr_sfl : '';
+
+$qstr_stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
+$qstr_stx = substr($qstr_stx, 0, 100);
+
+$qstr_sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : '';
+$qstr_sfl2 = in_array($qstr_sfl2, $allowed_sfl2) ? $qstr_sfl2 : '';
+
+$qstr_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$qstr_page = ($qstr_page > 0 && $qstr_page <= 10000) ? $qstr_page : 1;
 
 $g5['title'] = $html_title;
 include_once(G5_ADMIN_PATH.'/admin.head.php');
@@ -74,13 +102,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 <form name="fpersonalpayform" action="./shop_personalpayformupdate.php" method="post" onsubmit="return form_check(this);">
 <input type="hidden" name="w" value="<?php echo $w; ?>">
 <input type="hidden" name="personal_id" value="<?php echo $pp['personal_id']; ?>">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
-<input type="hidden" name="sst" value="<?php echo isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : ''; ?>">
-<input type="hidden" name="sod" value="<?php echo isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : ''; ?>">
-<input type="hidden" name="sfl" value="<?php echo isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : ''; ?>">
-<input type="hidden" name="stx" value="<?php echo isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : ''; ?>">
-<input type="hidden" name="sfl2" value="<?php echo isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; ?>">
-<input type="hidden" name="page" value="<?php echo isset($_GET['page']) ? (int)$_GET['page'] : 1; ?>">
+<input type="hidden" name="sst" value="<?php echo $qstr_sst; ?>">
+<input type="hidden" name="sod" value="<?php echo $qstr_sod; ?>">
+<input type="hidden" name="sfl" value="<?php echo $qstr_sfl; ?>">
+<input type="hidden" name="stx" value="<?php echo htmlspecialchars($qstr_stx, ENT_QUOTES, 'UTF-8'); ?>">
+<input type="hidden" name="sfl2" value="<?php echo $qstr_sfl2; ?>">
+<input type="hidden" name="page" value="<?php echo $qstr_page; ?>">
 
 <section id="anc_spp_info">
     <h2 class="h2_frm">청구 정보</h2>
@@ -208,8 +235,19 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 </section>
 <?php } ?>
 
+<?php
+// qstr 생성
+$qstr = '';
+if ($qstr_sst) $qstr .= '&sst=' . urlencode($qstr_sst);
+if ($qstr_sod) $qstr .= '&sod=' . urlencode($qstr_sod);
+if ($qstr_sfl) $qstr .= '&sfl=' . urlencode($qstr_sfl);
+if ($qstr_stx) $qstr .= '&stx=' . urlencode($qstr_stx);
+if ($qstr_sfl2) $qstr .= '&sfl2=' . urlencode($qstr_sfl2);
+if ($qstr_page > 1) $qstr .= '&page=' . $qstr_page;
+?>
+
 <div class="btn_fixed_top">
-    <a href="./shop_personalpaylist.php?<?php echo isset($_GET['sst']) ? 'sst='.clean_xss_tags($_GET['sst']).'&' : ''; ?><?php echo isset($_GET['sod']) ? 'sod='.clean_xss_tags($_GET['sod']).'&' : ''; ?><?php echo isset($_GET['sfl']) ? 'sfl='.clean_xss_tags($_GET['sfl']).'&' : ''; ?><?php echo isset($_GET['stx']) ? 'stx='.urlencode($_GET['stx']).'&' : ''; ?><?php echo isset($_GET['sfl2']) ? 'sfl2='.clean_xss_tags($_GET['sfl2']).'&' : ''; ?><?php echo isset($_GET['page']) ? 'page='.(int)$_GET['page'] : ''; ?>" class="btn btn_02">목록</a>
+    <a href="./shop_personalpaylist.php<?php echo $qstr ? '?' . ltrim($qstr, '&') : ''; ?>" class="btn btn_02">목록</a>
     <?php if($w == 'u') { ?>
         <a href="./shop_personalpayformupdate.php?w=d&amp;personal_id=<?php echo $pp['personal_id']; ?>" onclick="return delete_confirm(this);" class="btn btn_02">삭제</a>
     <?php } ?>
@@ -217,90 +255,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 </div>
 
 </form>
-
-<script>
-var shop_id = <?php echo $shop_id; ?>;
-
-$(function() {
-    var user_id_timer;
-    
-    $('#user_id').on('blur', function() {
-        var user_id = $(this).val().trim();
-        
-        if (!user_id) {
-            $('#user_id_check').html('').removeClass('valid invalid');
-            $('#shopdetail_id').html('<option value="">::세부예약ID없음::</option>');
-            return;
-        }
-        
-        $('#user_id_check').html('조회 중...').removeClass('valid invalid');
-        
-        clearTimeout(user_id_timer);
-        user_id_timer = setTimeout(function() {
-            $.ajax({
-                url: './ajax/shop_personalpay_shopdetail.php',
-                type: 'POST',
-                data: {
-                    user_id: user_id
-                },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.success) {
-                        // 고객 정보 설정
-                        if (response.customer) {
-                            if (response.customer.name) {
-                                $('#name').val(response.customer.name);
-                            }
-                            if (response.customer.phone) {
-                                $('#phone').val(response.customer.phone);
-                            }
-                            if (response.customer.email) {
-                                $('#email').val(response.customer.email);
-                            }
-                        }
-                        
-                        // 세부예약가맹점 ID 선택박스 구성
-                        var shopdetail_select = $('#shopdetail_id');
-                        shopdetail_select.html('<option value="">::세부예약ID없음::</option>');
-                        
-                        if (response.shopdetails && response.shopdetails.length > 0) {
-                            $.each(response.shopdetails, function(index, item) {
-                                shopdetail_select.append('<option value="' + item.shopdetail_id + '">' + item.display_text + '</option>');
-                            });
-                        }
-                        
-                        $('#user_id_check').html('조회 완료').addClass('valid').removeClass('invalid');
-                    } else {
-                        $('#user_id_check').html(response.message || '조회 실패').addClass('invalid').removeClass('valid');
-                        $('#shopdetail_id').html('<option value="">::세부예약ID::</option>');
-                    }
-                },
-                error: function() {
-                    $('#user_id_check').html('조회 중 오류가 발생했습니다.').addClass('invalid').removeClass('valid');
-                    $('#shopdetail_id').html('<option value="">::세부예약ID::</option>');
-                }
-            });
-        }, 500);
-    });
-});
-
-function form_check(f)
-{
-    if(f.amount.value.replace(/[0-9]/g, "").length > 0) {
-        alert("청구금액은 숫자만 입력해 주십시오");
-        f.amount.focus();
-        return false;
-    }
-    
-    if(parseInt(f.amount.value) <= 0) {
-        alert("청구금액은 0보다 큰 값이어야 합니다");
-        f.amount.focus();
-        return false;
-    }
-
-    return true;
-}
-</script>
 
 <style>
 .user_id_check {
