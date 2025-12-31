@@ -10,6 +10,36 @@ $(function() {
             return false;
         }
     });
+
+    // 모달 시작일 datepicker
+    $("#modal_date_from").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        showButtonPanel: true,
+        yearRange: "c-10:c+1",
+        maxDate: "+1y",
+        onClose: function(selectedDate) {
+            if (selectedDate) {
+                $("#modal_date_to").datepicker("option", "minDate", selectedDate);
+            }
+        }
+    });
+
+    // 모달 종료일 datepicker
+    $("#modal_date_to").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd",
+        showButtonPanel: true,
+        yearRange: "c-10:c+1",
+        maxDate: "+1y",
+        onClose: function(selectedDate) {
+            if (selectedDate) {
+                $("#modal_date_from").datepicker("option", "maxDate", selectedDate);
+            }
+        }
+    });
 });
 
 function form_check(f)
@@ -48,8 +78,75 @@ function resetAppointmentSearch() {
     // 검색 필드 초기화
     $('#modal_search_value').val('');
     $('#modal_search_type').val('nickname');
+    // 날짜 필드 초기화
+    $('#modal_date_from').val('');
+    $('#modal_date_to').val('');
     // 1페이지로 검색
     searchAppointments(1);
+}
+
+// 날짜 범위 설정 함수
+function setDateRange(type) {
+    var today = new Date();
+    var fromDate, toDate;
+
+    switch(type) {
+        case 'today':
+            // 오늘
+            fromDate = today;
+            toDate = today;
+            break;
+        case 'thisWeek':
+            // 이번주 (일요일 시작)
+            var dayOfWeek = today.getDay();
+            fromDate = new Date(today);
+            fromDate.setDate(today.getDate() - dayOfWeek);
+            toDate = new Date(fromDate);
+            toDate.setDate(fromDate.getDate() + 6);
+            break;
+        case 'thisMonth':
+            // 이번달
+            fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            toDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            break;
+        case 'last7days':
+            // 최근 7일
+            fromDate = new Date(today);
+            fromDate.setDate(today.getDate() - 6);
+            toDate = today;
+            break;
+        case 'last30days':
+            // 최근 30일
+            fromDate = new Date(today);
+            fromDate.setDate(today.getDate() - 29);
+            toDate = today;
+            break;
+        default:
+            return;
+    }
+
+    // 날짜를 YYYY-MM-DD 형식으로 변환
+    $('#modal_date_from').val(formatDate(fromDate));
+    $('#modal_date_to').val(formatDate(toDate));
+
+    // 검색 실행
+    searchAppointments(1);
+}
+
+// 날짜 초기화 함수
+function clearDateRange() {
+    $('#modal_date_from').val('');
+    $('#modal_date_to').val('');
+    // 검색 실행
+    searchAppointments(1);
+}
+
+// 날짜를 YYYY-MM-DD 형식으로 변환
+function formatDate(date) {
+    var year = date.getFullYear();
+    var month = ('0' + (date.getMonth() + 1)).slice(-2);
+    var day = ('0' + date.getDate()).slice(-2);
+    return year + '-' + month + '-' + day;
 }
 
 // 모달 닫기
@@ -69,6 +166,8 @@ function searchAppointments(page) {
 
     var searchType = $('#modal_search_type').val();
     var searchValue = $('#modal_search_value').val().trim();
+    var dateFrom = $('#modal_date_from').val();
+    var dateTo = $('#modal_date_to').val();
 
     // 로딩 표시 - 테이블 구조 유지하면서 높이 고정
     var loadingHtml = '<div class="tbl_wrap"><table class="tbl_head01">';
@@ -93,6 +192,8 @@ function searchAppointments(page) {
         data: {
             search_type: searchType,
             search_value: searchValue,
+            date_from: dateFrom,
+            date_to: dateTo,
             page: page  // 페이지 번호 추가
         },
         dataType: 'json',

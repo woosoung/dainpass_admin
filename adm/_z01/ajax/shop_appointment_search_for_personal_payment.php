@@ -13,6 +13,20 @@ $search_type = isset($_POST['search_type']) ? clean_xss_tags($_POST['search_type
 $search_value = isset($_POST['search_value']) ? clean_xss_tags($_POST['search_value']) : '';
 $search_value = substr($search_value, 0, 100); // 길이 제한
 
+// 날짜 범위 검증
+$date_from = isset($_POST['date_from']) ? clean_xss_tags($_POST['date_from']) : '';
+$date_to = isset($_POST['date_to']) ? clean_xss_tags($_POST['date_to']) : '';
+
+// 날짜 형식 검증 (YYYY-MM-DD)
+if ($date_from && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_from)) {
+    echo json_encode(array('success' => false, 'message' => '잘못된 시작일 형식입니다.'));
+    exit;
+}
+if ($date_to && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date_to)) {
+    echo json_encode(array('success' => false, 'message' => '잘못된 종료일 형식입니다.'));
+    exit;
+}
+
 // 페이징 설정
 $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
 $page = ($page > 0 && $page <= 10000) ? $page : 1; // 최대 페이지 제한
@@ -20,7 +34,7 @@ $rows_per_page = 10; // 페이지당 10개
 $offset = ($page - 1) * $rows_per_page;
 
 // 화이트리스트 검증 - user_id 검색 제외!
-$allowed_types = array('nickname', 'appointment_no');
+$allowed_types = array('nickname', 'appointment_no', 'service_name');
 if ($search_type && !in_array($search_type, $allowed_types)) {
     echo json_encode(array('success' => false, 'message' => '잘못된 검색 조건입니다.'));
     exit;
@@ -45,7 +59,23 @@ if ($search_value && $search_type) {
             // 숫자 외 문자가 있는 경우: TEXT 변환 후 검색
             $where_search = " AND CAST(sa.appointment_no AS TEXT) ILIKE '%" . $search_value_escaped . "%' ";
         }
+    } else if ($search_type == 'service_name') {
+        // 서비스명 검색 (집계 함수 사용하기 전 조인된 테이블에서 검색)
+        $where_search = " AND ss.service_name ILIKE '%" . $search_value_escaped . "%' ";
     }
+}
+
+// 날짜 범위 조건 추가
+$where_date = '';
+if ($date_from && $date_to) {
+    // 시작일 00:00:00부터 종료일 23:59:59까지
+    $where_date = " AND asd.appointment_datetime >= '" . $date_from . " 00:00:00' AND asd.appointment_datetime <= '" . $date_to . " 23:59:59' ";
+} else if ($date_from) {
+    // 시작일만 지정된 경우 (시작일 00:00:00 이후)
+    $where_date = " AND asd.appointment_datetime >= '" . $date_from . " 00:00:00' ";
+} else if ($date_to) {
+    // 종료일만 지정된 경우 (종료일 23:59:59 이전)
+    $where_date = " AND asd.appointment_datetime <= '" . $date_to . " 23:59:59' ";
 }
 
 // 총 개수 조회 (페이지네이션용)
@@ -54,10 +84,13 @@ $count_sql = " SELECT COUNT(DISTINCT asd.shopdetail_id) as cnt
                INNER JOIN shop_appointments AS sa ON asd.appointment_id = sa.appointment_id
                INNER JOIN customers AS c ON sa.customer_id = c.customer_id
                INNER JOIN payments AS p ON sa.appointment_id = p.appointment_id
+               LEFT JOIN shop_appointment_details AS sad ON asd.shopdetail_id = sad.shopdetail_id
+               LEFT JOIN shop_services AS ss ON sad.service_id = ss.service_id
                WHERE asd.shop_id = " . (int)$shop_id . "
                  AND p.status = 'DONE'
                  AND (p.pay_flag IS NULL OR p.pay_flag = 'GENERAL')
-                 " . $where_search . " ";
+                 " . $where_search . "
+                 " . $where_date . " ";
 $count_row = sql_fetch_pg($count_sql);
 $total_count = (int)$count_row['cnt'];
 $total_page = $total_count > 0 ? ceil($total_count / $rows_per_page) : 1;
@@ -79,6 +112,7 @@ $sql = " SELECT DISTINCT
            AND p.status = 'DONE'
            AND (p.pay_flag IS NULL OR p.pay_flag = 'GENERAL')
            " . $where_search . "
+           " . $where_date . "
          GROUP BY asd.shopdetail_id, sa.appointment_no, asd.appointment_datetime, c.nickname
          ORDER BY asd.appointment_datetime DESC
          LIMIT {$rows_per_page} OFFSET {$offset} ";

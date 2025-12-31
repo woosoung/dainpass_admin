@@ -87,6 +87,7 @@ $qstr_page = ($qstr_page > 0 && $qstr_page <= 10000) ? $qstr_page : 1;
 $g5['title'] = $html_title;
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
+include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
 ?>
 
 <div class="local_desc01 local_desc">
@@ -250,14 +251,35 @@ if ($qstr_page > 1) $qstr .= '&page=' . $qstr_page;
 
                 <!-- 검색 영역 -->
                 <div class="local_sch01 local_sch" style="margin-bottom:20px; border:1px solid #ddd; padding:15px; border-radius:3px; background:#f9f9f9;">
-                    <label for="modal_search_type" style="margin-right:10px;">검색 조건:</label>
-                    <select id="modal_search_type" class="frm_input" style="margin-right:10px;">
-                        <option value="nickname">닉네임</option>
-                        <option value="appointment_no">예약번호</option>
-                    </select>
-                    <input type="text" id="modal_search_value" class="frm_input" placeholder="검색어 입력" style="width:300px; margin-right:10px;">
-                    <button type="button" onclick="searchAppointments()" class="btn_submit btn">검색</button>
-                    <button type="button" onclick="resetAppointmentSearch()" class="btn btn_02" style="margin-left:5px;">전체목록</button>
+                    <div style="margin-bottom:10px;">
+                        <label for="modal_search_type" style="margin-right:10px;">검색 조건:</label>
+                        <select id="modal_search_type" class="frm_input" style="margin-right:10px;">
+                            <option value="nickname">닉네임</option>
+                            <option value="appointment_no">예약번호</option>
+                            <option value="service_name">서비스명</option>
+                        </select>
+                        <input type="text" id="modal_search_value" class="frm_input" placeholder="검색어 입력" style="width:300px; margin-right:10px;">
+                        <button type="button" onclick="searchAppointments()" class="btn_submit btn">검색</button>
+                        <button type="button" onclick="resetAppointmentSearch()" class="btn btn_02" style="margin-left:5px;">전체목록</button>
+                    </div>
+
+                    <div style="margin-top:10px; padding-top:10px; border-top:1px solid #e0e0e0;">
+                        <label style="margin-right:10px; display:inline-block; vertical-align:middle;">날짜 검색:</label>
+                        <div style="display:inline-block; vertical-align:middle;">
+                            <button type="button" onclick="setDateRange('today')" class="btn btn_02" style="margin-right:3px; padding:5px 10px; font-size:0.9em;">오늘</button>
+                            <button type="button" onclick="setDateRange('thisWeek')" class="btn btn_02" style="margin-right:3px; padding:5px 10px; font-size:0.9em;">이번주</button>
+                            <button type="button" onclick="setDateRange('thisMonth')" class="btn btn_02" style="margin-right:3px; padding:5px 10px; font-size:0.9em;">이번달</button>
+                            <button type="button" onclick="setDateRange('last7days')" class="btn btn_02" style="margin-right:3px; padding:5px 10px; font-size:0.9em;">최근 7일</button>
+                            <button type="button" onclick="setDateRange('last30days')" class="btn btn_02" style="margin-right:10px; padding:5px 10px; font-size:0.9em;">최근 30일</button>
+                        </div>
+                        <div style="display:inline-block; vertical-align:middle; margin-top:5px;">
+                            <input type="text" id="modal_date_from" class="frm_input" style="margin-right:5px; width:110px;" placeholder="시작일" maxlength="10" readonly>
+                            <span style="margin-right:5px;">~</span>
+                            <input type="text" id="modal_date_to" class="frm_input" style="margin-right:10px; width:110px;" placeholder="종료일" maxlength="10" readonly>
+                            <button type="button" onclick="clearDateRange()" class="btn btn_02" style="padding:5px 10px; font-size:0.9em;">날짜 초기화</button>
+                        </div>
+                    </div>
+
                     <div style="margin-top:10px; color:#666; font-size:0.9em;">
                         ※ 결제 완료된 예약만 검색됩니다
                     </div>
