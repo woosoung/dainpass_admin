@@ -46,6 +46,7 @@ if (!$has_access) {
 header('Content-Type: application/json; charset=utf-8');
 
 $user_id = isset($_POST['user_id']) ? clean_xss_tags($_POST['user_id'], 1, 1) : '';
+$user_id = substr($user_id, 0, 50); // 길이 제한
 
 if (!$user_id) {
     echo json_encode(array(
@@ -57,24 +58,23 @@ if (!$user_id) {
     exit;
 }
 
-// 고객 정보 조회
-$customer_sql = " SELECT customer_id, user_id, name, phone, email 
-                  FROM customers 
-                  WHERE user_id = '{$user_id}' ";
+// 고객 정보 조회 (개인정보보호법 준수: 닉네임만 반환)
+$user_id_escaped = sql_escape_string($user_id);
+$customer_sql = " SELECT customer_id, user_id, nickname
+                  FROM customers
+                  WHERE user_id = '{$user_id_escaped}' ";
 $customer_row = sql_fetch_pg($customer_sql);
 
 $customer_info = null;
 if ($customer_row && $customer_row['customer_id']) {
     $customer_info = array(
-        'name' => $customer_row['name'],
-        'phone' => $customer_row['phone'],
-        'email' => $customer_row['email']
+        'nickname' => $customer_row['nickname']
     );
 }
 
 // 해당 user_id로 결제한 가장 최근 shopdetail_id 조회 (예약일시 기준 최대 10개)
 // payments 테이블과 appointment_shop_detail을 조인하여 결제한 내역만 가져옴
-$shopdetail_sql = " SELECT DISTINCT 
+$shopdetail_sql = " SELECT DISTINCT
                         asd.shopdetail_id,
                         asd.appointment_id,
                         asd.appointment_datetime,
@@ -83,8 +83,8 @@ $shopdetail_sql = " SELECT DISTINCT
                    INNER JOIN shop_appointments AS sa ON asd.appointment_id = sa.appointment_id
                    INNER JOIN payments AS p ON sa.appointment_id = p.appointment_id
                    INNER JOIN customers AS c ON sa.customer_id = c.customer_id
-                   WHERE c.user_id = '{$user_id}'
-                     AND asd.shop_id = {$shop_id}
+                   WHERE c.user_id = '{$user_id_escaped}'
+                     AND asd.shop_id = " . (int)$shop_id . "
                      AND (p.pay_flag IS NULL OR p.pay_flag = 'GENERAL')
                      AND p.status = 'DONE'
                    ORDER BY asd.appointment_datetime DESC

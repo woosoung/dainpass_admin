@@ -13,9 +13,10 @@ $shop_id = $result['shop_id'];
 check_admin_token();
 
 // 화이트리스트로 허용값 정의
+// 개인정보보호법 준수: 닉네임만 검색 가능
 $allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
 $allowed_sod = array('asc', 'desc');
-$allowed_sfl = array('', 'personal_id', 'order_id', 'user_id', 'name', 'phone', 'email');
+$allowed_sfl = array('', 'personal_id', 'order_id', 'nickname');
 $allowed_sfl2 = array('', 'CHARGE', 'PAID');
 
 // qstr 생성 - 입력값 검증 강화

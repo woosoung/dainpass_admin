@@ -40,9 +40,10 @@ if($w == 'd') {
     sql_query_pg(" DELETE FROM personal_payment WHERE personal_id = " . (int)$personal_id . " AND shop_id = " . (int)$shop_id . " ");
 
     // qstr 생성 - 화이트리스트 검증
+    // 개인정보보호법 준수: 닉네임만 검색 가능
     $allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
     $allowed_sod = array('asc', 'desc');
-    $allowed_sfl = array('', 'personal_id', 'order_id', 'user_id', 'name', 'phone', 'email');
+    $allowed_sfl = array('', 'personal_id', 'order_id', 'nickname');
     $allowed_sfl2 = array('', 'CHARGE', 'PAID');
 
     $qstr = '';
@@ -91,14 +92,10 @@ if($w == 'd') {
     $user_id = isset($_POST['user_id']) ? clean_xss_tags($_POST['user_id'], 1, 1) : '';
     $user_id = substr($user_id, 0, 50); // 길이 제한
 
-    $name = isset($_POST['name']) ? strip_tags(clean_xss_attributes($_POST['name'])) : '';
-    $name = substr($name, 0, 100); // 길이 제한
-
-    $phone = isset($_POST['phone']) ? clean_xss_tags($_POST['phone'], 1, 1) : '';
-    $phone = substr($phone, 0, 20); // 길이 제한
-
-    $email = isset($_POST['email']) ? clean_xss_tags($_POST['email'], 1, 1) : '';
-    $email = substr($email, 0, 100); // 길이 제한
+    // 개인정보보호법 준수: name, phone, email은 POST로 받지 않고 user_id로부터 자동 조회
+    $name = '';
+    $phone = '';
+    $email = '';
 
     $reason = isset($_POST['reason']) ? $_POST['reason'] : '';
     $reason = substr($reason, 0, 1000); // 길이 제한
@@ -111,8 +108,9 @@ if($w == 'd') {
 
     $shopdetail_id = isset($_POST['shopdetail_id']) && $_POST['shopdetail_id'] !== '' ? (int)$_POST['shopdetail_id'] : null;
 
-    if(!$name)
-        alert('이름을 입력해 주십시오.');
+    // 기본 필수 입력값 검증
+    if(!$user_id)
+        alert('회원ID를 입력해 주십시오.');
     if(!$reason)
         alert('청구사유를 입력해 주십시오.');
     if(!$amount || $amount <= 0)
@@ -123,26 +121,24 @@ if($w == 'd') {
         alert('주문번호가 필요합니다.');
     }
 
-    // user_id가 있으면 customers 테이블에서 정보 가져오기
-    if ($user_id) {
-        $user_id_escaped = sql_escape_string($user_id);
-        $customer_sql = " SELECT customer_id, user_id, name, phone, email
-                         FROM customers
-                         WHERE user_id = '{$user_id_escaped}' ";
-        $customer_row = sql_fetch_pg($customer_sql);
-        
-        if ($customer_row && $customer_row['customer_id']) {
-            // 고객 정보가 있으면 자동으로 채우기
-            if (!$name && $customer_row['name']) {
-                $name = $customer_row['name'];
-            }
-            if (!$phone && $customer_row['phone']) {
-                $phone = $customer_row['phone'];
-            }
-            if (!$email && $customer_row['email']) {
-                $email = $customer_row['email'];
-            }
-        }
+    // user_id로부터 customers 테이블에서 개인정보 자동 조회 (개인정보보호법 준수)
+    $user_id_escaped = sql_escape_string($user_id);
+    $customer_sql = " SELECT customer_id, user_id, name, phone, email
+                     FROM customers
+                     WHERE user_id = '{$user_id_escaped}' ";
+    $customer_row = sql_fetch_pg($customer_sql);
+
+    if (!$customer_row || !$customer_row['customer_id']) {
+        alert('존재하지 않는 회원ID입니다.');
+    }
+
+    // 고객 정보 자동 설정
+    $name = $customer_row['name'] ? $customer_row['name'] : '';
+    $phone = $customer_row['phone'] ? $customer_row['phone'] : '';
+    $email = $customer_row['email'] ? $customer_row['email'] : '';
+
+    if (!$name) {
+        alert('해당 회원의 이름 정보가 없습니다.');
     }
 
     // shopdetail_id가 있으면 해당 shopdetail_id가 해당 shop_id에 속하는지 확인
@@ -263,9 +259,10 @@ if($w == '') {
 }
 
 // qstr 생성 - 화이트리스트 검증
+// 개인정보보호법 준수: 닉네임만 검색 가능
 $allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
 $allowed_sod = array('asc', 'desc');
-$allowed_sfl = array('', 'personal_id', 'order_id', 'user_id', 'name', 'phone', 'email');
+$allowed_sfl = array('', 'personal_id', 'order_id', 'nickname');
 $allowed_sfl2 = array('', 'CHARGE', 'PAID');
 
 $qstr = '';

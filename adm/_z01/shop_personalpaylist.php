@@ -16,9 +16,10 @@ $rows_per_page = 30;
 $offset = ($page - 1) * $rows_per_page;
 
 // 검색 조건 - 화이트리스트 방식으로 검증 강화
+// 개인정보보호법 준수: 닉네임만 검색 가능
 $allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
 $allowed_sod = array('asc', 'desc');
-$allowed_sfl = array('', 'personal_id', 'order_id', 'user_id', 'name', 'phone', 'email');
+$allowed_sfl = array('', 'personal_id', 'order_id', 'nickname');
 $allowed_sfl2 = array('', 'CHARGE', 'PAID');
 
 $sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'personal_id';
@@ -44,6 +45,7 @@ $where_sql = " WHERE pp.shop_id = " . (int)$shop_id . " ";
 
 if ($sfl && $stx) {
     // 이미 화이트리스트로 검증된 $sfl과 이스케이프된 $stx 사용
+    // 개인정보보호법 준수: 닉네임만 검색 가능
     switch ($sfl) {
         case 'personal_id':
             $where_sql .= " AND pp.personal_id = " . (int)$stx . " ";
@@ -51,17 +53,8 @@ if ($sfl && $stx) {
         case 'order_id':
             $where_sql .= " AND pp.order_id ILIKE '%" . $stx . "%' ";
             break;
-        case 'user_id':
-            $where_sql .= " AND pp.user_id ILIKE '%" . $stx . "%' ";
-            break;
-        case 'name':
-            $where_sql .= " AND pp.name ILIKE '%" . $stx . "%' ";
-            break;
-        case 'phone':
-            $where_sql .= " AND pp.phone ILIKE '%" . $stx . "%' ";
-            break;
-        case 'email':
-            $where_sql .= " AND pp.email ILIKE '%" . $stx . "%' ";
+        case 'nickname':
+            $where_sql .= " AND c.nickname ILIKE '%" . $stx . "%' ";
             break;
     }
 }
@@ -72,8 +65,10 @@ if ($sfl2 !== '') {
 }
 
 // 전체 레코드 수
-$count_sql = " SELECT COUNT(*) as cnt 
+// customers 테이블 조인하여 nickname 검색 지원
+$count_sql = " SELECT COUNT(*) as cnt
                FROM personal_payment AS pp
+               LEFT JOIN customers AS c ON pp.user_id = c.user_id
                {$where_sql} ";
 $count_row = sql_fetch_pg($count_sql);
 $total_count = $count_row['cnt'];
@@ -82,7 +77,17 @@ $total_count = $count_row['cnt'];
 $total_page = ceil($total_count / $rows_per_page);
 
 // 목록 조회
-$sql = " SELECT pp.*, 
+// customers 테이블 조인하여 nickname 가져오기 (개인정보보호법 준수)
+$sql = " SELECT pp.personal_id,
+                pp.order_id,
+                pp.shop_id,
+                pp.shopdetail_id,
+                pp.reason,
+                pp.amount,
+                pp.status,
+                pp.created_at,
+                pp.updated_at,
+                c.nickname,
                 p.payment_id,
                 p.payment_key,
                 p.payment_method,
@@ -91,11 +96,12 @@ $sql = " SELECT pp.*,
                 p.paid_at,
                 sa.appointment_no
          FROM personal_payment AS pp
+         LEFT JOIN customers AS c ON pp.user_id = c.user_id
          LEFT JOIN payments AS p ON pp.personal_id = p.personal_id AND p.pay_flag = 'PERSONAL'
          LEFT JOIN appointment_shop_detail AS asd ON pp.shopdetail_id = asd.shopdetail_id
          LEFT JOIN shop_appointments AS sa ON asd.appointment_id = sa.appointment_id
-         {$where_sql} 
-         ORDER BY {$sst} {$sod} 
+         {$where_sql}
+         ORDER BY {$sst} {$sod}
          LIMIT {$rows_per_page} OFFSET {$offset} ";
 $result = sql_query_pg($sql);
 
@@ -134,10 +140,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <option value="">선택</option>
         <option value="personal_id"<?php echo $sfl == 'personal_id' ? ' selected' : '' ?>>청구ID</option>
         <option value="order_id"<?php echo $sfl == 'order_id' ? ' selected' : '' ?>>주문번호</option>
-        <option value="user_id"<?php echo $sfl == 'user_id' ? ' selected' : '' ?>>회원ID</option>
-        <option value="name"<?php echo $sfl == 'name' ? ' selected' : '' ?>>이름</option>
-        <option value="phone"<?php echo $sfl == 'phone' ? ' selected' : '' ?>>휴대폰</option>
-        <option value="email"<?php echo $sfl == 'email' ? ' selected' : '' ?>>이메일</option>
+        <option value="nickname"<?php echo $sfl == 'nickname' ? ' selected' : '' ?>>회원 닉네임</option>
     </select>
     <label for="stx" class="sound_only">검색어</label>
     <input type="text" name="stx" value="<?php echo htmlspecialchars($stx, ENT_QUOTES, 'UTF-8') ?>" id="stx" class="frm_input" maxlength="100">
@@ -187,7 +190,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <th scope="col"><?php echo subject_sort_link('personal_id', $qstr) ?>청구ID</a></th>
         <th scope="col">예약번호</th>
         <th scope="col"><?php echo subject_sort_link('order_id', $qstr) ?>주문번호</a></th>
-        <th scope="col">회원정보</th>
+        <th scope="col">회원 닉네임</th>
         <th scope="col">청구사유</th>
         <th scope="col"><?php echo subject_sort_link('amount', $qstr) ?>청구금액</a></th>
         <th scope="col"><?php echo subject_sort_link('status', $qstr) ?>상태</a></th>
@@ -203,10 +206,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         for ($i=0; $row=sql_fetch_array_pg($result->result); $i++) {
             $personal_id = $row['personal_id'];
             $order_id = $row['order_id'];
-            $user_id = $row['user_id'];
-            $name = $row['name'];
-            $phone = $row['phone'];
-            $email = $row['email'];
+            $nickname = $row['nickname'];
             $reason = $row['reason'];
             $amount = $row['amount'];
             $status = $row['status'];
@@ -234,17 +234,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             
             $created_at_text = $created_at ? date('Y-m-d H:i', strtotime($created_at)) : '-';
             $paid_at_text = $paid_at ? date('Y-m-d H:i', strtotime($paid_at)) : '-';
-            
-            $customer_info = '';
-            if ($user_id) {
-                $customer_info .= htmlspecialchars($user_id);
-            }
-            if ($name) {
-                $customer_info .= ($customer_info ? '<br>' : '') . '<small>' . htmlspecialchars($name) . '</small>';
-            }
-            if (!$customer_info) {
-                $customer_info = '-';
-            }
+
+            // 개인정보보호법 준수: 닉네임만 표시
+            $customer_info = $nickname ? htmlspecialchars($nickname) : '-';
             
             $payment_info = '';
             if ($payment_id) {

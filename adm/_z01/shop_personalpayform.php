@@ -16,18 +16,16 @@ $allowed_w = array('', 'u');
 $w = isset($_REQUEST['w']) ? clean_xss_tags($_REQUEST['w']) : '';
 $w = in_array($w, $allowed_w) ? $w : '';
 
+// 개인정보보호법 준수: name, phone, email은 폼에서 입력받지 않음
 $pp = array(
     'personal_id' => 0,
     'order_id' => '',
     'shop_id' => $shop_id,
     'shopdetail_id' => null,
     'user_id' => '',
-    'name' => '',
     'reason' => '',
     'amount' => 0,
     'status' => 'CHARGE',
-    'phone' => '',
-    'email' => '',
     'is_settlement_target' => true
 );
 
@@ -41,18 +39,16 @@ if ($w == 'u') {
         alert('등록된 자료가 없습니다.');
     }
     
+    // 개인정보보호법 준수: name, phone, email은 폼에서 표시하지 않음
     $pp = array(
         'personal_id' => $pp_row['personal_id'],
         'order_id' => $pp_row['order_id'],
         'shop_id' => $pp_row['shop_id'],
         'shopdetail_id' => $pp_row['shopdetail_id'],
         'user_id' => $pp_row['user_id'],
-        'name' => $pp_row['name'],
         'reason' => $pp_row['reason'],
         'amount' => $pp_row['amount'],
         'status' => $pp_row['status'],
-        'phone' => $pp_row['phone'],
-        'email' => $pp_row['email'],
         'is_settlement_target' => $pp_row['is_settlement_target']
     );
     
@@ -64,9 +60,10 @@ if ($w == 'u') {
 }
 
 // qstr 파라미터 화이트리스트 검증
+// 개인정보보호법 준수: 닉네임만 검색 가능
 $allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
 $allowed_sod = array('asc', 'desc');
-$allowed_sfl = array('', 'personal_id', 'order_id', 'user_id', 'name', 'phone', 'email');
+$allowed_sfl = array('', 'personal_id', 'order_id', 'nickname');
 $allowed_sfl2 = array('', 'CHARGE', 'PAID');
 
 $qstr_sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : '';
@@ -133,24 +130,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         </tr>
         <?php } ?>
         <tr>
-            <th scope="row"><label for="user_id">회원ID</label></th>
+            <th scope="row"><label for="user_id">회원ID <strong class="sound_only">필수</strong></label></th>
             <td>
-                <input type="text" name="user_id" value="<?php echo get_text($pp['user_id']); ?>" id="user_id" class="frm_input" size="30">
-                <small style="color: #666;">회원ID를 입력하면 고객 정보와 결제 내역이 자동으로 불러와집니다.</small>
+                <input type="text" name="user_id" value="<?php echo get_text($pp['user_id']); ?>" id="user_id" required class="required frm_input" size="30"<?php echo $w == 'u' ? ' readonly' : ''; ?>>
+                <small style="color: #666;">회원ID를 입력하면 닉네임과 결제 내역이 자동으로 불러와집니다. 개인정보는 서버에서 자동으로 처리됩니다.</small>
                 <div id="user_id_check" class="user_id_check" style="margin-top: 5px;"></div>
             </td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="name">이름 <strong class="sound_only">필수</strong></label></th>
-            <td><input type="text" name="name" value="<?php echo get_text($pp['name']); ?>" id="name" required class="required frm_input" size="30"></td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="phone">휴대폰</label></th>
-            <td><input type="text" name="phone" value="<?php echo get_text($pp['phone']); ?>" id="phone" class="frm_input" size="30"></td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="email">이메일</label></th>
-            <td><input type="text" name="email" value="<?php echo get_text($pp['email']); ?>" id="email" class="frm_input" size="30"></td>
         </tr>
         <tr>
             <th scope="row"><label for="reason">청구사유 <strong class="sound_only">필수</strong></label></th>

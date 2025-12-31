@@ -6,6 +6,11 @@ $(function() {
     var user_id_timer;
 
     $('#user_id').on('blur', function() {
+        // 수정 모드일 때는 조회 기능 비활성화
+        if ($(this).prop('readonly')) {
+            return;
+        }
+
         var user_id = $(this).val().trim();
 
         if (!user_id) {
@@ -27,17 +32,10 @@ $(function() {
                 dataType: 'json',
                 success: function(response) {
                     if (response.success) {
-                        // 고객 정보 설정
-                        if (response.customer) {
-                            if (response.customer.name) {
-                                $('#name').val(response.customer.name);
-                            }
-                            if (response.customer.phone) {
-                                $('#phone').val(response.customer.phone);
-                            }
-                            if (response.customer.email) {
-                                $('#email').val(response.customer.email);
-                            }
+                        // 닉네임만 표시
+                        var user_info = '';
+                        if (response.customer && response.customer.nickname) {
+                            user_info = '닉네임: ' + response.customer.nickname;
                         }
 
                         // 세부예약가맹점 ID 선택박스 구성
@@ -50,7 +48,11 @@ $(function() {
                             });
                         }
 
-                        $('#user_id_check').html('조회 완료').addClass('valid').removeClass('invalid');
+                        var check_msg = '조회 완료';
+                        if (user_info) {
+                            check_msg += ' (' + user_info + ')';
+                        }
+                        $('#user_id_check').html(check_msg).addClass('valid').removeClass('invalid');
                     } else {
                         $('#user_id_check').html(response.message || '조회 실패').addClass('invalid').removeClass('valid');
                         $('#shopdetail_id').html('<option value="">::세부예약ID::</option>');
