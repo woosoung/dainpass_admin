@@ -89,8 +89,8 @@ if($w == 'd') {
     $order_id = isset($_POST['order_id']) ? clean_xss_tags($_POST['order_id'], 1, 1) : '';
     $order_id = substr($order_id, 0, 50); // 길이 제한
 
-    $user_id = isset($_POST['user_id']) ? clean_xss_tags($_POST['user_id'], 1, 1) : '';
-    $user_id = substr($user_id, 0, 50); // 길이 제한
+    // ⚠️ user_id는 POST로 받지 않음! shopdetail_id로부터 자동 조회
+    $user_id = '';
 
     // 개인정보보호법 준수: name, phone, email은 POST로 받지 않고 user_id로부터 자동 조회
     $name = '';
@@ -109,8 +109,8 @@ if($w == 'd') {
     $shopdetail_id = isset($_POST['shopdetail_id']) && $_POST['shopdetail_id'] !== '' ? (int)$_POST['shopdetail_id'] : null;
 
     // 기본 필수 입력값 검증
-    if(!$user_id)
-        alert('회원ID를 입력해 주십시오.');
+    if(!$shopdetail_id && $w != 'u')  // 신규 등록 시 필수
+        alert('예약을 선택해 주십시오. "예약에서 선택" 버튼을 사용하세요.');
     if(!$reason)
         alert('청구사유를 입력해 주십시오.');
     if(!$amount || $amount <= 0)
@@ -119,6 +119,37 @@ if($w == 'd') {
     // 수정 모드일 때만 order_id가 필요
     if ($w == 'u' && !$order_id) {
         alert('주문번호가 필요합니다.');
+    }
+
+    // ⭐ shopdetail_id로부터 user_id 조회
+    if ($shopdetail_id && $w != 'u') {
+        $user_lookup_sql = " SELECT c.user_id, c.nickname
+                             FROM appointment_shop_detail AS asd
+                             INNER JOIN shop_appointments AS sa ON asd.appointment_id = sa.appointment_id
+                             INNER JOIN customers AS c ON sa.customer_id = c.customer_id
+                             WHERE asd.shopdetail_id = " . (int)$shopdetail_id . "
+                             AND asd.shop_id = " . (int)$shop_id . " ";
+        $user_lookup_row = sql_fetch_pg($user_lookup_sql);
+
+        if (!$user_lookup_row || !$user_lookup_row['user_id']) {
+            alert('선택한 예약 정보를 찾을 수 없습니다.');
+        }
+
+        $user_id = $user_lookup_row['user_id'];
+    } else if ($w == 'u') {
+        // 수정 모드: 기존 personal_payment에서 user_id 조회
+        $existing_sql = " SELECT user_id FROM personal_payment WHERE personal_id = " . (int)$personal_id . " AND shop_id = " . (int)$shop_id . " ";
+        $existing_row = sql_fetch_pg($existing_sql);
+
+        if ($existing_row && $existing_row['user_id']) {
+            $user_id = $existing_row['user_id'];
+        } else {
+            alert('기존 결제 정보를 찾을 수 없습니다.');
+        }
+    }
+
+    if (!$user_id) {
+        alert('회원 정보를 찾을 수 없습니다.');
     }
 
     // user_id로부터 customers 테이블에서 개인정보 자동 조회 (개인정보보호법 준수)

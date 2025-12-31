@@ -130,11 +130,38 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         </tr>
         <?php } ?>
         <tr>
-            <th scope="row"><label for="user_id">회원ID <strong class="sound_only">필수</strong></label></th>
+            <th scope="row"><label>예약 정보 <strong class="sound_only">필수</strong></label></th>
             <td>
-                <input type="text" name="user_id" value="<?php echo get_text($pp['user_id']); ?>" id="user_id" required class="required frm_input" size="30"<?php echo $w == 'u' ? ' readonly' : ''; ?>>
-                <small style="color: #666;">회원ID를 입력하면 닉네임과 결제 내역이 자동으로 불러와집니다. 개인정보는 서버에서 자동으로 처리됩니다.</small>
-                <div id="user_id_check" class="user_id_check" style="margin-top: 5px;"></div>
+                <?php if ($w == 'u') { ?>
+                    <!-- 수정 모드: 기존 예약 정보 표시만 -->
+                    <?php
+                    if ($pp['shopdetail_id']) {
+                        $existing_sql = " SELECT asd.shopdetail_id, asd.appointment_id, asd.appointment_datetime, sa.appointment_no, c.nickname
+                                          FROM appointment_shop_detail AS asd
+                                          LEFT JOIN shop_appointments AS sa ON asd.appointment_id = sa.appointment_id
+                                          LEFT JOIN customers AS c ON sa.customer_id = c.customer_id
+                                          WHERE asd.shopdetail_id = " . (int)$pp['shopdetail_id'] . " ";
+                        $existing_row = sql_fetch_pg($existing_sql);
+                        if ($existing_row) {
+                            $existing_datetime = $existing_row['appointment_datetime'] ? date('Y-m-d H:i', strtotime($existing_row['appointment_datetime'])) : '';
+                            $existing_appointment_no = $existing_row['appointment_no'] ? $existing_row['appointment_no'] : '';
+                            $existing_nickname = $existing_row['nickname'] ? $existing_row['nickname'] : '';
+                            echo '<div style="padding: 10px; background: #f5f5f5; border-radius: 3px;">';
+                            echo '<strong>예약번호:</strong> ' . htmlspecialchars($existing_appointment_no) . '<br>';
+                            echo '<strong>예약일시:</strong> ' . $existing_datetime . '<br>';
+                            echo '<strong>닉네임:</strong> ' . htmlspecialchars($existing_nickname);
+                            echo '</div>';
+                        }
+                    }
+                    ?>
+                    <input type="hidden" name="shopdetail_id" id="shopdetail_id" value="<?php echo $pp['shopdetail_id']; ?>">
+                <?php } else { ?>
+                    <!-- 신규 등록: 예약 선택 버튼 -->
+                    <input type="hidden" name="shopdetail_id" id="shopdetail_id" value="" required>
+                    <button type="button" onclick="openAppointmentModal()" class="btn btn_02">예약 선택</button>
+                    <div id="selected_appointment_info" style="margin-top: 5px; color: #666; font-size: 0.95em;"></div>
+                    <small style="display:block; margin-top: 5px; color: #999;">예약 선택 버튼을 클릭하여 결제 완료된 예약을 선택해 주세요.</small>
+                <?php } ?>
             </td>
         </tr>
         <tr>
@@ -144,31 +171,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <tr>
             <th scope="row"><label for="amount">청구금액 <strong class="sound_only">필수</strong></label></th>
             <td><input type="text" name="amount" value="<?php echo $pp['amount']; ?>" id="amount" required class="required frm_input" size="15"> 원</td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="shopdetail_id">세부예약가맹점 ID</label></th>
-            <td>
-                <select name="shopdetail_id" id="shopdetail_id" class="frm_input">
-                    <option value="">::세부예약ID없음::</option>
-                    <?php if ($w == 'u' && $pp['shopdetail_id']) { ?>
-                    <?php
-                    // 수정 모드일 때 기존 shopdetail_id 정보 조회
-                    $existing_sql = " SELECT asd.shopdetail_id, asd.appointment_id, asd.appointment_datetime, sa.appointment_no
-                                      FROM appointment_shop_detail AS asd
-                                      LEFT JOIN shop_appointments AS sa ON asd.appointment_id = sa.appointment_id
-                                      WHERE asd.shopdetail_id = " . (int)$pp['shopdetail_id'] . " ";
-                    $existing_row = sql_fetch_pg($existing_sql);
-                    if ($existing_row) {
-                        $existing_datetime = $existing_row['appointment_datetime'] ? date('Y-m-d H:i', strtotime($existing_row['appointment_datetime'])) : '';
-                        $existing_appointment_no = $existing_row['appointment_no'] ? $existing_row['appointment_no'] : '';
-                        $existing_text = '예약번호: ' . $existing_appointment_no . '(세부예약ID: ' . $existing_row['shopdetail_id'] . ')-예약일시: ' . $existing_datetime;
-                    ?>
-                    <option value="<?php echo $existing_row['shopdetail_id']; ?>" selected><?php echo htmlspecialchars($existing_text); ?></option>
-                    <?php } ?>
-                    <?php } ?>
-                </select>
-                <small style="color: #666;">회원ID를 입력하면 결제한 예약 내역이 자동으로 불러와집니다.</small>
-            </td>
         </tr>
         </tbody>
         </table>
@@ -239,18 +241,57 @@ if ($qstr_page > 1) $qstr .= '&page=' . $qstr_page;
     <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
 </div>
 
+<!-- 예약 선택 모달 -->
+<div id="appointmentSelectModal" style="display:none; position:fixed; left:0; top:0; width:100%; height:100%; z-index:1000; background:rgba(0,0,0,0.5);">
+    <div style="position:relative; display:table; width:100%; height:100%;">
+        <div style="display:table-cell; vertical-align:middle; text-align:center; padding:20px;">
+            <div style="position:relative; background:#fff; max-width:900px; width:100%; max-height:90vh; overflow-y:auto; display:inline-block; padding:30px; border-radius:5px; text-align:left; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                <h2 style="font-size:1.3em; padding:0 0 15px 0; margin:0 0 15px 0; border-bottom:1px solid #ddd;">예약 선택</h2>
+
+                <!-- 검색 영역 -->
+                <div class="local_sch01 local_sch" style="margin-bottom:20px; border:1px solid #ddd; padding:15px; border-radius:3px; background:#f9f9f9;">
+                    <label for="modal_search_type" style="margin-right:10px;">검색 조건:</label>
+                    <select id="modal_search_type" class="frm_input" style="margin-right:10px;">
+                        <option value="nickname">닉네임</option>
+                        <option value="appointment_no">예약번호</option>
+                    </select>
+                    <input type="text" id="modal_search_value" class="frm_input" placeholder="검색어 입력" style="width:300px; margin-right:10px;">
+                    <button type="button" onclick="searchAppointments()" class="btn_submit btn">검색</button>
+                    <button type="button" onclick="resetAppointmentSearch()" class="btn btn_02" style="margin-left:5px;">전체목록</button>
+                    <div style="margin-top:10px; color:#666; font-size:0.9em;">
+                        ※ 결제 완료된 예약만 검색됩니다
+                    </div>
+                </div>
+
+                <!-- 결과 테이블 영역 -->
+                <div id="appointmentListArea">
+                    <!-- 동적으로 테이블 생성 -->
+                </div>
+
+                <!-- 닫기 버튼 -->
+                <div style="text-align:center; margin-top:20px;">
+                    <button type="button" onclick="closeAppointmentModal()" class="btn btn_02">닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 </form>
 
 <style>
-.user_id_check {
-    font-size: 0.9em;
-    margin-top: 5px;
-}
-.user_id_check.valid {
-    color: green;
-}
-.user_id_check.invalid {
-    color: red;
+/* 반응형 모달 스타일 */
+@media (max-width: 768px) {
+    #appointmentSelectModal .btn_submit {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    #appointmentSelectModal #modal_search_value {
+        width: 100% !important;
+        margin-top: 5px;
+        margin-right: 0 !important;
+    }
 }
 </style>
 
