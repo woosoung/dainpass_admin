@@ -19,11 +19,8 @@ if ($w != 'u' || $appointment_id <= 0) {
 }
 
 // 예약 기본 정보 조회 (BOOKED 상태 제외)
-$appointment_sql = " SELECT sa.*, 
-                            c.user_id, 
-                            c.name as customer_name, 
-                            c.phone as customer_phone,
-                            c.email as customer_email,
+$appointment_sql = " SELECT sa.*,
+                            c.nickname,
                             p.amount as payment_amount,
                             p.payment_method,
                             p.paid_at,
@@ -31,11 +28,11 @@ $appointment_sql = " SELECT sa.*,
                      FROM shop_appointments sa
                      LEFT JOIN customers c ON sa.customer_id = c.customer_id
                      LEFT JOIN payments p ON sa.appointment_id = p.appointment_id AND (p.pay_flag IS NULL OR p.pay_flag = 'GENERAL')
-                     WHERE sa.appointment_id = {$appointment_id} 
+                     WHERE sa.appointment_id = {$appointment_id}
                      AND sa.status != 'BOOKED'
                      AND EXISTS (
-                         SELECT 1 FROM appointment_shop_detail 
-                         WHERE appointment_id = sa.appointment_id 
+                         SELECT 1 FROM appointment_shop_detail
+                         WHERE appointment_id = sa.appointment_id
                          AND shop_id = {$shop_id}
                          AND status != 'BOOKED'
                      ) ";
@@ -197,16 +194,13 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         </td>
     </tr>
     <tr>
-        <th scope="row">고객정보</th>
+        <th scope="row">회원 닉네임</th>
         <td>
             <?php
             if ($appointment['customer_id']) {
-                echo '회원ID: ' . htmlspecialchars($appointment['user_id'] ? $appointment['user_id'] : 'ID: ' . $appointment['customer_id']) . '<br>';
-                echo '이름: ' . htmlspecialchars($appointment['customer_name'] ? $appointment['customer_name'] : '-') . '<br>';
-                echo '전화: ' . htmlspecialchars($appointment['customer_phone'] ? $appointment['customer_phone'] : '-') . '<br>';
-                echo '이메일: ' . htmlspecialchars($appointment['customer_email'] ? $appointment['customer_email'] : '-');
+                echo htmlspecialchars($appointment['nickname'] ? $appointment['nickname'] : '-');
             } else if ($appointment['guest_id']) {
-                echo '비회원 (Guest ID: ' . htmlspecialchars($appointment['guest_id']) . ')';
+                echo '비회원';
             } else {
                 echo '-';
             }
