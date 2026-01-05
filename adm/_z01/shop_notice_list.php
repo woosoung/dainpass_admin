@@ -144,11 +144,10 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <colgroup>
         <col style="width: 3%;">
         <col style="width: 7%;">
-        <col style="width: 32%;">
+        <col style="width: 42%;">
         <col style="width: 13%;">
         <col style="width: 10%;">
         <col style="width: 15%;">
-        <col style="width: 10%;">
         <col style="width: 10%;">
     </colgroup>
     <thead>
@@ -162,13 +161,11 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <th scope="col">작성자ID</th>
         <th scope="col">상태</th>
         <th scope="col">작성일시</th>
-        <th scope="col">정렬</th>
         <th scope="col">수정</th>
     </tr>
     </thead>
     <tbody>
     <?php
-    $num = $total_count - ($page - 1) * $rows_per_page;
     if ($result && is_object($result) && isset($result->result)) {
         for ($i=0; $row=sql_fetch_array_pg($result->result); $i++) {
             $shopnotice_id = $row['shopnotice_id'];
@@ -203,13 +200,11 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <td class="td_left"><?php echo htmlspecialchars($mb_id) ?></td>
         <td class="td_left"><?php echo $status_text ?></td>
         <td class="td_left"><?php echo $create_at_text ?></td>
-        <td class="td_num"><?php echo $num ?></td>
         <td class="td_mng">
             <a href="./shop_notice_form.php?w=u&shopnotice_id=<?php echo $shopnotice_id ?>&<?php echo $qstr ?>" class="btn btn_03">수정</a>
         </td>
     </tr>
     <?php
-            $num--;
         }
     }
     
