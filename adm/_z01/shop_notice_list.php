@@ -143,12 +143,13 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <caption><?php echo $g5['title'] ?> 목록</caption>
     <colgroup>
         <col style="width: 3%;">
-        <col style="width: 8%;">
-        <col style="width: 35%;">
-        <col style="width: 15%;">
+        <col style="width: 7%;">
+        <col style="width: 32%;">
+        <col style="width: 13%;">
         <col style="width: 10%;">
         <col style="width: 15%;">
-        <col style="width: 14%;">
+        <col style="width: 10%;">
+        <col style="width: 10%;">
     </colgroup>
     <thead>
     <tr>
@@ -162,6 +163,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <th scope="col">상태</th>
         <th scope="col">작성일시</th>
         <th scope="col">정렬</th>
+        <th scope="col">수정</th>
     </tr>
     </thead>
     <tbody>
@@ -197,13 +199,14 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             <input type="checkbox" name="chk[]" value="<?php echo $shopnotice_id ?>" id="chk_<?php echo $i ?>">
         </td>
         <td class="td_num"><?php echo $shopnotice_id ?></td>
-        <td class="td_left">
-            <a href="./shop_notice_form.php?w=u&shopnotice_id=<?php echo $shopnotice_id ?>&<?php echo $qstr ?>" class="td_link"><?php echo htmlspecialchars($subject_display) ?></a>
-        </td>
+        <td class="td_left"><?php echo htmlspecialchars($subject_display) ?></td>
         <td class="td_left"><?php echo htmlspecialchars($mb_id) ?></td>
         <td class="td_left"><?php echo $status_text ?></td>
         <td class="td_left"><?php echo $create_at_text ?></td>
         <td class="td_num"><?php echo $num ?></td>
+        <td class="td_mng">
+            <a href="./shop_notice_form.php?w=u&shopnotice_id=<?php echo $shopnotice_id ?>&<?php echo $qstr ?>" class="btn btn_03">수정</a>
+        </td>
     </tr>
     <?php
             $num--;
