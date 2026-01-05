@@ -40,7 +40,7 @@ if($w == 'd') {
     sql_query_pg(" DELETE FROM personal_payment WHERE personal_id = " . (int)$personal_id . " AND shop_id = " . (int)$shop_id . " ");
 
     // qstr 생성 - 화이트리스트 검증
-    // 개인정보보호법 준수: 닉네임만 검색 가능
+    // 닉네임만 검색 가능
     $allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
     $allowed_sod = array('asc', 'desc');
     $allowed_sfl = array('', 'personal_id', 'order_id', 'nickname');
@@ -92,7 +92,7 @@ if($w == 'd') {
     // ⚠️ user_id는 POST로 받지 않음! shopdetail_id로부터 자동 조회
     $user_id = '';
 
-    // 개인정보보호법 준수: name, phone, email은 POST로 받지 않고 user_id로부터 자동 조회
+    // user_id로부터 자동 조회
     $name = '';
     $phone = '';
     $email = '';
@@ -152,7 +152,7 @@ if($w == 'd') {
         alert('회원 정보를 찾을 수 없습니다.');
     }
 
-    // user_id로부터 customers 테이블에서 개인정보 자동 조회 (개인정보보호법 준수)
+    // user_id로부터 customers 테이블에서 개인정보 자동 조회
     $user_id_escaped = sql_escape_string($user_id);
     $customer_sql = " SELECT customer_id, user_id, name, phone, email
                      FROM customers
@@ -181,18 +181,7 @@ if($w == 'd') {
         $shopdetail_check_row = sql_fetch_pg($shopdetail_check_sql);
         
         if (!$shopdetail_check_row || !$shopdetail_check_row['shopdetail_id']) {
-            alert('해당 세부예약가맹점 ID가 존재하지 않거나 해당 가맹점의 것이 아닙니다.');
-        }
-    }
-
-    // order_id 중복 체크 (수정 시에만)
-    if ($w == 'u' && $order_id) {
-        $order_id_escaped = sql_escape_string($order_id);
-        $order_check_sql = " SELECT personal_id FROM personal_payment WHERE order_id = '{$order_id_escaped}' AND personal_id != " . (int)$personal_id . " ";
-        $order_check_row = sql_fetch_pg($order_check_sql);
-        
-        if ($order_check_row && $order_check_row['personal_id']) {
-            alert('이미 사용 중인 주문번호입니다.');
+            alert('해당 예약 정보가 존재하지 않거나 해당 가맹점의 것이 아닙니다.');
         }
     }
 
@@ -290,7 +279,6 @@ if($w == '') {
 }
 
 // qstr 생성 - 화이트리스트 검증
-// 개인정보보호법 준수: 닉네임만 검색 가능
 $allowed_sst = array('personal_id', 'order_id', 'created_at', 'status', 'amount');
 $allowed_sod = array('asc', 'desc');
 $allowed_sfl = array('', 'personal_id', 'order_id', 'nickname');
