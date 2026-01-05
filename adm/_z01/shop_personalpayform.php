@@ -247,6 +247,8 @@ if ($qstr_page > 1) $qstr .= '&page=' . $qstr_page;
     <div style="position:relative; display:table; width:100%; height:100%;">
         <div style="display:table-cell; vertical-align:middle; text-align:center; padding:20px;">
             <div class="modal-content-box" style="position:relative; background:#fff; max-width:900px; width:100%; max-height:90vh; overflow-y:auto; display:inline-block; padding:30px; border-radius:5px; text-align:left; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+                <!-- 우측 상단 닫기 버튼 -->
+                <button type="button" onclick="closeAppointmentModal()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:24px; color:#999; cursor:pointer; padding:0; width:30px; height:30px; line-height:30px; text-align:center;" onmouseover="this.style.color='#333'" onmouseout="this.style.color='#999'">&times;</button>
                 <h2 style="font-size:1.3em; padding:0 0 15px 0; margin:0 0 15px 0; border-bottom:1px solid #ddd;">예약 선택</h2>
 
                 <!-- 검색 영역 -->
@@ -288,11 +290,6 @@ if ($qstr_page > 1) $qstr .= '&page=' . $qstr_page;
                 <!-- 결과 테이블 영역 -->
                 <div id="appointmentListArea">
                     <!-- 동적으로 테이블 생성 -->
-                </div>
-
-                <!-- 닫기 버튼 -->
-                <div style="text-align:center; margin-top:20px;">
-                    <button type="button" onclick="closeAppointmentModal()" class="btn btn_02">닫기</button>
                 </div>
             </div>
         </div>
