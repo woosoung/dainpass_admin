@@ -130,10 +130,6 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
             </td>
         </tr>
         <?php } ?>
-        <?php 
-        $is_paid = ($w == 'u' && isset($pp['status']) && $pp['status'] == 'PAID');
-        $disabled_attr = $is_paid ? ' disabled' : '';
-        ?>
         <tr>
             <th scope="row"><label>예약 정보 <strong class="sound_only">필수</strong></label></th>
             <td>
@@ -171,23 +167,11 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
         </tr>
         <tr>
             <th scope="row"><label for="reason">청구사유 <strong class="sound_only">필수</strong></label></th>
-            <td><textarea name="reason" id="reason" rows="5" required class="required"<?php echo $disabled_attr; ?>><?php echo html_purifier($pp['reason']); ?></textarea></td>
+            <td><textarea name="reason" id="reason" rows="5" required class="required"><?php echo html_purifier($pp['reason']); ?></textarea></td>
         </tr>
         <tr>
             <th scope="row"><label for="amount">청구금액 <strong class="sound_only">필수</strong></label></th>
-            <td><input type="text" name="amount" value="<?php echo $pp['amount']; ?>" id="amount" required class="required frm_input" size="15"<?php echo $disabled_attr; ?>> 원</td>
-        </tr>
-        <tr>
-            <th scope="row"><label for="status">상태</label></th>
-            <td>
-                <select name="status" id="status" class="frm_input"<?php echo $disabled_attr; ?>>
-                    <option value="CHARGE"<?php echo $pp['status'] == 'CHARGE' ? ' selected' : ''; ?>>청구</option>
-                    <option value="PAID"<?php echo $pp['status'] == 'PAID' ? ' selected' : ''; ?>>결제완료</option>
-                </select>
-                <?php if ($is_paid) { ?>
-                <small style="color: #666;">결제완료 상태에서는 수정할 수 없습니다.</small>
-                <?php } ?>
-            </td>
+            <td><input type="text" name="amount" value="<?php echo $pp['amount']; ?>" id="amount" required class="required frm_input" size="15"> 원</td>
         </tr>
         <tr>
             <th scope="row"><label for="status">상태</label></th>
@@ -204,7 +188,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
     </div>
 </section>
 
-<?php if ($w == 'u') { ?>
+<?php if ($w == 'u' && isset($payment_row) && $payment_row) { ?>
 <section id="anc_spp_pay" class="cbox">
     <h2 class="h2_frm">결제 정보</h2>
     <div class="local_desc02 local_desc">
@@ -219,7 +203,6 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
             <col>
         </colgroup>
         <tbody>
-        <?php if (isset($payment_row) && $payment_row) { ?>
         <tr>
             <th scope="row">결제ID</th>
             <td><?php echo $payment_row['payment_id']; ?></td>
@@ -230,18 +213,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
         </tr>
         <tr>
             <th scope="row">결제방법</th>
-            <td>
-                <?php 
-                $payment_method = $payment_row['payment_method'];
-                if ($payment_method == 'MANUAL') {
-                    echo '수동';
-                } elseif ($payment_method == 'AUTO') {
-                    echo '자동';
-                } else {
-                    echo htmlspecialchars($payment_method);
-                }
-                ?>
-            </td>
+            <td><?php echo htmlspecialchars($payment_row['payment_method']); ?></td>
         </tr>
         <tr>
             <th scope="row">결제금액</th>
@@ -249,33 +221,11 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
         </tr>
         <tr>
             <th scope="row">결제상태</th>
-            <td>
-                <?php 
-                $payment_status = $payment_row['status'];
-                if ($payment_status == 'DONE') {
-                    echo '결제완료';
-                } elseif ($payment_status == 'PARTIAL_CANCELED') {
-                    echo '부분취소';
-                } elseif ($payment_status == 'CANCELED') {
-                    echo '취소';
-                } else {
-                    echo htmlspecialchars($payment_status);
-                }
-                ?>
-            </td>
+            <td><?php echo htmlspecialchars($payment_row['status']); ?></td>
         </tr>
-        <?php } ?>
         <tr>
             <th scope="row">결제일시</th>
-            <td>
-                <?php 
-                if (isset($payment_row) && $payment_row && $payment_row['paid_at']) {
-                    echo date('Y-m-d H:i:s', strtotime($payment_row['paid_at']));
-                } else {
-                    echo '-';
-                }
-                ?>
-            </td>
+            <td><?php echo $payment_row['paid_at'] ? date('Y-m-d H:i:s', strtotime($payment_row['paid_at'])) : '-'; ?></td>
         </tr>
         </tbody>
         </table>
@@ -297,17 +247,9 @@ if ($qstr_page > 1) $qstr .= '&page=' . $qstr_page;
 <div class="btn_fixed_top">
     <a href="./shop_personalpaylist.php<?php echo $qstr ? '?' . ltrim($qstr, '&') : ''; ?>" class="btn btn_02">목록</a>
     <?php if($w == 'u') { ?>
-        <?php if (!$is_paid) { ?>
-            <a href="./shop_personalpayformupdate.php?w=d&amp;personal_id=<?php echo $pp['personal_id']; ?>" onclick="return delete_confirm(this);" class="btn btn_02">삭제</a>
-        <?php } else { ?>
-            <a href="javascript:" onclick="" class="btn btn_02">삭제불가</a>
-        <?php } ?>
+        <a href="./shop_personalpayformupdate.php?w=d&amp;personal_id=<?php echo $pp['personal_id']; ?>" onclick="return delete_confirm(this);" class="btn btn_02">삭제</a>
     <?php } ?>
-    <?php if (!$is_paid) { ?>
     <input type="submit" value="확인" class="btn_submit btn" accesskey="s">
-    <?php } else { ?>
-    <button type="button" class="btn_submit btn" disabled>수정불가</button>
-    <?php } ?>
 </div>
 
 <!-- 예약 선택 모달 -->
