@@ -18,7 +18,7 @@ $offset = ($page - 1) * $rows_per_page;
 // 검색 조건 - 화이트리스트 방식으로 검증 강화
 $allowed_sst = array('appointment_id', 'appointment_no', 'status', 'created_at');
 $allowed_sod = array('asc', 'desc');
-$allowed_sfl = array('', 'appointment_no', 'user_id', 'customer_name');
+$allowed_sfl = array('', 'appointment_no', 'nickname');
 $allowed_sfl2 = array('', 'COMPLETED', 'CANCELLED');
 
 $sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'appointment_id';
@@ -61,11 +61,8 @@ if ($sfl && $stx) {
             // 이미 이스케이프된 $stx 사용
             $where_sql .= " AND sa.appointment_no ILIKE '%" . $stx . "%' ";
             break;
-        case 'user_id':
-            $where_sql .= " AND c.user_id ILIKE '%" . $stx . "%' ";
-            break;
-        case 'customer_name':
-            $where_sql .= " AND c.name ILIKE '%" . $stx . "%' ";
+        case 'nickname':
+            $where_sql .= " AND c.nickname ILIKE '%" . $stx . "%' ";
             break;
     }
 }
@@ -105,9 +102,7 @@ $sql = " SELECT DISTINCT ON (sa.appointment_id)
                 sa.guest_id,
                 sa.status,
                 sa.created_at,
-                c.user_id,
-                c.name as customer_name,
-                c.phone as customer_phone,
+                c.nickname,
                 MIN(asd.appointment_datetime) as first_appointment_datetime,
                 COALESCE(SUM(asd.balance_amount), 0) as total_payment_amount,
                 COALESCE(SUM(DISTINCT psc.cancel_amount), 0) as total_cancel_amount,
@@ -117,9 +112,9 @@ $sql = " SELECT DISTINCT ON (sa.appointment_id)
          LEFT JOIN customers AS c ON sa.customer_id = c.customer_id
          LEFT JOIN payments_shop_cancel AS psc ON sa.appointment_id = psc.appointment_id
          LEFT JOIN shop_appointment_details AS sad ON asd.shopdetail_id = sad.shopdetail_id
-         {$where_sql} 
-         GROUP BY sa.appointment_id, sa.appointment_no, sa.order_id, sa.customer_id, sa.guest_id, sa.status, sa.created_at, c.user_id, c.name, c.phone
-         ORDER BY {$sst} {$sod} 
+         {$where_sql}
+         GROUP BY sa.appointment_id, sa.appointment_no, sa.order_id, sa.customer_id, sa.guest_id, sa.status, sa.created_at, c.nickname
+         ORDER BY {$sst} {$sod}
          LIMIT {$rows_per_page} OFFSET {$offset} ";
 $result = sql_query_pg($sql);
 
@@ -158,8 +153,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
     <select name="sfl" id="sfl" class="frm_input">
         <option value="">선택</option>
         <option value="appointment_no"<?php echo $sfl == 'appointment_no' ? ' selected' : '' ?>>예약번호</option>
-        <option value="user_id"<?php echo $sfl == 'user_id' ? ' selected' : '' ?>>회원ID</option>
-        <option value="customer_name"<?php echo $sfl == 'customer_name' ? ' selected' : '' ?>>회원명</option>
+        <option value="nickname"<?php echo $sfl == 'nickname' ? ' selected' : '' ?>>닉네임</option>
     </select>
     <label for="stx" class="sound_only">검색어</label>
     <input type="text" name="stx" value="<?php echo htmlspecialchars($stx, ENT_QUOTES, 'UTF-8') ?>" id="stx" class="frm_input" maxlength="100">
@@ -215,7 +209,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
             <input type="checkbox" name="chkall" id="chkall" onclick="check_all(this.form)">
         </th>
         <th scope="col">예약번호</th>
-        <th scope="col">고객정보</th>
+        <th scope="col">회원 닉네임</th>
         <th scope="col">예약일시</th>
         <th scope="col">결제금액</th>
         <th scope="col">취소금액</th>
@@ -236,9 +230,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
             $customer_id = $row['customer_id'];
             $guest_id = $row['guest_id'];
             $status = $row['status'];
-            $user_id = $row['user_id'];
-            $customer_name = $row['customer_name'];
-            $customer_phone = $row['customer_phone'];
+            $nickname = $row['nickname'];
             $first_appointment_datetime = $row['first_appointment_datetime'];
             $total_payment_amount = $row['total_payment_amount'];
             $total_cancel_amount = $row['total_cancel_amount'];
@@ -267,9 +259,9 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
             
             $customer_info = '';
             if ($customer_id) {
-                $customer_info = ($user_id ? htmlspecialchars($user_id) : 'ID: ' . $customer_id) . '<br><small>' . ($customer_name ? htmlspecialchars($customer_name) : '-') . '</small>';
+                $customer_info = $nickname ? htmlspecialchars($nickname) : '-';
             } else if ($guest_id) {
-                $customer_info = '비회원<br><small>' . htmlspecialchars($guest_id) . '</small>';
+                $customer_info = '비회원';
             } else {
                 $customer_info = '-';
             }
