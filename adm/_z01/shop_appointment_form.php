@@ -176,7 +176,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             if ($appointment['status'] == 'COMPLETED' && $total_service_quantity == 0) {
                 $display_status = 'CANCELLED';
             }
-            
+
             $status_text = '';
             // BOOKED 상태는 이미 WHERE 조건에서 제외되므로 여기서는 처리하지 않음
             switch ($display_status) {
@@ -191,6 +191,19 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             }
             echo $status_text;
             ?>
+            <div style="margin-top:10px;">
+                <form name="fstatus" id="fstatus" method="post" action="./shop_appointment_form_update.php" onsubmit="return confirm('상태를 변경하시겠습니까?');">
+                <input type="hidden" name="action" value="status_update">
+                <input type="hidden" name="appointment_id" value="<?php echo $appointment_id; ?>">
+                <input type="hidden" name="qstr" value="<?php echo htmlspecialchars($qstr, ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="token" value="<?php echo get_admin_token(); ?>">
+                <select name="new_status" class="frm_input" style="margin-right:5px;">
+                    <option value="COMPLETED"<?php echo $appointment['status'] == 'COMPLETED' ? ' selected' : '' ?>>결제완료</option>
+                    <option value="CANCELLED"<?php echo $appointment['status'] == 'CANCELLED' ? ' selected' : '' ?>>취소됨</option>
+                </select>
+                <button type="submit" class="btn btn_03">상태변경</button>
+                </form>
+            </div>
         </td>
     </tr>
     <tr>
