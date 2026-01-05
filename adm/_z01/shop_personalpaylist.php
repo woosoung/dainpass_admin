@@ -296,7 +296,7 @@ echo $write_pages;
 $(function() {
     $(".personalpaycopy").on("click", function() {
         var href = this.href;
-        window.open(href, "copywin", "left=100, top=100, width=600, height=300, scrollbars=0");
+        window.open(href, "copywin", "left=100, top=100, width=700, height=600, scrollbars=1");
         return false;
     });
 });
