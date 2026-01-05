@@ -1,4 +1,8 @@
 <?php
+// PHP 오류 표시 (디버깅용 - 운영 환경에서는 제거)
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $sub_menu = "950200";
 include_once('./_common.php');
 
@@ -120,6 +124,12 @@ if($w == 'd') {
         alert('청구사유를 입력해 주십시오.');
     if(!$amount || $amount <= 0)
         alert('청구금액을 올바르게 입력해 주십시오.');
+    
+    // 상태 검증
+    if (!in_array($status, array('CHARGE', 'PAID'))) {
+        alert('올바른 상태 값을 선택해 주십시오.');
+    }
+    
     // 주문번호는 신규 등록 시 DB에서 자동 생성되므로 검증하지 않음
     // 수정 모드일 때만 order_id가 필요
     if ($w == 'u' && !$order_id) {
@@ -459,5 +469,6 @@ if (isset($_POST['sfl2']) && $_POST['sfl2']) {
     }
 }
 
-goto_url('./shop_personalpayform.php?w=u&amp;personal_id='.$personal_id.'&amp;'.ltrim($qstr, '&'));
+$redirect_url = './shop_personalpayform.php?w=u&amp;personal_id='.$personal_id.'&amp;'.ltrim($qstr, '&');
+goto_url($redirect_url);
 

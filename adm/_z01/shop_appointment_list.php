@@ -187,20 +187,20 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
 <input type="hidden" name="act" value="">
 
 <div class="tbl_head01 tbl_wrap">
-    <table>
+    <table style="width: 100%;">
     <caption><?php echo $g5['title'] ?> 목록</caption>
     <colgroup>
-        <col style="width: 50px;">
-        <col style="width: 120px;">
-        <col style="width: 150px;">
-        <col style="width: 200px;">
-    <col style="width: 150px;">
-    <col style="width: 150px;">
-    <col style="width: 120px;">
-    <col style="width: 120px;">
-    <col style="width: 100px;">
-    <col style="width: 120px;">
-    <col style="width: 80px;">
+        <col style="width: 3%;">
+        <col style="width: 9%;">
+        <col style="width: 8%;">
+        <col style="width: 10%;">
+        <col style="width: 12%;">
+        <col style="width: 11%;">
+        <col style="width: 11%;">
+        <col style="width: 7%;">
+        <col style="width: 14%;">
+        <col style="width: 5%;">
+        <col style="width: 8%;">
     </colgroup>
     <thead>
     <tr>
@@ -257,13 +257,16 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
                     $status_text = htmlspecialchars($display_status);
             }
             
-            $customer_info = '';
+            // 고객ID와 고객명을 분리
+            $customer_id_text = '';
+            $customer_name_text = '';
             if ($customer_id) {
                 $customer_info = $nickname ? htmlspecialchars($nickname) : '-';
             } else if ($guest_id) {
                 $customer_info = '비회원';
             } else {
-                $customer_info = '-';
+                $customer_id_text = '-';
+                $customer_name_text = '-';
             }
             
             $appointment_datetime_text = $first_appointment_datetime ? date('Y-m-d H:i', strtotime($first_appointment_datetime)) : '-';
@@ -274,7 +277,8 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
             <input type="checkbox" name="chk[]" value="<?php echo $appointment_id ?>" id="chk_<?php echo $i ?>">
         </td>
         <td class="td_left"><?php echo htmlspecialchars($appointment_no) ?></td>
-        <td class="td_left"><?php echo $customer_info ?></td>
+        <td class="td_left"><?php echo $customer_id_text ?></td>
+        <td class="td_left"><?php echo $customer_name_text ?></td>
         <td class="td_left"><?php echo $appointment_datetime_text ?></td>
         <td class="td_num"><?php echo number_format($total_payment_amount) ?>원</td>
         <td class="td_num"><?php echo number_format($total_cancel_amount) ?>원</td>
@@ -296,7 +300,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
     }
     
     if ($i == 0) {
-        echo '<tr><td colspan="10" class="td_empty">등록된 예약이 없습니다.</td></tr>';
+        echo '<tr><td colspan="11" class="td_empty">등록된 예약이 없습니다.</td></tr>';
     }
     ?>
     </tbody>
