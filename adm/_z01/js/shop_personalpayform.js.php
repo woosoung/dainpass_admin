@@ -40,6 +40,14 @@ $(function() {
             }
         }
     });
+
+    // 모달 바깥 영역 클릭 시 닫기
+    $(document).on('click', '#appointmentSelectModal', function(e) {
+        // 클릭한 요소가 모달 콘텐츠 박스(.modal-content-box) 내부가 아닌 경우 닫기
+        if (!$(e.target).closest('.modal-content-box').length) {
+            closeAppointmentModal();
+        }
+    });
 });
 
 function form_check(f)

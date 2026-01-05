@@ -246,7 +246,7 @@ if ($qstr_page > 1) $qstr .= '&page=' . $qstr_page;
 <div id="appointmentSelectModal" style="display:none; position:fixed; left:0; top:0; width:100%; height:100%; z-index:1000; background:rgba(0,0,0,0.5);">
     <div style="position:relative; display:table; width:100%; height:100%;">
         <div style="display:table-cell; vertical-align:middle; text-align:center; padding:20px;">
-            <div style="position:relative; background:#fff; max-width:900px; width:100%; max-height:90vh; overflow-y:auto; display:inline-block; padding:30px; border-radius:5px; text-align:left; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+            <div class="modal-content-box" style="position:relative; background:#fff; max-width:900px; width:100%; max-height:90vh; overflow-y:auto; display:inline-block; padding:30px; border-radius:5px; text-align:left; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
                 <h2 style="font-size:1.3em; padding:0 0 15px 0; margin:0 0 15px 0; border-bottom:1px solid #ddd;">예약 선택</h2>
 
                 <!-- 검색 영역 -->
