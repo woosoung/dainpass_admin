@@ -106,6 +106,11 @@ if($w == 'd') {
         alert('청구금액은 최대 1억 원까지 입력할 수 있습니다.');
     }
 
+    // status 검증 (화이트리스트)
+    $allowed_status = array('CHARGE', 'PAID');
+    $status = isset($_POST['status']) ? clean_xss_tags($_POST['status'], 1, 1) : 'CHARGE';
+    $status = in_array($status, $allowed_status) ? $status : 'CHARGE';
+
     $shopdetail_id = isset($_POST['shopdetail_id']) && $_POST['shopdetail_id'] !== '' ? (int)$_POST['shopdetail_id'] : null;
 
     // 기본 필수 입력값 검증
@@ -217,14 +222,14 @@ if($w == '') {
                 '{$name_escaped}',
                 '{$reason_escaped}',
                 " . (int)$amount . ",
-                'CHARGE',
+                '{$status}',
                 " . ($phone ? "'{$phone_escaped}'" : 'NULL') . ",
                 " . ($email ? "'{$email_escaped}'" : 'NULL') . ",
                 true,
                 NOW(),
                 NOW()
             ) RETURNING personal_id ";
-    
+
     $result = sql_query_pg($sql);
     // PostgreSQL의 RETURNING 절 사용
     if ($result && is_object($result) && isset($result->result)) {
@@ -236,24 +241,75 @@ if($w == '') {
         $new_row = sql_fetch_pg($new_sql);
         $personal_id = $new_row['personal_id'];
     }
-    
+
+    // 신규 등록 시 상태가 'PAID'이면 payments 테이블에 레코드 생성
+    if ($status == 'PAID') {
+        // order_id는 DB에서 자동 생성되므로 다시 조회
+        $order_sql = " SELECT order_id FROM personal_payment WHERE personal_id = " . (int)$personal_id . " ";
+        $order_row = sql_fetch_pg($order_sql);
+        $order_id_for_payment = ($order_row && $order_row['order_id']) ? sql_escape_string($order_row['order_id']) : '';
+
+        if (!$order_id_for_payment) {
+            alert('주문번호 생성에 실패했습니다.');
+        }
+
+        // payment_key 생성 (NOT NULL 제약조건) - 안전한 형식
+        $payment_key = 'PERSONAL_' . date('YmdHis') . '_' . (int)$personal_id;
+        $payment_key_escaped = sql_escape_string($payment_key);
+
+        // transaction_key 생성 (NOT NULL 제약조건) - 안전한 형식
+        $transaction_key = 'PERSONAL_' . date('YmdHis') . '_' . (int)$personal_id;
+        $transaction_key_escaped = sql_escape_string($transaction_key);
+
+        $payment_insert_sql = " INSERT INTO payments (
+                                    pay_flag,
+                                    personal_id,
+                                    order_id,
+                                    amount,
+                                    status,
+                                    payment_method,
+                                    payment_key,
+                                    response,
+                                    transaction_key,
+                                    paid_at,
+                                    updated_at
+                                ) VALUES (
+                                    'PERSONAL',
+                                    " . (int)$personal_id . ",
+                                    '{$order_id_for_payment}',
+                                    " . (int)$amount . ",
+                                    'DONE',
+                                    'MANUAL',
+                                    '{$payment_key_escaped}',
+                                    '{}'::jsonb,
+                                    '{$transaction_key_escaped}',
+                                    NOW(),
+                                    NOW()
+                                ) ";
+        $payment_result = sql_query_pg($payment_insert_sql);
+
+        if (!$payment_result) {
+            alert('결제 정보 생성에 실패했습니다.');
+        }
+    }
+
 } else if($w == 'u') {
     // 수정
     $sql = " SELECT personal_id, shop_id, status FROM personal_payment WHERE personal_id = " . (int)$personal_id . " AND shop_id = " . (int)$shop_id . " ";
     $row = sql_fetch_pg($sql);
-    
+
     if(!$row || !$row['personal_id'])
         alert('수정하시려는 자료가 존재하지 않습니다.');
-    
+
     // 결제완료된 건은 수정 불가
     if ($row['status'] == 'PAID') {
         alert('결제완료된 건은 수정할 수 없습니다.');
     }
-    
+
     // payments 테이블에 레코드가 있으면 수정 불가
-    $payment_check_sql = " SELECT payment_id FROM payments WHERE personal_id = " . (int)$personal_id . " AND pay_flag = 'PERSONAL' ";
+    $payment_check_sql = " SELECT payment_id, paid_at FROM payments WHERE personal_id = " . (int)$personal_id . " AND pay_flag = 'PERSONAL' ";
     $payment_check_row = sql_fetch_pg($payment_check_sql);
-    
+
     if ($payment_check_row && $payment_check_row['payment_id']) {
         alert('결제 정보가 있는 건은 수정할 수 없습니다.');
     }
@@ -264,18 +320,101 @@ if($w == '') {
                  name = '{$name_escaped}',
                  reason = '{$reason_escaped}',
                  amount = " . (int)$amount . ",
+                 status = '{$status}',
                  phone = " . ($phone ? "'{$phone_escaped}'" : 'NULL') . ",
                  email = " . ($email ? "'{$email_escaped}'" : 'NULL') . ",
                  updated_at = NOW()";
-    
+
     // order_id는 수정 시에만 업데이트 (변경된 경우에만)
     if ($order_id) {
         $sql .= ", order_id = '{$order_id_escaped}'";
     }
-    
+
     $sql .= " WHERE personal_id = " . (int)$personal_id . "
              AND shop_id = " . (int)$shop_id . " ";
     sql_query_pg($sql);
+
+    // 상태가 'PAID'일 때 payments 테이블 처리
+    if ($status == 'PAID') {
+        // order_id가 비어있으면 personal_payment에서 다시 조회
+        $current_order_id = $order_id_escaped;
+        if (empty($current_order_id)) {
+            $order_sql = " SELECT order_id FROM personal_payment WHERE personal_id = " . (int)$personal_id . " ";
+            $order_row = sql_fetch_pg($order_sql);
+            $current_order_id = ($order_row && $order_row['order_id']) ? sql_escape_string($order_row['order_id']) : '';
+        }
+
+        if (empty($current_order_id)) {
+            alert('주문번호가 없어 결제 정보를 저장할 수 없습니다.');
+        }
+
+        // payments 테이블에 레코드가 있는지 다시 확인
+        $payment_check_sql2 = " SELECT payment_id, paid_at FROM payments WHERE personal_id = " . (int)$personal_id . " AND pay_flag = 'PERSONAL' ";
+        $payment_check_row2 = sql_fetch_pg($payment_check_sql2);
+
+        if (!$payment_check_row2 || !$payment_check_row2['payment_id']) {
+            // payments 테이블에 레코드가 없으면 생성
+            // payment_key 생성 (NOT NULL 제약조건) - 안전한 형식
+            $payment_key = 'PERSONAL_' . date('YmdHis') . '_' . (int)$personal_id;
+            $payment_key_escaped = sql_escape_string($payment_key);
+
+            // transaction_key 생성 (NOT NULL 제약조건) - 안전한 형식
+            $transaction_key = 'PERSONAL_' . date('YmdHis') . '_' . (int)$personal_id;
+            $transaction_key_escaped = sql_escape_string($transaction_key);
+
+            $payment_insert_sql = " INSERT INTO payments (
+                                        pay_flag,
+                                        personal_id,
+                                        order_id,
+                                        amount,
+                                        status,
+                                        payment_method,
+                                        payment_key,
+                                        response,
+                                        transaction_key,
+                                        paid_at,
+                                        updated_at
+                                    ) VALUES (
+                                        'PERSONAL',
+                                        " . (int)$personal_id . ",
+                                        '{$current_order_id}',
+                                        " . (int)$amount . ",
+                                        'DONE',
+                                        'MANUAL',
+                                        '{$payment_key_escaped}',
+                                        '{}'::jsonb,
+                                        '{$transaction_key_escaped}',
+                                        NOW(),
+                                        NOW()
+                                    ) ";
+            $payment_result = sql_query_pg($payment_insert_sql);
+
+            if (!$payment_result) {
+                alert('결제 정보 생성에 실패했습니다.');
+            }
+        } else {
+            // payments 테이블에 레코드가 있으면 업데이트
+            $payment_update_sql = " UPDATE payments
+                                     SET order_id = '{$current_order_id}',
+                                         amount = " . (int)$amount . ",
+                                         status = 'DONE',
+                                         updated_at = NOW()";
+
+            // paid_at이 없으면 현재 시간으로 설정
+            if (!$payment_check_row2['paid_at']) {
+                $payment_update_sql .= ", paid_at = NOW()";
+            }
+
+            $payment_update_sql .= " WHERE payment_id = " . (int)$payment_check_row2['payment_id'] . "
+                                     AND personal_id = " . (int)$personal_id . "
+                                     AND pay_flag = 'PERSONAL' ";
+            $payment_result = sql_query_pg($payment_update_sql);
+
+            if (!$payment_result) {
+                alert('결제 정보 업데이트에 실패했습니다.');
+            }
+        }
+    }
 }
 
 // qstr 생성 - 화이트리스트 검증

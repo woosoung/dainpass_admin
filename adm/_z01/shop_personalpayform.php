@@ -161,7 +161,7 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
                     <input type="hidden" name="shopdetail_id" id="shopdetail_id" value="" required>
                     <button type="button" onclick="openAppointmentModal()" class="btn btn_02">예약 선택</button>
                     <div id="selected_appointment_info" style="margin-top: 5px; color: #666; font-size: 0.95em;"></div>
-                    <small style="display:block; margin-top: 5px; color: #999;">예약 선택 버튼을 클릭하여 결제 완료된 예약을 선택해 주세요.</small>
+                    <?php echo help("예약 선택 버튼을 클릭하여 결제 완료된 예약을 선택해 주세요."); ?>
                 <?php } ?>
             </td>
         </tr>
@@ -172,6 +172,16 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
         <tr>
             <th scope="row"><label for="amount">청구금액 <strong class="sound_only">필수</strong></label></th>
             <td><input type="text" name="amount" value="<?php echo $pp['amount']; ?>" id="amount" required class="required frm_input" size="15"> 원</td>
+        </tr>
+        <tr>
+            <th scope="row"><label for="status">상태</label></th>
+            <td>
+                <select name="status" id="status" class="frm_input">
+                    <option value="CHARGE"<?php echo $pp['status'] == 'CHARGE' ? ' selected' : ''; ?>>청구</option>
+                    <option value="PAID"<?php echo $pp['status'] == 'PAID' ? ' selected' : ''; ?>>결제완료</option>
+                </select>
+                <?php echo help("※ '결제완료' 선택 시 자동으로 결제 정보가 생성됩니다."); ?>
+            </td>
         </tr>
         </tbody>
         </table>
