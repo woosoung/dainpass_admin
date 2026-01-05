@@ -187,20 +187,19 @@ include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
 <input type="hidden" name="act" value="">
 
 <div class="tbl_head01 tbl_wrap">
-    <table>
+    <table style="width: 100%;">
     <caption><?php echo $g5['title'] ?> 목록</caption>
     <colgroup>
-        <col style="width: 50px;">
-        <col style="width: 120px;">
-        <col style="width: 150px;">
-        <col style="width: 200px;">
-    <col style="width: 150px;">
-    <col style="width: 150px;">
-    <col style="width: 120px;">
-    <col style="width: 120px;">
-    <col style="width: 100px;">
-    <col style="width: 120px;">
-    <col style="width: 80px;">
+        <col style="width: 3%;">
+        <col style="width: 10%;">
+        <col style="width: 12%;">
+        <col style="width: 15%;">
+        <col style="width: 12%;">
+        <col style="width: 12%;">
+        <col style="width: 12%;">
+        <col style="width: 12%;">
+        <col style="width: 6%;">
+        <col style="width: 6%;">
     </colgroup>
     <thead>
     <tr>
