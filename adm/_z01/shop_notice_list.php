@@ -11,50 +11,67 @@ $shop_info = $result['shop_info'];
 
 // 페이징 설정
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$page = $page > 0 ? $page : 1;
+$page = ($page > 0 && $page <= 10000) ? $page : 1; // 최대 페이지 제한
 $rows_per_page = 30;
 $offset = ($page - 1) * $rows_per_page;
 
-// 검색 조건
-$sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'shopnotice_id';
-$sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'desc';
-$sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
-$stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
-$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; // status 필터
+// 검색 조건 - 화이트리스트 방식으로 검증 강화
+$allowed_sst = array('shopnotice_id', 'subject', 'status', 'create_at');
+$allowed_sod = array('asc', 'desc');
+$allowed_sfl = array('', 'subject', 'content', 'mb_id');
+$allowed_sfl2 = array('', 'ok', 'pending');
 
-$where_sql = " WHERE shop_id = {$shop_id} ";
+$sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'shopnotice_id';
+$sst = in_array($sst, $allowed_sst) ? $sst : 'shopnotice_id';
+
+$sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'desc';
+$sod = in_array($sod, $allowed_sod) ? $sod : 'desc';
+
+$sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
+$sfl = in_array($sfl, $allowed_sfl) ? $sfl : '';
+
+$stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
+$stx = substr($stx, 0, 100); // 최대 길이 제한
+$stx = str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $stx); // SQL 특수문자 이스케이프
+
+$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : '';
+$sfl2 = in_array($sfl2, $allowed_sfl2) ? $sfl2 : '';
+
+$where_sql = " WHERE shop_id = " . (int)$shop_id . " ";
 
 if ($sfl && $stx) {
     switch ($sfl) {
         case 'subject':
-            $where_sql .= " AND subject LIKE '%{$stx}%' ";
+            // 이미 이스케이프된 $stx 사용
+            $where_sql .= " AND subject ILIKE '%" . $stx . "%' ";
             break;
         case 'content':
-            $where_sql .= " AND content LIKE '%{$stx}%' ";
+            $where_sql .= " AND content ILIKE '%" . $stx . "%' ";
             break;
         case 'mb_id':
-            $where_sql .= " AND mb_id LIKE '%{$stx}%' ";
+            $where_sql .= " AND mb_id ILIKE '%" . $stx . "%' ";
             break;
     }
 }
 
 if ($sfl2 !== '') {
-    $where_sql .= " AND status = '{$sfl2}' ";
+    // 이미 화이트리스트로 검증된 값만 사용
+    $where_sql .= " AND status = '" . $sfl2 . "' ";
 }
 
 // 전체 레코드 수
 $count_sql = " SELECT COUNT(*) as cnt FROM shop_notice {$where_sql} ";
 $count_row = sql_fetch_pg($count_sql);
-$total_count = $count_row['cnt'];
+$total_count = isset($count_row['cnt']) ? (int)$count_row['cnt'] : 0;
 
 // 페이징 계산
-$total_page = ceil($total_count / $rows_per_page);
+$total_page = $total_count > 0 ? ceil($total_count / $rows_per_page) : 0;
 
 // 목록 조회
-$sql = " SELECT * FROM shop_notice 
-         {$where_sql} 
-         ORDER BY {$sst} {$sod} 
-         LIMIT {$rows_per_page} OFFSET {$offset} ";
+$sql = " SELECT * FROM shop_notice
+         {$where_sql}
+         ORDER BY {$sst} {$sod}
+         LIMIT " . (int)$rows_per_page . " OFFSET " . (int)$offset . " ";
 $result = sql_query_pg($sql);
 
 // qstr 생성
@@ -75,7 +92,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <?php } ?>
 </div>
 
-<form name="fsearch" id="fsearch" method="get">
+<form name="fsearch" id="fsearch" method="get" onsubmit="return fsearch_submit(this);">
 <input type="hidden" name="sst" value="<?php echo $sst ?>">
 <input type="hidden" name="sod" value="<?php echo $sod ?>">
 
@@ -98,7 +115,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             <option value="mb_id"<?php echo $sfl == 'mb_id' ? ' selected' : '' ?>>작성자ID</option>
         </select>
         <label for="stx" class="sound_only">검색어</label>
-        <input type="text" name="stx" value="<?php echo $stx ?>" id="stx" class="frm_input">
+        <input type="text" name="stx" value="<?php echo htmlspecialchars($stx, ENT_QUOTES, 'UTF-8') ?>" id="stx" class="frm_input" maxlength="100">
         <input type="submit" value="검색" class="btn_submit">
     </div>
 </div>
@@ -108,7 +125,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <p>
         가맹점의 공지사항을 관리합니다.<br>
     </p>
-    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
+    <?php echo get_shop_display_name($shop_info, $shop_id, ''); ?>
 </div>
 
 <form name="flist" id="flist" action="./shop_notice_listupdate.php" method="post" onsubmit="return flist_submit(this);">
@@ -122,16 +139,16 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 <input type="hidden" name="act" value="">
 
 <div class="tbl_head01 tbl_wrap">
-    <table>
+    <table style="width: 100%;">
     <caption><?php echo $g5['title'] ?> 목록</caption>
     <colgroup>
-        <col style="width: 50px;">
-        <col style="width: 100px;">
-        <col>
-        <col style="width: 150px;">
-        <col style="width: 120px;">
-        <col style="width: 120px;">
-        <col style="width: 80px;">
+        <col style="width: 3%;">
+        <col style="width: 8%;">
+        <col style="width: 35%;">
+        <col style="width: 15%;">
+        <col style="width: 10%;">
+        <col style="width: 15%;">
+        <col style="width: 14%;">
     </colgroup>
     <thead>
     <tr>
