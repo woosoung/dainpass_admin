@@ -143,6 +143,7 @@ $de_point_unit = trim($de_point_unit) === '' ? 1 : (int)$de_point_unit;
 $de_settle_max_point_ratio = trim($de_settle_max_point_ratio) === '' ? 0 : (float)$de_settle_max_point_ratio;
 $de_point_getting_rate = trim($de_point_getting_rate) === '' ? 0 : (float)$de_point_getting_rate;
 $de_point_days = trim($de_point_days) === '' ? 0 : (int)$de_point_days;
+$de_point_duration = trim($de_point_duration) === '' ? 0 : (int)$de_point_duration;
 $de_cart_keep_term = trim($de_cart_keep_term) === '' ? 0 : (int)$de_cart_keep_term;
 $de_review_period = trim($de_review_period) === '' ? 0 : (int)$de_review_period;
 $de_review_modify_period = trim($de_review_modify_period) === '' ? 0 : (int)$de_review_modify_period;
@@ -212,7 +213,8 @@ $sql = " UPDATE {$g5['dain_default_table']}
        de_schedule_max_days          = '{$de_schedule_max_days}',
        de_schedule_days_colors       = '{$de_schedule_days_colors}',
        de_schedule_com_counts        = '{$de_schedule_com_counts}',
-       de_schedule_com_colors        = '{$de_schedule_com_colors}'
+       de_schedule_com_colors        = '{$de_schedule_com_colors}',
+       de_point_duration             = '{$de_point_duration}'
 ";
 
 // WHERE 절 추가 (없으면 전체 레코드 수정됨)
