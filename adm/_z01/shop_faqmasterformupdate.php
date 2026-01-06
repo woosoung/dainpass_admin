@@ -143,6 +143,6 @@ if ($w === '') {
 }
 
 // 등록/수정 후에는 수정 폼으로 이동
-alert('FAQ 마스터가 저장되었습니다.', './shop_faqmasterform.php?w=u&fm_id='.$fm_id);
+alert('FAQ 마스터가 저장되었습니다.', './shop_faqmasterlist.php');
 
 exit;
