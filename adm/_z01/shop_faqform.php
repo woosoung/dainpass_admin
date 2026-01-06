@@ -216,28 +216,6 @@ function frmshopfaqform_check(f)
     <?php echo get_editor_js('fa_question'); ?>
     <?php echo get_editor_js('fa_answer'); ?>
 
-    // 에디터 필수값 검증
-    <?php if ($is_dhtml_editor) { ?>
-    // 에디터 내용 체크
-    if (typeof ed_fa_question !== 'undefined') {
-        var question_content = ed_fa_question.outputBodyHTML();
-        var question_text = question_content.replace(/<[^>]*>/g, '').trim();
-        if (!question_text || question_text === '' || question_text === '&nbsp;') {
-            alert('질문을 입력해주세요.');
-            return false;
-        }
-    }
-
-    if (typeof ed_fa_answer !== 'undefined') {
-        var answer_content = ed_fa_answer.outputBodyHTML();
-        var answer_text = answer_content.replace(/<[^>]*>/g, '').trim();
-        if (!answer_text || answer_text === '' || answer_text === '&nbsp;') {
-            alert('답변을 입력해주세요.');
-            return false;
-        }
-    }
-    <?php } ?>
-
     return true;
 }
 </script>
