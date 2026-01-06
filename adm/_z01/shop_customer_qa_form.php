@@ -98,8 +98,9 @@ $pg_anchor ='<ul class="anchor">
 
 <div class="local_desc01 local_desc">
     <p>
-        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
+        고객 문의 내용을 확인하고 답변을 작성할 수 있습니다.<br>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <form name="fcustomerqaform" id="fcustomerqaform" action="./shop_customer_qa_form_update.php" method="post" enctype="multipart/form-data" onsubmit="return fcustomerqaform_submit(this);">
@@ -139,8 +140,15 @@ $pg_anchor ='<ul class="anchor">
             <th scope="row">작성자</th>
             <td>
                 <div class="text-sm">
-                    <strong><?=get_text($qna['name'])?></strong> (<?=get_text($qna['user_id'])?>)
-                    <span class="ml-2 text-xs text-gray-500"><?=substr($qna['qna_created_at'],0,10)?></span>
+                    <strong><?=get_text($qna['nickname'])?></strong>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">작성일</th>
+            <td>
+                <div class="text-sm">
+                    <span class=""><?=substr($qna['qna_created_at'],0,19)?></span>
                 </div>
             </td>
         </tr>
