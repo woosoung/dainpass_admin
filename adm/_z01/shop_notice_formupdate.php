@@ -13,11 +13,24 @@ $mb_id = $member['mb_id'];
 // 토큰 체크
 check_admin_token();
 
+// 입력 검증 - 화이트리스트 방식
+$allowed_w = array('', 'u');
 $w = isset($_POST['w']) ? clean_xss_tags($_POST['w']) : '';
+$w = in_array($w, $allowed_w) ? $w : '';
+
 $post_shopnotice_id = isset($_POST['shopnotice_id']) ? (int)$_POST['shopnotice_id'] : 0;
+$post_shopnotice_id = ($post_shopnotice_id > 0 && $post_shopnotice_id <= 2147483647) ? $post_shopnotice_id : 0;
+
 $post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
+$post_shop_id = ($post_shop_id > 0 && $post_shop_id <= 2147483647) ? $post_shop_id : 0;
+
 $post_subject = isset($_POST['subject']) ? clean_xss_tags($_POST['subject']) : '';
+$post_subject = trim($post_subject);
+$post_subject = substr($post_subject, 0, 100); // 최대 길이 제한
+
+$allowed_status = array('ok', 'pending');
 $post_status = isset($_POST['status']) ? clean_xss_tags($_POST['status']) : 'ok';
+$post_status = in_array($post_status, $allowed_status) ? $post_status : 'ok';
 
 // 에디터 내용 처리
 $is_dhtml_editor = false;
@@ -40,6 +53,13 @@ if ($is_dhtml_editor) {
     $post_content = isset($_POST['content']) ? clean_xss_tags($_POST['content']) : '';
 }
 
+// content 길이 제한 (10MB)
+if (strlen($post_content) > 10485760) {
+    // qstr은 아직 생성되지 않았으므로 기본 리다이렉트만
+    alert('내용이 너무 깁니다. (최대 10MB)', './shop_notice_form.php?w='.$w.($post_shopnotice_id ? '&shopnotice_id='.$post_shopnotice_id : ''));
+    exit;
+}
+
 // content 내의 로컬 이미지 URL을 S3 URL로 변환
 // 수정 모드일 때는 shopnotice_id 전달
 $shopnotice_id_for_convert = 0;
@@ -51,25 +71,50 @@ if (!empty($post_content) && function_exists('convert_shop_notice_content_images
     $post_content = convert_shop_notice_content_images_to_s3($post_content, $shopnotice_id_for_convert);
 }
 
+// qstr 파라미터 검증
+$allowed_sst = array('shopnotice_id', 'subject', 'status', 'create_at');
+$allowed_sod = array('asc', 'desc');
+$allowed_sfl = array('', 'subject', 'content', 'mb_id');
+$allowed_sfl2 = array('', 'ok', 'pending');
+
+$qs_page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+$qs_page = ($qs_page > 0 && $qs_page <= 10000) ? $qs_page : 1;
+
+$qs_sst = isset($_POST['sst']) ? clean_xss_tags($_POST['sst']) : '';
+$qs_sst = in_array($qs_sst, $allowed_sst) ? $qs_sst : '';
+
+$qs_sod = isset($_POST['sod']) ? clean_xss_tags($_POST['sod']) : '';
+$qs_sod = in_array($qs_sod, $allowed_sod) ? $qs_sod : '';
+
+$qs_sfl = isset($_POST['sfl']) ? clean_xss_tags($_POST['sfl']) : '';
+$qs_sfl = in_array($qs_sfl, $allowed_sfl) ? $qs_sfl : '';
+
+$qs_stx = isset($_POST['stx']) ? clean_xss_tags($_POST['stx']) : '';
+$qs_stx = substr($qs_stx, 0, 100);
+$qs_stx = str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $qs_stx);
+
+$qs_sfl2 = isset($_POST['sfl2']) ? clean_xss_tags($_POST['sfl2']) : '';
+$qs_sfl2 = in_array($qs_sfl2, $allowed_sfl2) ? $qs_sfl2 : '';
+
 // qstr 생성
 $qstr = '';
-if (isset($_POST['page']) && $_POST['page']) {
-    $qstr .= '&page=' . (int)$_POST['page'];
+if ($qs_page > 1) {
+    $qstr .= '&page=' . $qs_page;
 }
-if (isset($_POST['sst']) && $_POST['sst']) {
-    $qstr .= '&sst=' . urlencode($_POST['sst']);
+if ($qs_sst) {
+    $qstr .= '&sst=' . urlencode($qs_sst);
 }
-if (isset($_POST['sod']) && $_POST['sod']) {
-    $qstr .= '&sod=' . urlencode($_POST['sod']);
+if ($qs_sod) {
+    $qstr .= '&sod=' . urlencode($qs_sod);
 }
-if (isset($_POST['sfl']) && $_POST['sfl']) {
-    $qstr .= '&sfl=' . urlencode($_POST['sfl']);
+if ($qs_sfl) {
+    $qstr .= '&sfl=' . urlencode($qs_sfl);
 }
-if (isset($_POST['stx']) && $_POST['stx']) {
-    $qstr .= '&stx=' . urlencode($_POST['stx']);
+if ($qs_stx) {
+    $qstr .= '&stx=' . urlencode($qs_stx);
 }
-if (isset($_POST['sfl2']) && $_POST['sfl2']) {
-    $qstr .= '&sfl2=' . urlencode($_POST['sfl2']);
+if ($qs_sfl2) {
+    $qstr .= '&sfl2=' . urlencode($qs_sfl2);
 }
 
 // shop_id 검증
@@ -79,18 +124,15 @@ if ($post_shop_id != $shop_id) {
 }
 
 // 필수값 검증
-if (!$post_subject || trim($post_subject) == '') {
+if (!$post_subject || $post_subject == '') {
     alert('제목을 입력해주세요.', './shop_notice_form.php?w='.$w.($post_shopnotice_id ? '&shopnotice_id='.$post_shopnotice_id : '').($qstr ? '&'.ltrim($qstr, '&') : ''));
     exit;
 }
 
-if (!$post_content || trim($post_content) == '') {
+// content는 에디터에서 가져온 값이므로 trim 처리
+$post_content_trimmed = trim($post_content);
+if (!$post_content_trimmed || $post_content_trimmed == '') {
     alert('내용을 입력해주세요.', './shop_notice_form.php?w='.$w.($post_shopnotice_id ? '&shopnotice_id='.$post_shopnotice_id : '').($qstr ? '&'.ltrim($qstr, '&') : ''));
-    exit;
-}
-
-if (!in_array($post_status, array('ok', 'pending'))) {
-    alert('상태값이 올바르지 않습니다.', './shop_notice_form.php?w='.$w.($post_shopnotice_id ? '&shopnotice_id='.$post_shopnotice_id : '').($qstr ? '&'.ltrim($qstr, '&') : ''));
     exit;
 }
 

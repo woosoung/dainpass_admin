@@ -16,8 +16,38 @@ $shop_info = $result['shop_info'];
 
 @auth_check($auth[$sub_menu], 'w');
 
+// 입력 검증 - 화이트리스트 방식
 $shopnotice_id = isset($_REQUEST['shopnotice_id']) ? (int)$_REQUEST['shopnotice_id'] : 0;
+$shopnotice_id = ($shopnotice_id > 0 && $shopnotice_id <= 2147483647) ? $shopnotice_id : 0;
+
+$allowed_w = array('', 'u');
 $w = isset($_REQUEST['w']) ? clean_xss_tags($_REQUEST['w']) : '';
+$w = in_array($w, $allowed_w) ? $w : '';
+
+// 쿼리스트링 파라미터 검증
+$allowed_sst = array('shopnotice_id', 'subject', 'status', 'create_at');
+$allowed_sod = array('asc', 'desc');
+$allowed_sfl = array('', 'subject', 'content', 'mb_id');
+$allowed_sfl2 = array('', 'ok', 'pending');
+
+$qs_sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : '';
+$qs_sst = in_array($qs_sst, $allowed_sst) ? $qs_sst : '';
+
+$qs_sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : '';
+$qs_sod = in_array($qs_sod, $allowed_sod) ? $qs_sod : '';
+
+$qs_sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
+$qs_sfl = in_array($qs_sfl, $allowed_sfl) ? $qs_sfl : '';
+
+$qs_stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
+$qs_stx = substr($qs_stx, 0, 100);
+$qs_stx = str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $qs_stx);
+
+$qs_sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : '';
+$qs_sfl2 = in_array($qs_sfl2, $allowed_sfl2) ? $qs_sfl2 : '';
+
+$qs_page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$qs_page = ($qs_page > 0 && $qs_page <= 10000) ? $qs_page : 1;
 
 $notice = array(
     'shopnotice_id' => 0,
@@ -137,12 +167,12 @@ $editor_js_content = $editor_js;
 <input type="hidden" name="w" value="<?php echo $w; ?>">
 <input type="hidden" name="shopnotice_id" value="<?php echo $notice['shopnotice_id']; ?>">
 <input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
-<input type="hidden" name="sst" value="<?php echo isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : ''; ?>">
-<input type="hidden" name="sod" value="<?php echo isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : ''; ?>">
-<input type="hidden" name="sfl" value="<?php echo isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : ''; ?>">
-<input type="hidden" name="stx" value="<?php echo isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : ''; ?>">
-<input type="hidden" name="sfl2" value="<?php echo isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; ?>">
-<input type="hidden" name="page" value="<?php echo isset($_GET['page']) ? (int)$_GET['page'] : 1; ?>">
+<input type="hidden" name="sst" value="<?php echo htmlspecialchars($qs_sst); ?>">
+<input type="hidden" name="sod" value="<?php echo htmlspecialchars($qs_sod); ?>">
+<input type="hidden" name="sfl" value="<?php echo htmlspecialchars($qs_sfl); ?>">
+<input type="hidden" name="stx" value="<?php echo htmlspecialchars($qs_stx); ?>">
+<input type="hidden" name="sfl2" value="<?php echo htmlspecialchars($qs_sfl2); ?>">
+<input type="hidden" name="page" value="<?php echo $qs_page; ?>">
 <input type="hidden" name="token" value="<?php echo get_admin_token(); ?>">
 
 <div class="tbl_frm01 tbl_wrap">
@@ -156,7 +186,7 @@ $editor_js_content = $editor_js;
     <tr>
         <th scope="row"><label for="subject">제목<strong class="sound_only">필수</strong></label></th>
         <td>
-            <input type="text" name="subject" value="<?php echo get_text($notice['subject']); ?>" id="subject" required class="frm_input required" size="80" maxlength="255">
+            <input type="text" name="subject" value="<?php echo get_text($notice['subject']); ?>" id="subject" required class="frm_input required" size="80" maxlength="100">
         </td>
     </tr>
     <tr>
@@ -180,7 +210,16 @@ $editor_js_content = $editor_js;
 
 <div class="btn_fixed_top btn_confirm">
     <button type="submit" class="btn_submit btn">확인</button>
-    <a href="./shop_notice_list.php?<?php echo isset($_GET['sst']) ? 'sst='.urlencode($_GET['sst']) : ''; ?><?php echo isset($_GET['sod']) ? '&sod='.urlencode($_GET['sod']) : ''; ?><?php echo isset($_GET['sfl']) ? '&sfl='.urlencode($_GET['sfl']) : ''; ?><?php echo isset($_GET['stx']) ? '&stx='.urlencode($_GET['stx']) : ''; ?><?php echo isset($_GET['sfl2']) ? '&sfl2='.urlencode($_GET['sfl2']) : ''; ?><?php echo isset($_GET['page']) ? '&page='.(int)$_GET['page'] : ''; ?>" class="btn_cancel btn btn_02">취소</a>
+    <?php
+    $cancel_qstr = '';
+    if ($qs_sst) $cancel_qstr .= 'sst=' . urlencode($qs_sst);
+    if ($qs_sod) $cancel_qstr .= ($cancel_qstr ? '&' : '') . 'sod=' . urlencode($qs_sod);
+    if ($qs_sfl) $cancel_qstr .= ($cancel_qstr ? '&' : '') . 'sfl=' . urlencode($qs_sfl);
+    if ($qs_stx) $cancel_qstr .= ($cancel_qstr ? '&' : '') . 'stx=' . urlencode($qs_stx);
+    if ($qs_sfl2) $cancel_qstr .= ($cancel_qstr ? '&' : '') . 'sfl2=' . urlencode($qs_sfl2);
+    if ($qs_page > 1) $cancel_qstr .= ($cancel_qstr ? '&' : '') . 'page=' . $qs_page;
+    ?>
+    <a href="./shop_notice_list.php<?php echo $cancel_qstr ? '?' . $cancel_qstr : ''; ?>" class="btn_cancel btn btn_02">취소</a>
 </div>
 
 </form>
