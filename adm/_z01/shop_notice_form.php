@@ -109,12 +109,7 @@ if ($w == 'u') {
         if (!empty($content)) {
             // PostgreSQL에서 가져온 content는 이미 올바른 형식일 수 있음
             // 하지만 안전을 위해 디코딩 시도
-            
-            // 먼저 백슬래시 제거 (magic quotes 등으로 인한 이스케이프 제거)
-            if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
-                $content = stripslashes($content);
-            }
-            
+
             // HTML 엔티티가 인코딩되어 있는지 확인
             // &quot; 또는 &amp; 같은 엔티티가 있으면 디코딩
             if (strpos($content, '&quot;') !== false || strpos($content, '&amp;') !== false || strpos($content, '&lt;') !== false || strpos($content, '&gt;') !== false) {
@@ -159,8 +154,8 @@ $editor_js_content = $editor_js;
 <div class="local_desc01 local_desc">
     <p>
         공지사항을 <?php echo $w == 'u' ? '수정' : '등록'; ?>합니다.<br>
-        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <form name="fnoticeform" action="./shop_notice_formupdate.php" method="post" onsubmit="return form_check(this);">
