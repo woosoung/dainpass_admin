@@ -274,7 +274,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     <td class="td_status">
                         <span class="<?=$status_class?>"><?=$status_text?></span>
                     </td>
-                    <td class="td_created_at font_size_8"><?=substr($row['qna_created_at'],0,16)?></td>
+                    <td class="td_created_at font_size_8"><?=substr($row['qna_created_at'],0,19)?></td>
                     <td class="td_mngsmall"><?=$s_mod?></td>
                 </tr>
                 <?php
