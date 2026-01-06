@@ -80,7 +80,7 @@ if ($w === '') {
                      AND shop_id = {$form_shop_id} ";
     $exist = sql_fetch_pg($exist_sql);
     if (!$exist || !$exist['fm_id']) {
-        alert('등록된 자료가 없거나, 다른 가맹점의 FAQ 마스터입니다.', './shop_faqmasterlist.php');
+        alert('등록된 자료가 없습니다.', './shop_faqmasterlist.php');
         exit;
     }
 
@@ -110,7 +110,7 @@ if ($w === '') {
                      AND shop_id = {$form_shop_id} ";
     $exist = sql_fetch_pg($exist_sql);
     if (!$exist || !$exist['fm_id']) {
-        alert('등록된 자료가 없거나, 다른 가맹점의 FAQ 마스터입니다.', './shop_faqmasterlist.php');
+        alert('등록된 자료가 없습니다.', './shop_faqmasterlist.php');
         exit;
     }
 
