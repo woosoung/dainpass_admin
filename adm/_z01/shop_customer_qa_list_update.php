@@ -22,6 +22,12 @@ if (!isset($_POST['chk']) || !is_array($_POST['chk']) || !count($_POST['chk'])) 
 auth_check($auth[$sub_menu], 'w');
 check_admin_token();
 
+// 개발 권한 체크 (mb_level 8 이상만 삭제 가능)
+if ($member['mb_level'] < 8) {
+    alert('삭제 권한이 없습니다. 개발 관리자만 삭제할 수 있습니다.', './shop_customer_qa_list.php');
+    exit;
+}
+
 // 가맹점 접근 권한 체크 (세션에서 shop_id 가져옴)
 $result = check_shop_access();
 $shop_id = $result['shop_id'];

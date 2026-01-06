@@ -155,7 +155,7 @@ $row = sql_fetch_pg($sql);
 $pending_count = $row['cnt'];
 
 $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
-$colspan = 10;
+$colspan = ($member['mb_level'] >= 8) ? 10 : 9;
 
 $g5['title'] = '고객문의관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
@@ -206,10 +206,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             <caption><?php echo $g5['title']; ?> 목록</caption>
             <thead>
                 <tr class="success">
+                    <?php if($member['mb_level'] >= 8) { ?>
                     <th scope="col">
                         <label for="chkall" class="sound_only">문의 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
+                    <?php } ?>
                     <th scope="col" class="td_left">번호</th>
                     <th scope="col" class="td_left">회원 닉네임</th>
                     <th scope="col" class="td_left">제목</th>
@@ -237,11 +239,13 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     $bg = 'bg'.($i%2);
                 ?>
                 <tr class="<?=$bg?>" tr_id="<?=$row['qna_id']?>">
+                    <?php if($member['mb_level'] >= 8) { ?>
                     <td class="td_chk">
                         <input type="hidden" name="qna_id[<?=$i?>]" value="<?=$row['qna_id']?>" id="qna_id_<?=$i?>">
                         <label for="chk_<?=$i?>" class="sound_only"><?=get_text($row['qna_subject'])?></label>
                         <input type="checkbox" name="chk[]" value="<?=$i?>" id="chk_<?=$i?>">
                     </td>
+                    <?php } ?>
                     <td class="td_qna_idx td_left font_size_8"><?=$row['qna_id']?></td>
                     <td class="td_customer_info td_left">
                         <div class="text-sm">
@@ -282,7 +286,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         </table>
     </div>
     <div class="btn_fixed_top">
-        <?php if(!@auth_check($auth[$sub_menu],"d",1)) { ?>
+        <?php if($member['mb_level'] >= 8 && !@auth_check($auth[$sub_menu],"d",1)) { ?>
         <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
         <?php } ?>
     </div>
