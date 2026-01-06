@@ -32,6 +32,9 @@ $allowed_status = array('ok', 'pending');
 $post_status = isset($_POST['status']) ? clean_xss_tags($_POST['status']) : 'ok';
 $post_status = in_array($post_status, $allowed_status) ? $post_status : 'ok';
 
+// is_important 검증 (체크박스는 체크되면 '1', 체크 안 되면 전송되지 않음)
+$post_is_important = isset($_POST['is_important']) && $_POST['is_important'] == '1' ? true : false;
+
 // 에디터 내용 처리
 $is_dhtml_editor = false;
 if ($config['cf_editor'] && (!is_mobile() || (defined('G5_IS_MOBILE_DHTML_USE') && G5_IS_MOBILE_DHTML_USE))) {
@@ -165,12 +168,13 @@ if ($w == 'u') {
     $post_content_escaped = pg_escape_string($g5['connect_pg'], $post_content);
     $post_subject_escaped = pg_escape_string($g5['connect_pg'], $post_subject);
     
-    $update_sql = " UPDATE shop_notice 
-                    SET subject = '{$post_subject_escaped}', 
-                        content = '{$post_content_escaped}', 
+    $update_sql = " UPDATE shop_notice
+                    SET subject = '{$post_subject_escaped}',
+                        content = '{$post_content_escaped}',
                         status = '{$post_status}',
+                        is_important = " . ($post_is_important ? 'true' : 'false') . ",
                         update_at = CURRENT_TIMESTAMP
-                    WHERE shopnotice_id = {$post_shopnotice_id} 
+                    WHERE shopnotice_id = {$post_shopnotice_id}
                     AND shop_id = {$post_shop_id} ";
     
     $result = sql_query_pg($update_sql);
@@ -212,8 +216,8 @@ if ($w == 'u') {
     $mb_id_escaped = pg_escape_string($g5['connect_pg'], $mb_id);
     // INSERT - shopnotice_id는 AUTO_INCREMENT이므로 제외 (PostgreSQL에서 자동으로 시퀀스 사용)
     // 이미지 설명에 따르면: shopnotice_id (BIGINT, PRIMARY KEY, AUTO_INCREMENT)
-    $insert_sql = " INSERT INTO shop_notice (shop_id, mb_id, subject, content, status, create_at, update_at) 
-                    VALUES ({$post_shop_id}, '{$mb_id_escaped}', '{$post_subject_escaped}', '{$post_content_escaped}', '{$post_status}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ";
+    $insert_sql = " INSERT INTO shop_notice (shop_id, mb_id, subject, content, status, is_important, create_at, update_at)
+                    VALUES ({$post_shop_id}, '{$mb_id_escaped}', '{$post_subject_escaped}', '{$post_content_escaped}', '{$post_status}', " . ($post_is_important ? 'true' : 'false') . ", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ";
     
     $result = sql_query_pg($insert_sql);
     

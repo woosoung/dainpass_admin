@@ -67,10 +67,10 @@ $total_count = isset($count_row['cnt']) ? (int)$count_row['cnt'] : 0;
 // 페이징 계산
 $total_page = $total_count > 0 ? ceil($total_count / $rows_per_page) : 0;
 
-// 목록 조회
+// 목록 조회 (중요 공지를 먼저 표시)
 $sql = " SELECT * FROM shop_notice
          {$where_sql}
-         ORDER BY {$sst} {$sod}
+         ORDER BY is_important DESC, {$sst} {$sod}
          LIMIT " . (int)$rows_per_page . " OFFSET " . (int)$offset . " ";
 $result = sql_query_pg($sql);
 
@@ -174,7 +174,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             $mb_id = $row['mb_id'];
             $status = $row['status'];
             $create_at = $row['create_at'];
-            
+            // PostgreSQL boolean 값은 't' 또는 'f'로 반환됨
+            $is_important = isset($row['is_important']) && $row['is_important'] === 't' ? true : false;
+
             $status_text = '';
             $status_class = '';
             switch ($status) {
@@ -187,16 +189,21 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                 default:
                     $status_text = htmlspecialchars($status);
             }
-            
+
             $create_at_text = $create_at ? date('Y-m-d H:i', strtotime($create_at)) : '-';
             $subject_display = mb_strlen($subject) > 50 ? mb_substr($subject, 0, 50) . '...' : $subject;
     ?>
-    <tr>
+    <tr<?php echo $is_important ? ' style="background-color:#fff8f0;"' : ''; ?>>
         <td class="td_chk">
             <input type="checkbox" name="chk[]" value="<?php echo $shopnotice_id ?>" id="chk_<?php echo $i ?>">
         </td>
         <td class="td_num"><?php echo $shopnotice_id ?></td>
-        <td class="td_left"><?php echo htmlspecialchars($subject_display) ?></td>
+        <td class="td_left">
+            <?php if ($is_important) { ?>
+                <strong style="color:#ff4444;">[중요]</strong>
+            <?php } ?>
+            <?php echo htmlspecialchars($subject_display) ?>
+        </td>
         <td class="td_left"><?php echo htmlspecialchars($mb_id) ?></td>
         <td class="td_left"><?php echo $status_text ?></td>
         <td class="td_left"><?php echo $create_at_text ?></td>

@@ -55,7 +55,8 @@ $notice = array(
     'mb_id' => $member['mb_id'],
     'subject' => '',
     'content' => '',
-    'status' => 'ok'
+    'status' => 'ok',
+    'is_important' => false
 );
 
 if ($w == 'u') {
@@ -74,7 +75,8 @@ if ($w == 'u') {
         'mb_id' => $notice_row['mb_id'],
         'subject' => $notice_row['subject'],
         'content' => $notice_row['content'],
-        'status' => $notice_row['status']
+        'status' => $notice_row['status'],
+        'is_important' => isset($notice_row['is_important']) && $notice_row['is_important'] === 't' ? true : false
     );
     
     // 수정 모드일 때 shopnotice_id를 세션에 저장 (에디터 업로드 시 사용)
@@ -197,6 +199,14 @@ $editor_js_content = $editor_js;
                 <option value="ok"<?php echo $notice['status'] == 'ok' ? ' selected' : '' ?>>정상</option>
                 <option value="pending"<?php echo $notice['status'] == 'pending' ? ' selected' : '' ?>>대기</option>
             </select>
+        </td>
+    </tr>
+    <tr>
+        <th scope="row"><label for="is_important">중요 공지</label></th>
+        <td>
+            <input type="checkbox" name="is_important" id="is_important" value="1"<?php echo $notice['is_important'] ? ' checked' : '' ?>>
+            <label for="is_important">중요 공지로 지정</label>
+            <?php echo help('목록 상단에 우선 표시');?>
         </td>
     </tr>
     </tbody>
