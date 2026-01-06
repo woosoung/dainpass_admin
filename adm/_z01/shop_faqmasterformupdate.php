@@ -36,8 +36,8 @@ $fm_subject = trim($fm_subject);
 $fm_subject = substr($fm_subject, 0, 100); // 최대 길이 제한
 
 $fm_order = isset($_POST['fm_order']) ? (int)$_POST['fm_order'] : 0;
-// INT 범위 검증
-if ($fm_order < -2147483648 || $fm_order > 2147483647) {
+// 출력순서 범위 검증 (-1000~1000)
+if ($fm_order < -1000 || $fm_order > 1000) {
     $fm_order = 0;
 }
 

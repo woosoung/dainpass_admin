@@ -79,7 +79,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
                     <th scope="row"><label for="fm_order">출력순서</label></th>
                     <td>
                         <?php echo help('숫자가 작을수록 FAQ 분류에서 먼저 출력됩니다.'); ?>
-                        <input type="number" name="fm_order" value="<?php echo (int)$fm['fm_order']; ?>" id="fm_order" class="frm_input" min="-2147483648" max="2147483647" size="10">
+                        <input type="number" name="fm_order" value="<?php echo (int)$fm['fm_order']; ?>" id="fm_order" class="frm_input" min="-1000" max="1000" size="10">
                     </td>
                 </tr>
                 <tr>
@@ -128,8 +128,8 @@ function frmshopfaqmasterform_check(f) {
     // 출력순서 범위 검증
     if (f.fm_order.value !== '') {
         var order = parseInt(f.fm_order.value);
-        if (isNaN(order) || order < -2147483648 || order > 2147483647) {
-            alert('출력순서는 -2147483648에서 2147483647 사이의 정수여야 합니다.');
+        if (isNaN(order) || order < -1000 || order > 1000) {
+            alert('출력순서는 -1000에서 1000 사이의 정수여야 합니다.');
             f.fm_order.focus();
             return false;
         }
