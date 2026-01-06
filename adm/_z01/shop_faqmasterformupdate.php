@@ -31,24 +31,27 @@ $fm_id = ($fm_id >= 0 && $fm_id <= 2147483647) ? $fm_id : 0;
 // form에서 넘어온 shop_id는 신뢰하지 않고, 현재 로그인 정보 기준으로 강제
 $form_shop_id = $shop_id;
 
-$fm_subject = isset($_POST['fm_subject']) ? strip_tags(clean_xss_attributes($_POST['fm_subject'])) : '';
-$fm_subject = trim($fm_subject);
-$fm_subject = substr($fm_subject, 0, 100); // 최대 길이 제한
+// 삭제가 아닐 때만 제목/순서 검증
+if ($w !== 'd') {
+    $fm_subject = isset($_POST['fm_subject']) ? strip_tags(clean_xss_attributes($_POST['fm_subject'])) : '';
+    $fm_subject = trim($fm_subject);
+    $fm_subject = substr($fm_subject, 0, 100); // 최대 길이 제한
 
-$fm_order = isset($_POST['fm_order']) ? (int)$_POST['fm_order'] : 0;
-// 출력순서 범위 검증 (-1000~1000)
-if ($fm_order < -1000 || $fm_order > 1000) {
-    $fm_order = 0;
+    $fm_order = isset($_POST['fm_order']) ? (int)$_POST['fm_order'] : 0;
+    // 출력순서 범위 검증 (-1000~1000)
+    if ($fm_order < -1000 || $fm_order > 1000) {
+        $fm_order = 0;
+    }
+
+    if ($fm_subject === '') {
+        alert('제목을 입력해 주세요.', './shop_faqmasterform.php?w='.$w.($fm_id ? '&fm_id='.$fm_id : ''));
+        exit;
+    }
+
+    // 공통 SET 절 (PostgreSQL, faq_master)
+    // 문자열은 pg_escape_string으로 이스케이프
+    $fm_subject_pg = pg_escape_string($g5['connect_pg'], $fm_subject);
 }
-
-if ($fm_subject === '') {
-    alert('제목을 입력해 주세요.', './shop_faqmasterform.php?w='.$w.($fm_id ? '&fm_id='.$fm_id : ''));
-    exit;
-}
-
-// 공통 SET 절 (PostgreSQL, faq_master)
-// 문자열은 pg_escape_string으로 이스케이프
-$fm_subject_pg = pg_escape_string($g5['connect_pg'], $fm_subject);
 
 if ($w === '') {
     // INSERT
@@ -111,9 +114,18 @@ if ($w === '') {
         exit;
     }
 
-    // 마스터에 속한 FAQ 항목 먼저 삭제
-    $del_faq_sql = " DELETE FROM faq WHERE fm_id = {$fm_id} ";
-    sql_query_pg($del_faq_sql);
+    // 마스터에 속한 FAQ 항목 개수 확인
+    $faq_cnt_sql = " SELECT COUNT(*) AS cnt
+                     FROM faq
+                     WHERE fm_id = {$fm_id} ";
+    $faq_cnt_row = sql_fetch_pg($faq_cnt_sql);
+    $faq_cnt = isset($faq_cnt_row['cnt']) ? (int)$faq_cnt_row['cnt'] : 0;
+
+    // FAQ 항목이 존재하면 삭제 불가
+    if ($faq_cnt > 0) {
+        alert('해당 FAQ 마스터에 속한 FAQ 항목이 '.number_format($faq_cnt).'개 존재합니다.\\n\\nFAQ 항목을 먼저 삭제한 후 마스터를 삭제해주세요.', './shop_faqmasterlist.php');
+        exit;
+    }
 
     // 마스터 삭제
     $del_master_sql = " DELETE FROM faq_master

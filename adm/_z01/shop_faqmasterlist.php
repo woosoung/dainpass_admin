@@ -100,6 +100,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
             <col style="width:80px;">
             <col>
             <col style="width:120px;">
+            <col style="width:80px;">
             <col style="width:160px;">
         </colgroup>
         <thead>
@@ -108,6 +109,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
                 <th scope="col">제목</th>
                 <th scope="col">FAQ수</th>
                 <th scope="col">순서</th>
+                <th scope="col">관리</th>
             </tr>
         </thead>
         <tbody>
@@ -138,13 +140,21 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
                 </td>
                 <td class="td_num"><?php echo number_format($fa_cnt); ?></td>
                 <td class="td_num"><?php echo (int)$row['fm_order']; ?></td>
+                <td class="td_mng td_mng_m">
+                    <a href="./shop_faqmasterform.php?w=u&amp;fm_id=<?php echo $fm_id; ?>" class="btn btn_03">수정</a>
+                    <form method="post" action="./shop_faqmasterformupdate.php" style="display:inline;" onsubmit="return confirm('한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?');">
+                        <input type="hidden" name="w" value="d">
+                        <input type="hidden" name="fm_id" value="<?php echo $fm_id; ?>">
+                        <button type="submit" class="btn btn_02">삭제</button>
+                    </form>
+                </td>
             </tr>
         <?php
             }
         }
 
         if (!isset($i) || $i == 0) {
-            echo '<tr><td colspan="4" class="empty_table"><span>등록된 FAQ마스터가 없습니다.</span></td></tr>';
+            echo '<tr><td colspan="5" class="empty_table"><span>등록된 FAQ마스터가 없습니다.</span></td></tr>';
         }
         ?>
         </tbody>
