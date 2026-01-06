@@ -212,7 +212,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
                     <?php } ?>
-                    <th scope="col" class="td_left">번호</th>
+                    <th scope="col" class="">번호</th>
                     <th scope="col" class="td_left">회원 닉네임</th>
                     <th scope="col" class="td_left">제목</th>
                     <th scope="col" class="td_left">내용</th>
@@ -246,7 +246,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                         <input type="checkbox" name="chk[]" value="<?=$i?>" id="chk_<?=$i?>">
                     </td>
                     <?php } ?>
-                    <td class="td_qna_idx td_left font_size_8"><?=$row['qna_id']?></td>
+                    <td class="td_qna_idx font_size_8"><?=$row['qna_id']?></td>
                     <td class="td_customer_info td_left">
                         <div class="text-sm">
                             <div><?=htmlspecialchars($row['nickname'], ENT_QUOTES, 'UTF-8')?></div>
