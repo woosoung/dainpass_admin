@@ -224,7 +224,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             <tbody>
                 <?php
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
-                    $s_mod = '<a href="./shop_customer_qa_form.php?'.$qstr.'&amp;w=u&amp;qna_id='.$row['qna_id'].'">답변/보기</a>';
+                    $s_mod = '<a href="./shop_customer_qa_form.php?'.$qstr.'&amp;w=u&amp;qna_id='.$row['qna_id'].'" class="btn btn_03">조회</a>';
 
                     // 답변 상태
                     $has_reply = ($row['admin_reply_count'] > 0);
