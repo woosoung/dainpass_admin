@@ -74,7 +74,7 @@ $fm_sql = " SELECT fm_id, shop_id
 $fm = sql_fetch_pg($fm_sql);
 
 if (!$fm || !$fm['fm_id']) {
-    alert('등록된 FAQ 마스터가 없거나, 다른 가맹점의 데이터입니다.', './shop_faqmasterlist.php');
+    alert('등록된 FAQ 마스터가 없습니다.', './shop_faqmasterlist.php');
     exit;
 }
 
@@ -157,7 +157,7 @@ if ($w === '') {
                      AND m.shop_id = {$shop_id} ";
     $exist = sql_fetch_pg($exist_sql);
     if (!$exist || !$exist['fa_id']) {
-        alert('등록된 FAQ 항목이 없거나, 다른 가맹점의 데이터입니다.', './shop_faqlist.php?fm_id='.$fm_id);
+        alert('등록된 FAQ 항목이 없습니다.', './shop_faqlist.php?fm_id='.$fm_id);
         exit;
     }
 
@@ -213,7 +213,7 @@ if ($w === '') {
                      AND m.shop_id = {$shop_id} ";
     $exist = sql_fetch_pg($exist_sql);
     if (!$exist || !$exist['fa_id']) {
-        alert('등록된 FAQ 항목이 없거나, 다른 가맹점의 데이터입니다.', './shop_faqlist.php?fm_id='.$fm_id);
+        alert('등록된 FAQ 항목이 없습니다.', './shop_faqlist.php?fm_id='.$fm_id);
         exit;
     }
 
