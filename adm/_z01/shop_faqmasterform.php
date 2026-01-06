@@ -9,9 +9,13 @@ $result = check_shop_access();
 $shop_id = $result['shop_id'];
 $shop_info = $result['shop_info'];
 
-// 수정 모드 여부
+// 입력 검증 - 화이트리스트 방식
+$allowed_w = array('', 'u');
 $w = isset($_GET['w']) ? clean_xss_tags($_GET['w']) : '';
-$fm_id = isset($_GET['fm_id']) ? (int) $_GET['fm_id'] : 0;
+$w = in_array($w, $allowed_w) ? $w : '';
+
+$fm_id = isset($_GET['fm_id']) ? (int)$_GET['fm_id'] : 0;
+$fm_id = ($fm_id >= 0 && $fm_id <= 2147483647) ? $fm_id : 0;
 
 $html_title = 'FAQ 마스터';
 $fm = array(
@@ -75,13 +79,13 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
                     <th scope="row"><label for="fm_order">출력순서</label></th>
                     <td>
                         <?php echo help('숫자가 작을수록 FAQ 분류에서 먼저 출력됩니다.'); ?>
-                        <input type="number" name="fm_order" value="<?php echo (int) $fm['fm_order']; ?>" id="fm_order" class="frm_input" maxlength="10" size="10">
+                        <input type="number" name="fm_order" value="<?php echo (int)$fm['fm_order']; ?>" id="fm_order" class="frm_input" min="-2147483648" max="2147483647" size="10">
                     </td>
                 </tr>
                 <tr>
                     <th scope="row"><label for="fm_subject">제목<strong class="sound_only">필수</strong></label></th>
                     <td>
-                        <input type="text" name="fm_subject" value="<?php echo get_text($fm['fm_subject']); ?>" id="fm_subject" required class="frm_input required" size="70" maxlength="255">
+                        <input type="text" name="fm_subject" value="<?php echo htmlspecialchars($fm['fm_subject'], ENT_QUOTES, 'UTF-8'); ?>" id="fm_subject" required class="frm_input required" size="70" maxlength="100">
                         <?php if ($w === 'u') { ?>
                             <a href="./shop_faqlist.php?fm_id=<?php echo (int) $fm['fm_id']; ?>&amp;fm_subject=<?php echo urlencode($fm['fm_subject']); ?>" class="btn_frmline">FAQ 항목관리</a>
                         <?php } ?>
@@ -99,11 +103,38 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
 
 <script>
 function frmshopfaqmasterform_check(f) {
+    // 제목 검증
     if (!f.fm_subject.value || f.fm_subject.value.trim() === '') {
         alert('제목을 입력해 주세요.');
         f.fm_subject.focus();
         return false;
     }
+
+    // 제목 길이 제한 (100자)
+    if (f.fm_subject.value.length > 100) {
+        alert('제목은 최대 100자까지 입력 가능합니다.');
+        f.fm_subject.focus();
+        return false;
+    }
+
+    // 제목 XSS 패턴 체크
+    var dangerous_chars = /<script|<iframe|javascript:|onerror=|onload=/i;
+    if (dangerous_chars.test(f.fm_subject.value)) {
+        alert('제목에 허용되지 않는 문자가 포함되어 있습니다.');
+        f.fm_subject.focus();
+        return false;
+    }
+
+    // 출력순서 범위 검증
+    if (f.fm_order.value !== '') {
+        var order = parseInt(f.fm_order.value);
+        if (isNaN(order) || order < -2147483648 || order > 2147483647) {
+            alert('출력순서는 -2147483648에서 2147483647 사이의 정수여야 합니다.');
+            f.fm_order.focus();
+            return false;
+        }
+    }
+
     return true;
 }
 </script>

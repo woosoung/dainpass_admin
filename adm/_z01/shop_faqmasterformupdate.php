@@ -2,6 +2,11 @@
 $sub_menu = '960200';
 include_once('./_common.php');
 
+// 입력 검증 - 화이트리스트 방식
+$allowed_w = array('', 'u', 'd');
+$w = isset($_REQUEST['w']) ? clean_xss_tags($_REQUEST['w']) : '';
+$w = in_array($w, $allowed_w) ? $w : '';
+
 // 등록/수정/삭제 모두에 대해 데모 체크
 if ($w === 'u' || $w === 'd') {
     check_demo();
@@ -19,12 +24,22 @@ check_admin_token();
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
 
-// 입력값
-$fm_id    = isset($_REQUEST['fm_id']) ? (int) $_REQUEST['fm_id'] : 0;
+// 입력값 검증
+$fm_id = isset($_REQUEST['fm_id']) ? (int)$_REQUEST['fm_id'] : 0;
+$fm_id = ($fm_id >= 0 && $fm_id <= 2147483647) ? $fm_id : 0;
+
 // form에서 넘어온 shop_id는 신뢰하지 않고, 현재 로그인 정보 기준으로 강제
 $form_shop_id = $shop_id;
+
 $fm_subject = isset($_POST['fm_subject']) ? strip_tags(clean_xss_attributes($_POST['fm_subject'])) : '';
-$fm_order   = isset($_POST['fm_order']) ? (int) $_POST['fm_order'] : 0;
+$fm_subject = trim($fm_subject);
+$fm_subject = substr($fm_subject, 0, 100); // 최대 길이 제한
+
+$fm_order = isset($_POST['fm_order']) ? (int)$_POST['fm_order'] : 0;
+// INT 범위 검증
+if ($fm_order < -2147483648 || $fm_order > 2147483647) {
+    $fm_order = 0;
+}
 
 if ($fm_subject === '') {
     alert('제목을 입력해 주세요.', './shop_faqmasterform.php?w='.$w.($fm_id ? '&fm_id='.$fm_id : ''));
@@ -50,7 +65,7 @@ if ($w === '') {
     $fm_id = (int) sql_insert_id_pg('faq_master');
 
 } elseif ($w === 'u') {
-    if (!$fm_id) {
+    if (!$fm_id || $fm_id <= 0) {
         alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
         exit;
     }
@@ -80,7 +95,7 @@ if ($w === '') {
     }
 
 } elseif ($w === 'd') {
-    if (!$fm_id) {
+    if (!$fm_id || $fm_id <= 0) {
         alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
         exit;
     }
@@ -107,6 +122,11 @@ if ($w === '') {
     sql_query_pg($del_master_sql);
 
     alert('FAQ 마스터가 삭제되었습니다.', './shop_faqmasterlist.php');
+    exit;
+
+} else {
+    // 허용되지 않는 w 값
+    alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
     exit;
 }
 
