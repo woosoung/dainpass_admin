@@ -30,37 +30,40 @@ $fm_id = ($fm_id > 0 && $fm_id <= 2147483647) ? $fm_id : 0;
 $fa_id = isset($_REQUEST['fa_id']) ? (int)$_REQUEST['fa_id'] : 0;
 $fa_id = ($fa_id >= 0 && $fa_id <= 2147483647) ? $fa_id : 0;
 
-$fa_order = isset($_POST['fa_order']) ? (int)$_POST['fa_order'] : 0;
-// 출력순서 범위 검증 (-1000~1000)
-if ($fa_order < -1000 || $fa_order > 1000) {
-    $fa_order = 0;
-}
-
-// 에디터 값 (질문/답변)은 HTML 그대로 받아와서,
-// 저장 전 convert_shop_faq_content_images_to_s3()로 S3에 업로드 및 URL 변환
-$fa_question = isset($_POST['fa_question']) ? $_POST['fa_question'] : '';
-$fa_answer   = isset($_POST['fa_answer']) ? $_POST['fa_answer'] : '';
-
-// 에디터 콘텐츠 길이 제한 (10MB)
-if (strlen($fa_question) > 10485760) {
-    alert('질문 내용이 너무 깁니다. (최대 10MB)', './shop_faqform.php?w='.$w.'&fm_id='.$fm_id.($fa_id ? '&fa_id='.$fa_id : ''));
-    exit;
-}
-if (strlen($fa_answer) > 10485760) {
-    alert('답변 내용이 너무 깁니다. (최대 10MB)', './shop_faqform.php?w='.$w.'&fm_id='.$fm_id.($fa_id ? '&fa_id='.$fa_id : ''));
-    exit;
-}
-
 // fm_id 필수 체크
 if (!$fm_id) {
     alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
     exit;
 }
 
-// 필수값 검사 (질문/답변 모두 비어있으면 에러)
-if (trim(strip_tags($fa_question)) === '' || trim(strip_tags($fa_answer)) === '') {
-    alert('질문과 답변을 모두 입력해 주세요.', './shop_faqform.php?w='.$w.'&fm_id='.$fm_id.($fa_id ? '&fa_id='.$fa_id : ''));
-    exit;
+// 삭제가 아닐 때만 질문/답변 검증
+if ($w !== 'd') {
+    $fa_order = isset($_POST['fa_order']) ? (int)$_POST['fa_order'] : 0;
+    // 출력순서 범위 검증 (-1000~1000)
+    if ($fa_order < -1000 || $fa_order > 1000) {
+        $fa_order = 0;
+    }
+
+    // 에디터 값 (질문/답변)은 HTML 그대로 받아와서,
+    // 저장 전 convert_shop_faq_content_images_to_s3()로 S3에 업로드 및 URL 변환
+    $fa_question = isset($_POST['fa_question']) ? $_POST['fa_question'] : '';
+    $fa_answer   = isset($_POST['fa_answer']) ? $_POST['fa_answer'] : '';
+
+    // 에디터 콘텐츠 길이 제한 (10MB)
+    if (strlen($fa_question) > 10485760) {
+        alert('질문 내용이 너무 깁니다. (최대 10MB)', './shop_faqform.php?w='.$w.'&fm_id='.$fm_id.($fa_id ? '&fa_id='.$fa_id : ''));
+        exit;
+    }
+    if (strlen($fa_answer) > 10485760) {
+        alert('답변 내용이 너무 깁니다. (최대 10MB)', './shop_faqform.php?w='.$w.'&fm_id='.$fm_id.($fa_id ? '&fa_id='.$fa_id : ''));
+        exit;
+    }
+
+    // 필수값 검사 (질문/답변 모두 비어있으면 에러)
+    if (trim(strip_tags($fa_question)) === '' || trim(strip_tags($fa_answer)) === '') {
+        alert('질문과 답변을 모두 입력해 주세요.', './shop_faqform.php?w='.$w.'&fm_id='.$fm_id.($fa_id ? '&fa_id='.$fa_id : ''));
+        exit;
+    }
 }
 
 // 해당 fm_id가 현재 가맹점의 것인지 검사
@@ -74,31 +77,35 @@ if (!$fm || !$fm['fm_id']) {
     alert('등록된 FAQ 마스터가 없거나, 다른 가맹점의 데이터입니다.', './shop_faqmasterlist.php');
     exit;
 }
-// --- S3 업로드 & URL 변환을 위해 content 사전/사후 처리 ---
 
-// 업데이트인 경우, 기존 S3 이미지 목록 확보 (미사용 이미지 정리용)
-$old_question = '';
-$old_answer   = '';
-if ($w === 'u' && $fa_id) {
-    $old_row = sql_fetch_pg(" SELECT fa_question, fa_answer
-                              FROM faq
-                              WHERE fa_id = {$fa_id}
-                                AND fm_id = {$fm_id} ");
-    if ($old_row) {
-        $old_question = (string) $old_row['fa_question'];
-        $old_answer   = (string) $old_row['fa_answer'];
+// 삭제가 아닐 때만 S3 업로드 & URL 변환 처리
+if ($w !== 'd') {
+    // --- S3 업로드 & URL 변환을 위해 content 사전/사후 처리 ---
+
+    // 업데이트인 경우, 기존 S3 이미지 목록 확보 (미사용 이미지 정리용)
+    $old_question = '';
+    $old_answer   = '';
+    if ($w === 'u' && $fa_id) {
+        $old_row = sql_fetch_pg(" SELECT fa_question, fa_answer
+                                  FROM faq
+                                  WHERE fa_id = {$fa_id}
+                                    AND fm_id = {$fm_id} ");
+        if ($old_row) {
+            $old_question = (string) $old_row['fa_question'];
+            $old_answer   = (string) $old_row['fa_answer'];
+        }
     }
-}
 
-// 수정 모드에서 로컬 이미지가 있으면 S3로 업로드 (에디터에서 이미 S3로 올라간 이미지는 그대로 유지)
-if (function_exists('convert_shop_faq_content_images_to_s3') && $w === 'u' && $fa_id) {
-    $fa_question = convert_shop_faq_content_images_to_s3($fa_question, $shop_id, $fm_id, $fa_id, 'fa_question');
-    $fa_answer   = convert_shop_faq_content_images_to_s3($fa_answer,   $shop_id, $fm_id, $fa_id, 'fa_answer');
-}
+    // 수정 모드에서 로컬 이미지가 있으면 S3로 업로드 (에디터에서 이미 S3로 올라간 이미지는 그대로 유지)
+    if (function_exists('convert_shop_faq_content_images_to_s3') && $w === 'u' && $fa_id) {
+        $fa_question = convert_shop_faq_content_images_to_s3($fa_question, $shop_id, $fm_id, $fa_id, 'fa_question');
+        $fa_answer   = convert_shop_faq_content_images_to_s3($fa_answer,   $shop_id, $fm_id, $fa_id, 'fa_answer');
+    }
 
-// PostgreSQL 이스케이프
-$fa_question_pg = pg_escape_string($g5['connect_pg'], $fa_question);
-$fa_answer_pg   = pg_escape_string($g5['connect_pg'], $fa_answer);
+    // PostgreSQL 이스케이프
+    $fa_question_pg = pg_escape_string($g5['connect_pg'], $fa_question);
+    $fa_answer_pg   = pg_escape_string($g5['connect_pg'], $fa_answer);
+}
 
 if ($w === '') {
     // INSERT
