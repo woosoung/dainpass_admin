@@ -131,8 +131,8 @@ $rows = 20;
 $from_record = ($page - 1) * $rows;
 
 $sql = " SELECT q.*, c.user_id, c.name, c.nickname, c.phone, c.email,
-                (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id) AS reply_count,
-                (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id AND sq.reply_mb_id IS NOT NULL) AS admin_reply_count
+                (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id) AS reply_count
+                -- (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id AND sq.reply_mb_id IS NOT NULL) AS admin_reply_count
             {$sql_common}
             {$sql_search}
             {$sql_order}
@@ -229,7 +229,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     $s_mod = '<a href="./shop_customer_qa_form.php?'.$qstr.'&amp;w=u&amp;qna_id='.$row['qna_id'].'" class="btn btn_03">조회</a>';
 
                     // 답변 상태
-                    $has_reply = ($row['admin_reply_count'] > 0);
+                    $has_reply = ($row['reply_count'] > 0);
                     $status_text = $has_reply ? '답변완료' : '답변대기';
                     $status_class = $has_reply ? 'text-green-600' : 'text-red-600';
                     
@@ -267,9 +267,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     <td class="td_secret"><?=($row['qna_secret_yn'] == 'Y') ? '비밀' : '공개'?></td>
                     <td class="td_reply_count">
                         <span class="text-blue-600"><?=$row['reply_count']?></span>
-                        <?php if($has_reply) { ?>
-                            <span class="text-green-600">(관리자: <?=$row['admin_reply_count']?>)</span>
-                        <?php } ?>
                     </td>
                     <td class="td_status">
                         <span class="<?=$status_class?>"><?=$status_text?></span>
