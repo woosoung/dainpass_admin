@@ -9,9 +9,18 @@ $result = check_shop_access();
 $shop_id = $result['shop_id'];
 $shop_info = $result['shop_info'];
 
-// 파라미터
-$fm_id = isset($_GET['fm_id']) ? (int) $_GET['fm_id'] : 0;
-$fm_subject = isset($_GET['fm_subject']) ? clean_xss_tags($_GET['fm_subject'], 1, 1, 255) : '';
+// 파라미터 검증
+$fm_id = isset($_GET['fm_id']) ? (int)$_GET['fm_id'] : 0;
+$fm_id = ($fm_id > 0 && $fm_id <= 2147483647) ? $fm_id : 0;
+
+$fm_subject = isset($_GET['fm_subject']) ? clean_xss_tags($_GET['fm_subject']) : '';
+$fm_subject = substr($fm_subject, 0, 100); // 최대 길이 제한
+
+// fm_id 필수 체크
+if (!$fm_id) {
+    alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
+    exit;
+}
 
 // 해당 가맹점의 마스터인지 확인
 $fm_sql = " SELECT fm_id, shop_id, fm_subject
@@ -30,7 +39,7 @@ if ($fm['fm_subject']) {
     $fm_subject = $fm['fm_subject'];
 }
 
-$g5['title'] = 'FAQ 상세관리 : '.get_text($fm_subject);
+$g5['title'] = 'FAQ 상세관리 : '.htmlspecialchars($fm_subject, ENT_QUOTES, 'UTF-8');
 
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
@@ -79,6 +88,15 @@ $result = sql_query_pg($list_sql);
         <?php
         if ($result && is_object($result) && isset($result->result)) {
             for ($i = 0; $row = sql_fetch_array_pg($result->result); $i++) {
+                $fa_id = (int)$row['fa_id'];
+                $row_fm_id = (int)$row['fm_id'];
+                $fa_order = (int)$row['fa_order'];
+
+                // ID 범위 검증
+                if ($fa_id <= 0 || $fa_id > 2147483647 || $row_fm_id <= 0 || $row_fm_id > 2147483647) {
+                    continue;
+                }
+
                 $num = $i + 1;
                 $bg = 'bg'.($i % 2);
 
@@ -90,11 +108,11 @@ $result = sql_query_pg($list_sql);
         ?>
             <tr class="<?php echo $bg; ?>">
                 <td class="td_num"><?php echo $num; ?></td>
-                <td class="td_left"><?php echo get_text($question); ?></td>
-                <td class="td_num"><?php echo (int) $row['fa_order']; ?></td>
+                <td class="td_left"><?php echo htmlspecialchars($question, ENT_QUOTES, 'UTF-8'); ?></td>
+                <td class="td_num"><?php echo $fa_order; ?></td>
                 <td class="td_mng td_mng_m">
-                    <a href="./shop_faqform.php?w=u&amp;fm_id=<?php echo (int) $row['fm_id']; ?>&amp;fa_id=<?php echo (int) $row['fa_id']; ?>" class="btn btn_03">수정</a>
-                    <a href="./shop_faqformupdate.php?w=d&amp;fm_id=<?php echo (int) $row['fm_id']; ?>&amp;fa_id=<?php echo (int) $row['fa_id']; ?>" onclick="return delete_confirm(this);" class="btn btn_02">삭제</a>
+                    <a href="./shop_faqform.php?w=u&amp;fm_id=<?php echo $row_fm_id; ?>&amp;fa_id=<?php echo $fa_id; ?>" class="btn btn_03">수정</a>
+                    <a href="./shop_faqformupdate.php?w=d&amp;fm_id=<?php echo $row_fm_id; ?>&amp;fa_id=<?php echo $fa_id; ?>&amp;token=<?php echo get_admin_token(); ?>" onclick="return delete_confirm(this);" class="btn btn_02">삭제</a>
                 </td>
             </tr>
         <?php

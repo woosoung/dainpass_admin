@@ -200,6 +200,13 @@ add_javascript('<script src="'.G5_Z_URL.'/js/colpick/colpick.js"></script>',0);
             </td>
         </tr>
         <tr>
+            <th scope="row"><label for="de_point_duration">포인트 유효기간<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_point_duration</span><?php } ?></label></th>
+            <td>
+                <?php echo help("포인트의 유효기간을 설정합니다. (단위: 개월)\n예: 1로 설정하면 1개월 동안 포인트가 유효합니다."); ?>
+                <input type="text" name="de_point_duration" value="<?php echo get_sanitize_input($default2['de_point_duration']??0); ?>" id="de_point_duration" class="frm_input" size="5"> 개월
+            </td>
+        </tr>
+        <tr>
             <th scope="row"><label for="de_pg_service">결제대행사<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_pg_service [토스=lg]</span><?php } ?></label></th>
             <td>
                 <input type="hidden" name="de_pg_service" id="de_pg_service" value="<?php echo $default2['de_pg_service']; ?>" >
@@ -215,7 +222,7 @@ add_javascript('<script src="'.G5_Z_URL.'/js/colpick/colpick.js"></script>',0);
                 <a href="http://sir.kr/main/service/lg_pg.php" target="_blank" id="scf_lgreg" class="lg_btn">토스페이먼츠 신청하기</a>
             </th>
             <td>
-                <span class="sitecode hidden">si_</span> <input type="text" name="de_lg_mid" value="<?php echo get_sanitize_input($default2['de_lg_mid']); ?>" id="de_lg_mid" class="frm_input code_input w-[120px]" size="10" maxlength="20"> 영문자, 숫자 혼용
+                <span class="hidden sitecode">si_</span> <input type="text" name="de_lg_mid" value="<?php echo get_sanitize_input($default2['de_lg_mid']); ?>" id="de_lg_mid" class="frm_input code_input w-[120px]" size="10" maxlength="20"> 영문자, 숫자 혼용
             </td>
         </tr>
         <tr class="pg_info_fld lg_info_fld">

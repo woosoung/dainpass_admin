@@ -14,13 +14,15 @@ $shop_info = $result['shop_info'];
 // faq       : fa_id (PK, bigserial), fm_id (bigint), fa_question (text), fa_answer (text), fa_order (int)
 
 // 페이징 설정
-$page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
-$page = $page > 0 ? $page : 1;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = ($page > 0 && $page <= 10000) ? $page : 1; // 최대 페이지 제한
 $rows_per_page = 30;
 $offset = ($page - 1) * $rows_per_page;
 
-// 검색 조건 (제목 검색만 제공)
+// 검색 조건 검증 (제목 검색만 제공)
 $stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
+$stx = substr($stx, 0, 100); // 최대 길이 제한
+$stx = str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $stx); // SQL 특수문자 이스케이프
 
 $where_sql = " WHERE shop_id = {$shop_id} ";
 if ($stx !== '') {
@@ -68,10 +70,10 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
     <?php } ?>
 </div>
 
-<form name="fsearch" id="fsearch" method="get" class="mb-3 local_sch01 local_sch">
+<form name="fsearch" id="fsearch" method="get" class="mb-3 local_sch01 local_sch" onsubmit="return fsearch_submit(this);">
     <div>
         <label for="stx" class="sound_only">FAQ마스터 제목</label>
-        <input type="text" name="stx" value="<?php echo get_text($stx); ?>" id="stx" class="frm_input" placeholder="FAQ마스터 제목 검색">
+        <input type="text" name="stx" value="<?php echo htmlspecialchars($stx, ENT_QUOTES, 'UTF-8'); ?>" id="stx" class="frm_input" placeholder="FAQ마스터 제목 검색" maxlength="100">
         <input type="submit" value="검색" class="btn_submit">
     </div>
 </form>
@@ -98,6 +100,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
             <col style="width:80px;">
             <col>
             <col style="width:120px;">
+            <col style="width:80px;">
             <col style="width:160px;">
         </colgroup>
         <thead>
@@ -106,20 +109,25 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
                 <th scope="col">제목</th>
                 <th scope="col">FAQ수</th>
                 <th scope="col">순서</th>
+                <th scope="col">관리</th>
             </tr>
         </thead>
         <tbody>
         <?php
         if ($result && is_object($result) && isset($result->result)) {
             for ($i = 0; $row = sql_fetch_array_pg($result->result); $i++) {
-                $fm_id = (int) $row['fm_id'];
+                $fm_id = (int)$row['fm_id'];
+                // ID 범위 검증
+                if ($fm_id <= 0 || $fm_id > 2147483647) {
+                    continue;
+                }
 
                 // 해당 마스터에 속한 FAQ 개수
                 $fa_cnt_sql = " SELECT COUNT(*) AS cnt
                                 FROM faq
                                 WHERE fm_id = {$fm_id} ";
                 $fa_cnt_row = sql_fetch_pg($fa_cnt_sql);
-                $fa_cnt = isset($fa_cnt_row['cnt']) ? (int) $fa_cnt_row['cnt'] : 0;
+                $fa_cnt = isset($fa_cnt_row['cnt']) ? (int)$fa_cnt_row['cnt'] : 0;
 
                 $bg = 'bg'.($i % 2);
         ?>
@@ -131,14 +139,22 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
                     </a>
                 </td>
                 <td class="td_num"><?php echo number_format($fa_cnt); ?></td>
-                <td class="td_num"><?php echo (int) $row['fm_order']; ?></td>
+                <td class="td_num"><?php echo (int)$row['fm_order']; ?></td>
+                <td class="td_mng td_mng_m">
+                    <a href="./shop_faqmasterform.php?w=u&amp;fm_id=<?php echo $fm_id; ?>" class="btn btn_03">수정</a>
+                    <form method="post" action="./shop_faqmasterformupdate.php" style="display:inline;" onsubmit="return confirm('한번 삭제한 자료는 복구할 방법이 없습니다.\n\n정말 삭제하시겠습니까?');">
+                        <input type="hidden" name="w" value="d">
+                        <input type="hidden" name="fm_id" value="<?php echo $fm_id; ?>">
+                        <button type="submit" class="btn btn_02">삭제</button>
+                    </form>
+                </td>
             </tr>
         <?php
             }
         }
 
         if (!isset($i) || $i == 0) {
-            echo '<tr><td colspan="4" class="empty_table"><span>등록된 FAQ마스터가 없습니다.</span></td></tr>';
+            echo '<tr><td colspan="5" class="empty_table"><span>등록된 FAQ마스터가 없습니다.</span></td></tr>';
         }
         ?>
         </tbody>
@@ -148,5 +164,30 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name']
 <?php
 // 페이징 (기존 관리자 페이징 함수 재사용)
 echo get_paging(G5_IS_MOBILE ? $config['cf_mobile_pages'] : $config['cf_write_pages'], $page, $total_page, "./shop_faqmasterlist.php?stx=".urlencode($stx)."&amp;page=");
+?>
 
+<script>
+function fsearch_submit(f) {
+    if (f.stx && f.stx.value) {
+        var stx = f.stx.value.trim();
+
+        // 길이 제한
+        if (stx.length > 100) {
+            alert('검색어는 최대 100자까지 입력 가능합니다.');
+            return false;
+        }
+
+        // XSS 패턴 체크
+        var dangerous_chars = /<script|<iframe|javascript:|onerror=|onload=/i;
+        if (dangerous_chars.test(stx)) {
+            alert('검색어에 허용되지 않는 문자가 포함되어 있습니다.');
+            return false;
+        }
+    }
+
+    return true;
+}
+</script>
+
+<?php
 include_once(G5_ADMIN_PATH.'/admin.tail.php');

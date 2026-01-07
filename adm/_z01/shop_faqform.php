@@ -16,10 +16,22 @@ $result = check_shop_access();
 $shop_id = $result['shop_id'];
 $shop_info = $result['shop_info'];
 
-// 파라미터
+// 파라미터 검증
+$allowed_w = array('', 'u');
 $w = isset($_GET['w']) ? clean_xss_tags($_GET['w']) : '';
-$fm_id = isset($_GET['fm_id']) ? (int) $_GET['fm_id'] : 0;
-$fa_id = isset($_GET['fa_id']) ? (int) $_GET['fa_id'] : 0;
+$w = in_array($w, $allowed_w) ? $w : '';
+
+$fm_id = isset($_GET['fm_id']) ? (int)$_GET['fm_id'] : 0;
+$fm_id = ($fm_id > 0 && $fm_id <= 2147483647) ? $fm_id : 0;
+
+$fa_id = isset($_GET['fa_id']) ? (int)$_GET['fa_id'] : 0;
+$fa_id = ($fa_id >= 0 && $fa_id <= 2147483647) ? $fa_id : 0;
+
+// fm_id 필수 체크
+if (!$fm_id) {
+    alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
+    exit;
+}
 
 // 해당 가맹점의 FAQ 마스터 확인
 $fm_sql = " SELECT fm_id, shop_id, fm_subject
@@ -99,7 +111,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <th scope="row"><label for="fa_order">출력순서</label></th>
         <td>
             <?php echo help('숫자가 작을수록 FAQ 페이지에서 먼저 출력됩니다.'); ?>
-            <input type="text" name="fa_order" value="<?php echo (int) $fa['fa_order']; ?>" id="fa_order" class="frm_input" maxlength="10" size="10">
+            <input type="number" name="fa_order" value="<?php echo (int)$fa['fa_order']; ?>" id="fa_order" class="frm_input" min="-1000" max="1000" size="10">
             <?php if ($w === 'u') { ?>
                 <a href="<?php echo G5_BBS_URL; ?>/faq.php?fm_id=<?php echo (int) $fm_id; ?>" class="btn_frmline">내용보기</a>
             <?php } ?>
@@ -122,9 +134,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             if ($is_dhtml_editor) {
                 $question_content = isset($fa['fa_question']) ? $fa['fa_question'] : '';
                 if (!empty($question_content)) {
-                    if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
-                        $question_content = stripslashes($question_content);
-                    }
                     if (strpos($question_content, '&quot;') !== false || strpos($question_content, '&amp;') !== false) {
                         $question_content = html_entity_decode($question_content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
                     }
@@ -158,9 +167,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             if ($is_dhtml_editor) {
                 $answer_content = isset($fa['fa_answer']) ? $fa['fa_answer'] : '';
                 if (!empty($answer_content)) {
-                    if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
-                        $answer_content = stripslashes($answer_content);
-                    }
                     if (strpos($answer_content, '&quot;') !== false || strpos($answer_content, '&amp;') !== false) {
                         $answer_content = html_entity_decode($answer_content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
                     }
@@ -197,15 +203,14 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 <script>
 function frmshopfaqform_check(f)
 {
-    var errmsg = "";
-    var errfld = null;
-
-    // 질문/답변은 에디터 필수값 (형식은 이후 S3 처리와 함께 보강 가능)
-
-    if (errmsg != "") {
-        alert(errmsg);
-        if (errfld) errfld.focus();
-        return false;
+    // 출력순서 범위 검증
+    if (f.fa_order.value !== '') {
+        var order = parseInt(f.fa_order.value);
+        if (isNaN(order) || order < -1000 || order > 1000) {
+            alert('출력순서는 -1000에서 1000 사이의 정수여야 합니다.');
+            f.fa_order.focus();
+            return false;
+        }
     }
 
     <?php echo get_editor_js('fa_question'); ?>

@@ -65,10 +65,17 @@ $(document).on('submit', '.frm_edit_reply', function(e) {
         return false;
     }
     
+    // 토큰 가져오기
+    var token = get_ajax_token();
+    if (!token) {
+        alert('토큰 정보가 올바르지 않습니다.');
+        return false;
+    }
+
     $.ajax({
         url: './shop_customer_qa_form_update.php',
         type: 'POST',
-        data: formData + '&w=u&token=' + $('input[name="token"]').val(),
+        data: formData + '&w=u&token=' + token,
         dataType: 'json',
         success: function(response) {
             if (response.error) {
@@ -94,15 +101,21 @@ $(document).on('click', '.btn_delete_reply', function() {
         return false;
     }
     
+    // 토큰 가져오기
+    var token = get_ajax_token();
+    if (!token) {
+        alert('토큰 정보가 올바르지 않습니다.');
+        return false;
+    }
+
     $.ajax({
         url: './shop_customer_qa_form_update.php',
         type: 'POST',
         data: {
             reply_id: reply_id,
             qna_id: $('input[name="qna_id"]').val(),
-            shop_id: $('input[name="shop_id"]').val(),
             w: 'd',
-            token: $('input[name="token"]').val()
+            token: token
         },
         dataType: 'json',
         success: function(response) {

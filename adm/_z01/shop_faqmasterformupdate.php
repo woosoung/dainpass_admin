@@ -2,6 +2,11 @@
 $sub_menu = '960200';
 include_once('./_common.php');
 
+// 입력 검증 - 화이트리스트 방식
+$allowed_w = array('', 'u', 'd');
+$w = isset($_REQUEST['w']) ? clean_xss_tags($_REQUEST['w']) : '';
+$w = in_array($w, $allowed_w) ? $w : '';
+
 // 등록/수정/삭제 모두에 대해 데모 체크
 if ($w === 'u' || $w === 'd') {
     check_demo();
@@ -19,21 +24,34 @@ check_admin_token();
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
 
-// 입력값
-$fm_id    = isset($_REQUEST['fm_id']) ? (int) $_REQUEST['fm_id'] : 0;
+// 입력값 검증
+$fm_id = isset($_REQUEST['fm_id']) ? (int)$_REQUEST['fm_id'] : 0;
+$fm_id = ($fm_id >= 0 && $fm_id <= 2147483647) ? $fm_id : 0;
+
 // form에서 넘어온 shop_id는 신뢰하지 않고, 현재 로그인 정보 기준으로 강제
 $form_shop_id = $shop_id;
-$fm_subject = isset($_POST['fm_subject']) ? strip_tags(clean_xss_attributes($_POST['fm_subject'])) : '';
-$fm_order   = isset($_POST['fm_order']) ? (int) $_POST['fm_order'] : 0;
 
-if ($fm_subject === '') {
-    alert('제목을 입력해 주세요.', './shop_faqmasterform.php?w='.$w.($fm_id ? '&fm_id='.$fm_id : ''));
-    exit;
+// 삭제가 아닐 때만 제목/순서 검증
+if ($w !== 'd') {
+    $fm_subject = isset($_POST['fm_subject']) ? strip_tags(clean_xss_attributes($_POST['fm_subject'])) : '';
+    $fm_subject = trim($fm_subject);
+    $fm_subject = substr($fm_subject, 0, 100); // 최대 길이 제한
+
+    $fm_order = isset($_POST['fm_order']) ? (int)$_POST['fm_order'] : 0;
+    // 출력순서 범위 검증 (-1000~1000)
+    if ($fm_order < -1000 || $fm_order > 1000) {
+        $fm_order = 0;
+    }
+
+    if ($fm_subject === '') {
+        alert('제목을 입력해 주세요.', './shop_faqmasterform.php?w='.$w.($fm_id ? '&fm_id='.$fm_id : ''));
+        exit;
+    }
+
+    // 공통 SET 절 (PostgreSQL, faq_master)
+    // 문자열은 pg_escape_string으로 이스케이프
+    $fm_subject_pg = pg_escape_string($g5['connect_pg'], $fm_subject);
 }
-
-// 공통 SET 절 (PostgreSQL, faq_master)
-// 문자열은 pg_escape_string으로 이스케이프
-$fm_subject_pg = pg_escape_string($g5['connect_pg'], $fm_subject);
 
 if ($w === '') {
     // INSERT
@@ -50,7 +68,7 @@ if ($w === '') {
     $fm_id = (int) sql_insert_id_pg('faq_master');
 
 } elseif ($w === 'u') {
-    if (!$fm_id) {
+    if (!$fm_id || $fm_id <= 0) {
         alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
         exit;
     }
@@ -62,7 +80,7 @@ if ($w === '') {
                      AND shop_id = {$form_shop_id} ";
     $exist = sql_fetch_pg($exist_sql);
     if (!$exist || !$exist['fm_id']) {
-        alert('등록된 자료가 없거나, 다른 가맹점의 FAQ 마스터입니다.', './shop_faqmasterlist.php');
+        alert('등록된 자료가 없습니다.', './shop_faqmasterlist.php');
         exit;
     }
 
@@ -80,7 +98,7 @@ if ($w === '') {
     }
 
 } elseif ($w === 'd') {
-    if (!$fm_id) {
+    if (!$fm_id || $fm_id <= 0) {
         alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
         exit;
     }
@@ -92,13 +110,22 @@ if ($w === '') {
                      AND shop_id = {$form_shop_id} ";
     $exist = sql_fetch_pg($exist_sql);
     if (!$exist || !$exist['fm_id']) {
-        alert('등록된 자료가 없거나, 다른 가맹점의 FAQ 마스터입니다.', './shop_faqmasterlist.php');
+        alert('등록된 자료가 없습니다.', './shop_faqmasterlist.php');
         exit;
     }
 
-    // 마스터에 속한 FAQ 항목 먼저 삭제
-    $del_faq_sql = " DELETE FROM faq WHERE fm_id = {$fm_id} ";
-    sql_query_pg($del_faq_sql);
+    // 마스터에 속한 FAQ 항목 개수 확인
+    $faq_cnt_sql = " SELECT COUNT(*) AS cnt
+                     FROM faq
+                     WHERE fm_id = {$fm_id} ";
+    $faq_cnt_row = sql_fetch_pg($faq_cnt_sql);
+    $faq_cnt = isset($faq_cnt_row['cnt']) ? (int)$faq_cnt_row['cnt'] : 0;
+
+    // FAQ 항목이 존재하면 삭제 불가
+    if ($faq_cnt > 0) {
+        alert('해당 FAQ 마스터에 속한 FAQ 항목이 '.number_format($faq_cnt).'개 존재합니다.\\n\\nFAQ 항목을 먼저 삭제한 후 마스터를 삭제해주세요.', './shop_faqmasterlist.php');
+        exit;
+    }
 
     // 마스터 삭제
     $del_master_sql = " DELETE FROM faq_master
@@ -108,9 +135,14 @@ if ($w === '') {
 
     alert('FAQ 마스터가 삭제되었습니다.', './shop_faqmasterlist.php');
     exit;
+
+} else {
+    // 허용되지 않는 w 값
+    alert('잘못된 접근입니다.', './shop_faqmasterlist.php');
+    exit;
 }
 
 // 등록/수정 후에는 수정 폼으로 이동
-alert('FAQ 마스터가 저장되었습니다.', './shop_faqmasterform.php?w=u&fm_id='.$fm_id);
+alert('FAQ 마스터가 저장되었습니다.', './shop_faqmasterlist.php');
 
 exit;

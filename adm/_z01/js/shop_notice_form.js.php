@@ -15,9 +15,25 @@ $editor_js .= chk_editor_js('content', $is_dhtml_editor);
 function form_check(f) {
     // 에디터 내용을 textarea에 넣어주는 코드 (폼 제출 전에 실행)
     <?php echo $editor_js; ?>
-    
+
+    // 제목 검증
     if (!f.subject.value || f.subject.value.trim() == '') {
         alert('제목을 입력해주세요.');
+        f.subject.focus();
+        return false;
+    }
+
+    // 제목 길이 제한 (100자)
+    if (f.subject.value.length > 100) {
+        alert('제목은 최대 100자까지 입력 가능합니다.');
+        f.subject.focus();
+        return false;
+    }
+
+    // 제목 XSS 패턴 체크
+    var dangerous_chars = /<script|<iframe|javascript:|onerror=|onload=/i;
+    if (dangerous_chars.test(f.subject.value)) {
+        alert('제목에 허용되지 않는 문자가 포함되어 있습니다.');
         f.subject.focus();
         return false;
     }

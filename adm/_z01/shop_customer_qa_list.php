@@ -9,6 +9,30 @@ $shop_info = $result['shop_info'];
 
 @auth_check($auth[$sub_menu], 'r');
 
+// 페이징 검증
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = ($page > 0 && $page <= 10000) ? $page : 1;
+
+// 정렬 필드 화이트리스트
+$allowed_sst = array('q.qna_id', 'q.qna_created_at', 'c.nickname');
+$sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : '';
+$sst = in_array($sst, $allowed_sst) ? $sst : '';
+
+// 정렬 방향 화이트리스트
+$allowed_sod = array('asc', 'desc', 'ASC', 'DESC');
+$sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : '';
+$sod = in_array($sod, $allowed_sod) ? $sod : '';
+
+// 검색 필드 화이트리스트 (닉네임만 허용)
+$allowed_sfl = array('', 'nickname', 'qna_subject', 'qna_content');
+$sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
+$sfl = in_array($sfl, $allowed_sfl) ? $sfl : '';
+
+// 검색어 검증
+$stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
+$stx = substr($stx, 0, 100); // 최대 길이 제한
+$stx = str_replace(array('\\', '%', '_'), array('\\\\', '\\%', '\\_'), $stx); // SQL 특수문자 이스케이프
+
 $form_input = '';
 $qstr = '';
 // 검색 조건을 qstr에 추가
@@ -23,6 +47,9 @@ if (!empty($sst)) {
 }
 if (!empty($sod)) {
     $qstr .= '&sod='.urlencode($sod);
+}
+if (!empty($ser_status)) {
+    $qstr .= '&ser_status='.urlencode($ser_status);
 }
 // 추가적인 검색조건 (ser_로 시작하는 검색필드)
 foreach($_REQUEST as $key => $value ) {
@@ -49,34 +76,33 @@ $where[] = " q.shop_id = {$shop_id} ";
 // 최초 질문만 조회 (qna_parent_id IS NULL)
 $where[] = " q.qna_parent_id IS NULL ";
 
-$_GET['sfl'] = !empty($_GET['sfl']) ? $_GET['sfl'] : '';
+// 검색 조건 처리 (닉네임만 허용)
+if ($stx !== '') {
+    // PostgreSQL 이스케이프 (이미 SQL 특수문자는 이스케이프 처리됨)
+    $stx_escaped = pg_escape_string($g5['connect_pg'], $stx);
 
-// 검색 조건 처리
-if ($stx) {
     switch ($sfl) {
-        case 'customer_id' :
-            $where[] = " q.customer_id = '".addslashes($stx)."' ";
-            break;
-        case 'user_id' :
-            $where[] = " c.user_id LIKE '%".addslashes($stx)."%' ";
-            break;
-        case 'name' :
-            $where[] = " c.name LIKE '%".addslashes($stx)."%' ";
+        case 'nickname' :
+            $where[] = " c.nickname ILIKE '%{$stx_escaped}%' ";
             break;
         case 'qna_subject' :
-            $where[] = " q.qna_subject LIKE '%".addslashes($stx)."%' ";
+            $where[] = " q.qna_subject ILIKE '%{$stx_escaped}%' ";
             break;
         case 'qna_content' :
-            $where[] = " q.qna_content LIKE '%".addslashes($stx)."%' ";
+            $where[] = " q.qna_content ILIKE '%{$stx_escaped}%' ";
             break;
         default :
-            $where[] = " ( q.qna_subject LIKE '%".addslashes($stx)."%' OR q.qna_content LIKE '%".addslashes($stx)."%' OR c.name LIKE '%".addslashes($stx)."%' OR c.user_id LIKE '%".addslashes($stx)."%' ) ";
+            // 전체 검색: 제목, 내용, 닉네임
+            $where[] = " ( q.qna_subject ILIKE '%{$stx_escaped}%' OR q.qna_content ILIKE '%{$stx_escaped}%' OR c.nickname ILIKE '%{$stx_escaped}%' ) ";
             break;
     }
 }
 
-// 답변 상태 필터
-$ser_status = isset($_GET['ser_status']) ? trim($_GET['ser_status']) : '';
+// 답변 상태 필터 화이트리스트
+$allowed_ser_status = array('', 'pending', 'answered');
+$ser_status = isset($_GET['ser_status']) ? trim(clean_xss_tags($_GET['ser_status'])) : '';
+$ser_status = in_array($ser_status, $allowed_ser_status) ? $ser_status : '';
+
 if ($ser_status !== '') {
     // 답변이 있는 문의만 조회
     if ($ser_status == 'answered') {
@@ -94,6 +120,7 @@ if ($where)
 else
     $sql_search = '';
 
+// 정렬 기본값 설정
 if (!$sst) {
     $sst = "q.qna_id";
     $sod = "DESC";
@@ -101,12 +128,11 @@ if (!$sst) {
 
 $sql_order = " ORDER BY {$sst} {$sod} ";
 $rows = 20;
-if (!$page) $page = 1;
 $from_record = ($page - 1) * $rows;
 
 $sql = " SELECT q.*, c.user_id, c.name, c.nickname, c.phone, c.email,
-                (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id) AS reply_count,
-                (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id AND sq.reply_mb_id IS NOT NULL) AS admin_reply_count
+                (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id) AS reply_count
+                -- (SELECT COUNT(*) FROM shop_qna sq WHERE sq.qna_parent_id = q.qna_id AND sq.reply_mb_id IS NOT NULL) AS admin_reply_count
             {$sql_common}
             {$sql_search}
             {$sql_order}
@@ -129,7 +155,7 @@ $row = sql_fetch_pg($sql);
 $pending_count = $row['cnt'];
 
 $listall = '<a href="'.$_SERVER['SCRIPT_NAME'].'" class="ov_listall">전체목록</a>';
-$colspan = 10;
+$colspan = ($member['mb_level'] >= 8) ? 10 : 9;
 
 $g5['title'] = '고객문의관리';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
@@ -144,20 +170,18 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 <label for="ser_status" class="sound_only">답변상태</label>
 <select name="ser_status" id="ser_status" class="cp_field" title="답변상태">
     <option value="">전체</option>
-    <option value="pending"<?php echo get_selected($_GET['ser_status']??'', "pending"); ?>>답변대기</option>
-    <option value="answered"<?php echo get_selected($_GET['ser_status']??'', "answered"); ?>>답변완료</option>
+    <option value="pending"<?php echo get_selected($ser_status, "pending"); ?>>답변대기</option>
+    <option value="answered"<?php echo get_selected($ser_status, "answered"); ?>>답변완료</option>
 </select>
 
 <select name="sfl" id="sfl">
-    <option value=""<?php echo get_selected($_GET['sfl']??'', ""); ?>>전체</option>
-    <option value="qna_subject"<?php echo get_selected($_GET['sfl']??'', "qna_subject"); ?>>제목</option>
-    <option value="qna_content"<?php echo get_selected($_GET['sfl']??'', "qna_content"); ?>>내용</option>
-    <option value="user_id"<?php echo get_selected($_GET['sfl']??'', "user_id"); ?>>아이디</option>
-    <option value="name"<?php echo get_selected($_GET['sfl']??'', "name"); ?>>이름</option>
-    <option value="customer_id"<?php echo get_selected($_GET['sfl']??'', "customer_id"); ?>>고객ID</option>
+    <option value=""<?php echo get_selected($sfl, ""); ?>>전체</option>
+    <option value="qna_subject"<?php echo get_selected($sfl, "qna_subject"); ?>>제목</option>
+    <option value="qna_content"<?php echo get_selected($sfl, "qna_content"); ?>>내용</option>
+    <option value="nickname"<?php echo get_selected($sfl, "nickname"); ?>>닉네임</option>
 </select>
 <label for="stx" class="sound_only">검색어<strong class="sound_only"> 필수</strong></label>
-<input type="text" name="stx" value="<?php echo $stx ?>" id="stx" class="frm_input">
+<input type="text" name="stx" value="<?php echo htmlspecialchars($stx, ENT_QUOTES, 'UTF-8') ?>" id="stx" class="frm_input" maxlength="100">
 <input type="submit" class="btn_submit" value="검색">
 </form>
 
@@ -176,19 +200,20 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <input type="hidden" name="page" value="<?php echo $page ?>">
     <input type="hidden" name="token" value="">
     <input type="hidden" name="w" value="">
-    <input type="hidden" name="shop_id" value="<?php echo $shop_id ?>">
     <?php echo $form_input; ?>
     <div class="tbl_head01 tbl_wrap">
         <table class="table table-bordered table-condensed tbl_sticky_100">
             <caption><?php echo $g5['title']; ?> 목록</caption>
             <thead>
                 <tr class="success">
+                    <?php if($member['mb_level'] >= 8) { ?>
                     <th scope="col">
                         <label for="chkall" class="sound_only">문의 전체</label>
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
-                    <th scope="col" class="td_left">번호</th>
-                    <th scope="col" class="td_left">고객정보</th>
+                    <?php } ?>
+                    <th scope="col" class="">번호</th>
+                    <th scope="col" class="td_left">회원 닉네임</th>
                     <th scope="col" class="td_left">제목</th>
                     <th scope="col" class="td_left">내용</th>
                     <th scope="col">비밀글</th>
@@ -201,10 +226,10 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             <tbody>
                 <?php
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
-                    $s_mod = '<a href="./shop_customer_qa_form.php?'.$qstr.'&amp;w=u&amp;qna_id='.$row['qna_id'].'">답변/보기</a>';
+                    $s_mod = '<a href="./shop_customer_qa_form.php?'.$qstr.'&amp;w=u&amp;qna_id='.$row['qna_id'].'" class="btn btn_03">조회</a>';
 
                     // 답변 상태
-                    $has_reply = ($row['admin_reply_count'] > 0);
+                    $has_reply = ($row['reply_count'] > 0);
                     $status_text = $has_reply ? '답변완료' : '답변대기';
                     $status_class = $has_reply ? 'text-green-600' : 'text-red-600';
                     
@@ -214,16 +239,22 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     $bg = 'bg'.($i%2);
                 ?>
                 <tr class="<?=$bg?>" tr_id="<?=$row['qna_id']?>">
+                    <?php if($member['mb_level'] >= 8) { ?>
                     <td class="td_chk">
                         <input type="hidden" name="qna_id[<?=$i?>]" value="<?=$row['qna_id']?>" id="qna_id_<?=$i?>">
                         <label for="chk_<?=$i?>" class="sound_only"><?=get_text($row['qna_subject'])?></label>
                         <input type="checkbox" name="chk[]" value="<?=$i?>" id="chk_<?=$i?>">
                     </td>
-                    <td class="td_qna_idx td_left font_size_8"><?=$row['qna_id']?></td>
+                    <?php } ?>
+                    <td class="td_qna_idx font_size_8"><?=$row['qna_id']?></td>
                     <td class="td_customer_info td_left">
                         <div class="text-sm">
-                            <div><strong><?=get_text($row['name'])?></strong> (<?=get_text($row['user_id'])?>)</div>
-                            <div class="text-xs text-gray-500">ID: <?=$row['customer_id']?></div>
+                            <div><?=htmlspecialchars($row['nickname'], ENT_QUOTES, 'UTF-8')?></div>
+                            <?php
+                            // 개발관리자 이상에게만 노출
+                            if ($member['mb_level'] >= 8) { ?>
+                            <div class="text-xs text-gray-500">ID: <?=(int)$row['customer_id']?></div>
+                            <?php } ?>
                         </div>
                     </td>
                     <td class="td_qna_subject td_left">
@@ -236,14 +267,11 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                     <td class="td_secret"><?=($row['qna_secret_yn'] == 'Y') ? '비밀' : '공개'?></td>
                     <td class="td_reply_count">
                         <span class="text-blue-600"><?=$row['reply_count']?></span>
-                        <?php if($has_reply) { ?>
-                            <span class="text-green-600">(관리자: <?=$row['admin_reply_count']?>)</span>
-                        <?php } ?>
                     </td>
                     <td class="td_status">
                         <span class="<?=$status_class?>"><?=$status_text?></span>
                     </td>
-                    <td class="td_created_at font_size_8"><?=substr($row['qna_created_at'],0,16)?></td>
+                    <td class="td_created_at font_size_8"><?=substr($row['qna_created_at'],0,19)?></td>
                     <td class="td_mngsmall"><?=$s_mod?></td>
                 </tr>
                 <?php
@@ -255,7 +283,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         </table>
     </div>
     <div class="btn_fixed_top">
-        <?php if(!@auth_check($auth[$sub_menu],"d",1)) { ?>
+        <?php if($member['mb_level'] >= 8 && !@auth_check($auth[$sub_menu],"d",1)) { ?>
         <input type="submit" name="act_button" value="선택삭제" onclick="document.pressed=this.value" class="btn_02 btn">
         <?php } ?>
     </div>

@@ -9,28 +9,34 @@ $shop_info = $result['shop_info'];
 
 auth_check_menu($auth, $sub_menu, "r");
 
+// qna_id 검증
 $qna_id = isset($_GET['qna_id']) ? (int)$_GET['qna_id'] : 0;
+if ($qna_id <= 0 || $qna_id > 2147483647) {
+    alert('잘못된 문의번호입니다.', './shop_customer_qa_list.php');
+    exit;
+}
 
 if ($qna_id > 0) {
     // 최초 질문 조회 (해당 가맹점의 문의만)
-    $sql = " SELECT q.*, c.user_id, c.name, c.nickname, c.phone, c.email 
+    $sql = " SELECT q.*, c.user_id, c.name, c.nickname, c.phone, c.email
              FROM shop_qna q
              LEFT JOIN customers c ON q.customer_id = c.customer_id
-             WHERE q.qna_id = '$qna_id' 
-             AND q.shop_id = {$shop_id} 
+             WHERE q.qna_id = {$qna_id}
+             AND q.shop_id = {$shop_id}
              AND q.qna_parent_id IS NULL ";
-    
+
     $qna = sql_fetch_pg($sql);
-    
+
     if (!isset($qna['qna_id']) || !$qna['qna_id']) {
-        alert("문의자료가 없습니다.");
+        alert("문의자료가 없습니다.", './shop_customer_qa_list.php');
+        exit;
     }
-    
+
     // 답변 목록 조회 (최신순) - PostgreSQL에서만 조회
     $sql_replies = " SELECT qr.*, c.user_id, c.name, c.nickname
                      FROM shop_qna qr
                      LEFT JOIN customers c ON qr.customer_id = c.customer_id
-                     WHERE qr.qna_parent_id = '$qna_id'
+                     WHERE qr.qna_parent_id = {$qna_id}
                      ORDER BY qr.qna_created_at DESC ";
     $result_replies = sql_query_pg($sql_replies);
     
@@ -41,12 +47,12 @@ if ($qna_id > 0) {
         while ($reply = sql_fetch_array_pg($result_replies->result)) {
             // 관리자 ID 수집 (MySQL에서 조회하기 위해)
             if (!empty($reply['reply_mb_id'])) {
-                $admin_ids[] = addslashes($reply['reply_mb_id']);
+                $admin_ids[] = sql_escape_string($reply['reply_mb_id']);
             }
             $replies[] = $reply;
         }
     }
-    
+
     // MySQL에서 관리자 정보 조회
     $admin_info = array();
     if (!empty($admin_ids)) {
@@ -92,13 +98,13 @@ $pg_anchor ='<ul class="anchor">
 
 <div class="local_desc01 local_desc">
     <p>
-        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
+        고객 문의 내용을 확인하고 답변을 작성할 수 있습니다.<br>
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <form name="fcustomerqaform" id="fcustomerqaform" action="./shop_customer_qa_form_update.php" method="post" enctype="multipart/form-data" onsubmit="return fcustomerqaform_submit(this);">
 <input type="hidden" name="qna_id" value="<?php echo $qna_id; ?>">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
 <input type="hidden" name="w" value="r">
 <input type="hidden" name="token" value="<?php echo get_token(); ?>">
 <input type="hidden" name="original_secret_yn" id="original_secret_yn" value="<?php echo $qna['qna_secret_yn']; ?>">
@@ -134,8 +140,15 @@ $pg_anchor ='<ul class="anchor">
             <th scope="row">작성자</th>
             <td>
                 <div class="text-sm">
-                    <strong><?=get_text($qna['name'])?></strong> (<?=get_text($qna['user_id'])?>)
-                    <span class="ml-2 text-xs text-gray-500"><?=substr($qna['qna_created_at'],0,10)?></span>
+                    <strong><?=get_text($qna['nickname'])?></strong>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th scope="row">작성일</th>
+            <td>
+                <div class="text-sm">
+                    <span class=""><?=substr($qna['qna_created_at'],0,19)?></span>
                 </div>
             </td>
         </tr>
@@ -303,7 +316,6 @@ $pg_anchor ='<ul class="anchor">
                 <form class="frm_edit_reply" data-reply-id="<?=$reply['qna_id']?>">
                     <input type="hidden" name="reply_id" value="<?=$reply['qna_id']?>">
                     <input type="hidden" name="qna_id" value="<?=$qna_id?>">
-                    <input type="hidden" name="shop_id" value="<?=$shop_id?>">
                     <div style="margin-bottom: 10px;">
                         <label><strong>답변 내용 수정:</strong></label>
                         <textarea name="qna_reply_content" rows="5" class="frm_input" style="width: 100%;" required><?=!empty($reply['qna_content']) ? htmlspecialchars($reply['qna_content']) : ''?></textarea>
