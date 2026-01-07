@@ -145,7 +145,6 @@ include_once('./js/staff_schedule_form.js.php');
 <form name="form01" id="form01" action="./staff_schedule_form_update.php" onsubmit="return form01_submit(this);" method="post">
 <input type="hidden" name="w" value="<?php echo $w ?>">
 <input type="hidden" name="schedule_id" value="<?php echo $schedule_id ?>">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id ?>">
 <input type="hidden" name="ser_staff_id" value="<?php echo $ser_staff_id ?>">
 <input type="hidden" name="ser_date_from" value="<?php echo $ser_date_from ?>">
 <input type="hidden" name="ser_date_to" value="<?php echo $ser_date_to ?>">
