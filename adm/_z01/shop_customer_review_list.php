@@ -4,7 +4,7 @@ include_once('./_common.php');
 
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
-$shop_id = $result['shop_id'];
+$shop_id = (int)$result['shop_id'];
 $shop_info = $result['shop_info'];
 
 @auth_check($auth[$sub_menu], 'r');
@@ -20,7 +20,27 @@ $sst = isset($_GET['sst']) ? clean_xss_tags($_GET['sst']) : 'review_id';
 $sod = isset($_GET['sod']) ? clean_xss_tags($_GET['sod']) : 'desc';
 $sfl = isset($_GET['sfl']) ? clean_xss_tags($_GET['sfl']) : '';
 $stx = isset($_GET['stx']) ? clean_xss_tags($_GET['stx']) : '';
-$sfl2 = isset($_GET['sfl2']) ? clean_xss_tags($_GET['sfl2']) : ''; // 평점 필터
+$sfl2 = isset($_GET['sfl2']) ? $_GET['sfl2'] : ''; // 평점 필터
+
+// 정렬 방향 검증
+$sod = strtolower($sod);
+if (!in_array($sod, array('asc', 'desc'))) {
+    $sod = 'desc';
+}
+
+// 검색 필드 검증
+$allowed_sfl = array('customer_id', 'user_id', 'customer_name', 'sr_content');
+if ($sfl && !in_array($sfl, $allowed_sfl)) {
+    $sfl = '';
+}
+
+// 평점 필터 검증 (1~5 또는 빈값)
+if ($sfl2 !== '') {
+    $sfl2 = (int)$sfl2;
+    if ($sfl2 < 1 || $sfl2 > 5) {
+        $sfl2 = '';
+    }
+}
 
 // ORDER BY 필드에 테이블 별칭이 없으면 추가
 if ($sst && strpos($sst, '.') === false) {
@@ -28,30 +48,35 @@ if ($sst && strpos($sst, '.') === false) {
     $allowed_fields = array('review_id', 'sr_score', 'sr_created_at', 'sr_updated_at');
     if (in_array($sst, $allowed_fields)) {
         $sst = 'sr.' . $sst;
+    } else {
+        $sst = 'sr.review_id'; // 기본값
     }
 }
 
 $where_sql = " WHERE sr.shop_id = {$shop_id} AND sr.sr_deleted = 'N' ";
 
 if ($sfl && $stx) {
+    // SQL Injection 방지를 위한 이스케이프 처리
+    $stx_escaped = pg_escape_string($g5['connect_pg'], $stx);
+
     switch ($sfl) {
         case 'customer_id':
-            $where_sql .= " AND c.customer_id::text LIKE '%{$stx}%' ";
+            $where_sql .= " AND c.customer_id::text LIKE '%{$stx_escaped}%' ";
             break;
         case 'user_id':
-            $where_sql .= " AND c.user_id LIKE '%{$stx}%' ";
+            $where_sql .= " AND c.user_id LIKE '%{$stx_escaped}%' ";
             break;
         case 'customer_name':
-            $where_sql .= " AND c.name LIKE '%{$stx}%' ";
+            $where_sql .= " AND c.name LIKE '%{$stx_escaped}%' ";
             break;
         case 'sr_content':
-            $where_sql .= " AND sr.sr_content LIKE '%{$stx}%' ";
+            $where_sql .= " AND sr.sr_content LIKE '%{$stx_escaped}%' ";
             break;
     }
 }
 
 if ($sfl2 !== '') {
-    $where_sql .= " AND sr.sr_score = '{$sfl2}' ";
+    $where_sql .= " AND sr.sr_score = {$sfl2} ";
 }
 
 // 전체 레코드 수
