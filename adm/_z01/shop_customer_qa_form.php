@@ -211,7 +211,7 @@ $pg_anchor ='<ul class="anchor">
             <th scope="row"><label for="qna_reply_content">답변 내용<strong class="sound_only">필수</strong></label></th>
             <td>
                 <textarea name="qna_reply_content" id="qna_reply_content" rows="10" class="frm_input" style="width: 100%;" required></textarea>
-                <?php echo help("고객 문의에 대한 답변을 작성해주세요."); ?>
+                <?php echo help("작성된 답변은 수정이 불가능합니다. 신중하게 작성해 주세요. (고객 확인 전까지만 삭제 가능)"); ?>
             </td>
         </tr>
         </tbody>
@@ -273,11 +273,15 @@ $pg_anchor ='<ul class="anchor">
                     <strong><?=$writer_name?></strong>
                     <?php if($is_admin) { ?>
                         <span class="text-sm text-blue-700 font-weight-bold">(가맹점 관리자)</span>
-                        <?php 
-                        // 관리자 답변이고 고객이 확인하지 않은 경우 (qna_status = 'pending')
-                        $can_edit = ($is_admin && !empty($reply['qna_status']) && $reply['qna_status'] == 'pending');
+                        <?php
+                        // 개발자 여부 확인
+                        $is_developer = (isset($member['mb_level']) && $member['mb_level'] >= 8);
+
+                        // 개발자는 항상 삭제 가능, 일반 관리자는 고객 미확인일 때만 삭제 가능
+                        $can_delete = $is_developer || ($is_admin && !empty($reply['qna_status']) && $reply['qna_status'] == 'pending');
+                        $can_edit = $is_developer; // 수정은 개발자만 가능
                         $is_confirmed = ($is_admin && !empty($reply['qna_status']) && $reply['qna_status'] == 'ok');
-                        
+
                         // 고객 확인 여부 표시
                         if ($is_confirmed) {
                         ?>
@@ -285,10 +289,14 @@ $pg_anchor ='<ul class="anchor">
                         <?php } else { ?>
                         <span class="ml-2 text-xs text-orange-600"><i class="fa fa-clock-o"></i> 고객 미확인</span>
                         <?php } ?>
-                        
-                        <?php if ($can_edit) { ?>
-                        <span class="ml-2 text-xs text-orange-600">(수정/삭제 가능)</span>
-                        <?php } ?>
+                        <?php
+                            // 개발자가 아닌 경우에만 삭제 가능 여부 표시
+                            if (!$is_developer && $can_delete) {
+                        ?>
+                        <span class="ml-2 text-xs text-orange-600">(삭제 가능)</span>
+                        <?php
+                            }
+                        ?>
                     <?php } else { ?>
                         <span class="text-sm text-green-700 font-weight-bold">(고객)</span>
                     <?php } ?>
@@ -298,9 +306,13 @@ $pg_anchor ='<ul class="anchor">
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span class="text-sm text-gray-500"><?=!empty($reply['qna_created_at']) ? substr($reply['qna_created_at'],0,16) : ''?></span>
-                    <?php if($is_admin && $can_edit) { ?>
+                    <?php if($is_admin) { ?>
+                        <?php if($can_edit) { ?>
                         <button type="button" class="btn_edit_reply btn_02 btn" data-reply-id="<?=$reply['qna_id']?>" style="padding: 4px 8px; font-size: 12px;">수정</button>
+                        <?php } ?>
+                        <?php if($can_delete) { ?>
                         <button type="button" class="btn_delete_reply btn_02 btn" data-reply-id="<?=$reply['qna_id']?>" style="padding: 4px 8px; font-size: 12px; background: #dc3545; color: #fff;">삭제</button>
+                        <?php } ?>
                     <?php } ?>
                 </div>
             </div>
@@ -311,7 +323,7 @@ $pg_anchor ='<ul class="anchor">
                     <?=!empty($reply['qna_content']) ? nl2br(get_text($reply['qna_content'])) : ''?>
                 <?php } ?>
             </div>
-            <?php if($is_admin && $can_edit) { ?>
+            <?php if($can_edit) { ?>
             <div id="reply_edit_form_<?=$reply['qna_id']?>" style="display: none; margin-top: 10px; padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 4px;">
                 <form class="frm_edit_reply" data-reply-id="<?=$reply['qna_id']?>">
                     <input type="hidden" name="reply_id" value="<?=$reply['qna_id']?>">
