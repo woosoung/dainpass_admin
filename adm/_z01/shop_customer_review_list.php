@@ -9,6 +9,9 @@ $shop_info = $result['shop_info'];
 
 @auth_check($auth[$sub_menu], 'r');
 
+// 개발자 권한 체크 (mb_level 8 이상)
+$is_developer = isset($member['mb_level']) && $member['mb_level'] >= 8;
+
 // 페이징 설정
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $page = $page > 0 ? $page : 1;
@@ -163,7 +166,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <table>
     <caption><?php echo $g5['title'] ?> 목록</caption>
     <colgroup>
+        <?php if ($is_developer) { ?>
         <col style="width: 50px;">
+        <?php } ?>
         <col style="width: 100px;">
         <col style="width: 200px;">
         <col style="width: 100px;">
@@ -174,10 +179,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     </colgroup>
     <thead>
     <tr>
+        <?php if ($is_developer) { ?>
         <th scope="col">
             <label for="chkall" class="sound_only">전체</label>
             <input type="checkbox" name="chkall" id="chkall" onclick="check_all(this.form)">
         </th>
+        <?php } ?>
         <th scope="col"><?php echo subject_sort_link('review_id', $qstr, 1); ?>리뷰ID</a></th>
         <th scope="col">고객정보</th>
         <th scope="col"><?php echo subject_sort_link('sr_score', $qstr, 1); ?>평점</a></th>
@@ -231,10 +238,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             $content_preview = $sr_content ? cut_str(strip_tags($sr_content), 50, '...') : '-';
     ?>
     <tr>
+        <?php if ($is_developer) { ?>
         <td class="td_chk">
             <input type="hidden" name="review_id[<?php echo $i ?>]" value="<?php echo $review_id ?>">
             <input type="checkbox" name="chk[]" value="<?php echo $i ?>" id="chk_<?php echo $i ?>">
         </td>
+        <?php } ?>
         <td class="td_num"><?php echo $review_id ?></td>
         <td class="td_left"><?php echo $customer_info ?></td>
         <td class="td_left"><?php echo $score_text ?></td>
@@ -251,16 +260,19 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     }
     
     if ($i == 0) {
-        echo '<tr><td colspan="8" class="td_empty">등록된 리뷰가 없습니다.</td></tr>';
+        $colspan = $is_developer ? 8 : 7;
+        echo '<tr><td colspan="'.$colspan.'" class="td_empty">등록된 리뷰가 없습니다.</td></tr>';
     }
     ?>
     </tbody>
     </table>
 </div>
 
+<?php if ($is_developer) { ?>
 <div class="btn_fixed_top btn_confirm">
     <button type="button" onclick="flist_delete_submit();" class="btn btn_02">선택삭제</button>
 </div>
+<?php } ?>
 
 </form>
 

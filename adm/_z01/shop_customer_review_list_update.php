@@ -24,6 +24,13 @@ if (!in_array($w, $allowed_w)) {
     alert("잘못된 요청입니다.");
 }
 
+// 삭제 작업은 개발자(mb_level 8 이상)만 가능
+if ($w == 'd') {
+    if (!isset($member['mb_level']) || $member['mb_level'] < 8) {
+        alert("삭제 권한이 없습니다. 개발자만 삭제할 수 있습니다.");
+    }
+}
+
 // 삭제할 때
 if($w == 'd') {
     // review_id 배열 검증
