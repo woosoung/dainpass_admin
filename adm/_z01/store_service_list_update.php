@@ -2,19 +2,13 @@
 $sub_menu = "930200";
 include_once("./_common.php");
 
-@auth_check($auth[$sub_menu], 'u');
+@auth_check($auth[$sub_menu], 'w');
 
 // 가맹점 접근 권한 체크
 $result = check_shop_access();
 $shop_id = $result['shop_id'];
 
 $w = isset($_POST['w']) ? trim($_POST['w']) : '';
-$post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
-
-// 가맹점측 관리자는 자신의 가맹점만 수정 가능
-if ($post_shop_id != $shop_id) {
-    alert('접속할 수 없는 페이지 입니다.');
-}
 
 $sst = isset($_POST['sst']) ? trim($_POST['sst']) : '';
 $sod = isset($_POST['sod']) ? trim($_POST['sod']) : '';

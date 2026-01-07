@@ -111,7 +111,6 @@ include_once('./js/store_service_list.js.php');
 <input type="hidden" name="page" value="<?=$page?>">
 <input type="hidden" name="token" value="">
 <input type="hidden" name="w" value="">
-<input type="hidden" name="shop_id" value="<?=$shop_id?>">
 
 <div class="tbl_head01 tbl_wrap">
     <table class="table table-bordered table-condensed tbl_sticky_100">
