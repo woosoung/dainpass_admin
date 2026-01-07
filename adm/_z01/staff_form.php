@@ -87,11 +87,6 @@ if ($w == '') {
     if (!$com || !isset($com['staff_id']) || !$com['staff_id'])
         alert('존재하지 않는 직원자료입니다.');
     
-    // 가맹점측 관리자는 자신의 가맹점 직원만 수정 가능
-    if ($com['store_id'] != $shop_id) {
-        alert('접속할 수 없는 페이지 입니다.');
-    }
-    
     $com['name'] = get_text($com['name']);
     $com['phone'] = get_text($com['phone']);
     $com['specialty'] = get_text($com['specialty']);
@@ -140,7 +135,6 @@ include_once('./js/staff_form.js.php');
 <input type="hidden" name="sod" value="<?php echo $sod ?>">
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
 <input type="hidden" name="staff_id" value="<?php echo $staff_id; ?>">
 <?=$form_input??''?>
 <div class="local_desc01 local_desc">
