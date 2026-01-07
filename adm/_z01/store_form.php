@@ -247,7 +247,7 @@ include_once('./js/store_form.js.php');
 		}
 		?>
 		<th scope="row">가맹점관리자<strong class="sound_only">필수</strong>
-			<a href="javascript:" shop_id="<?=$com['shop_id']?>" id="btn_manager" class="ml-2 !text-blue-500 text-[16px]"><i class="fa fa-pencil-square-o"></i></a>
+			<a href="javascript:" id="btn_manager" class="ml-2 !text-blue-500 text-[16px]"><i class="fa fa-pencil-square-o"></i></a>
 		</th>
 		<td>
 			<?php echo $com['shop_managers_text']; ?>

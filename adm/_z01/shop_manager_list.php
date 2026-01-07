@@ -15,19 +15,14 @@ if ($is_member && $member['mb_id']) {
         // 오너/관리자 플래그 설정
         $is_store_owner = ($member['mb_level'] == 5);
         $is_store_manager = ($member['mb_level'] == 4);
-
-        // shop_id 소유권 검증 (필수!)
-        $user_shop_id = (int)trim($member['mb_1']);
-        $requested_shop_id = (int)$shop_id;
-
-        if ($requested_shop_id > 0 && $user_shop_id > 0 && $requested_shop_id != $user_shop_id) {
-            alert_close('자신의 가맹점만 관리할 수 있습니다.');
-        }
     }
 }
 
-
 @auth_check($auth[$sub_menu], 'w');
+
+// 가맹점 접근 권한 체크 - check_shop_access() 사용
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
 
 if(!$shop_id)
     alert_close('가맹점 정보가 존재하지 않습니다.');

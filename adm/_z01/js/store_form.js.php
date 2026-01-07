@@ -120,8 +120,7 @@ document.addEventListener('DOMContentLoaded', function(){
         btnManager.addEventListener("click", function(e) {
             e.preventDefault(); // return false와 동일한 효과
 
-            const shop_id = this.getAttribute("shop_id");
-            const href = "./shop_manager_list.php?shop_id=" + shop_id;
+            const href = "./shop_manager_list.php";
 
             const winShopMember = window.open(
                 href,
