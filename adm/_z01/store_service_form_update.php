@@ -24,7 +24,7 @@ if ($w == 'u')
 
 //check_admin_token();
 if(!trim($_POST['service_name'])) alert('서비스명을 입력해 주세요.');
-if(!trim($_POST['service_time']) || (int)$_POST['service_time'] < 0) alert('소요시간을 입력해 주세요.');
+if(!isset($_POST['service_time']) || $_POST['service_time'] === '') alert('소요시간을 입력해 주세요.');
 
 $service_name = trim($_POST['service_name']);
 $description = isset($_POST['description']) ? conv_unescape_nl(stripslashes($_POST['description'])) : '';
