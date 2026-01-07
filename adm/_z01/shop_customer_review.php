@@ -51,8 +51,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 <div class="local_desc01 local_desc">
     <p>
-        <?php echo get_shop_display_name($shop_info, $shop_id); ?>
+        고객이 작성한 리뷰의 상세 내용을 확인할 수 있습니다.
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <div class="tbl_frm01 tbl_wrap">
