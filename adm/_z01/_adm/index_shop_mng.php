@@ -335,10 +335,6 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
     </div>
 </div>
 
-<script>
-var SHOP_STATISTICS_SHOP_ID = <?php echo (int)$shop_id; ?>;
-</script>
-
 <?php
 include_once('./js/index_shop_mng.js.php');
 ?>
