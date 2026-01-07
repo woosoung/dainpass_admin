@@ -112,7 +112,6 @@ include_once('./js/staff_services_form.js.php');
 <input type="hidden" name="sod" value="<?php echo $sod ?>">
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
 <input type="hidden" name="staff_id" value="<?php echo $staff_id; ?>">
 
 <div class="local_desc01 local_desc">

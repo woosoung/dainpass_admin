@@ -10,13 +10,7 @@ $result = check_shop_access();
 $shop_id = $result['shop_id'];
 
 // 입력 기본값 안전 초기화
-$post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
 $staff_id = isset($_POST['staff_id']) ? (int)$_POST['staff_id'] : (isset($_REQUEST['staff_id']) ? (int)$_REQUEST['staff_id'] : 0);
-
-// 가맹점측 관리자는 자신의 가맹점만 수정 가능
-if ($post_shop_id != $shop_id) {
-    alert('접속할 수 없는 페이지 입니다.');
-}
 
 if (!$staff_id) {
     alert('직원 정보가 없습니다.');
