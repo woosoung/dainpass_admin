@@ -186,7 +186,6 @@ include_once('./js/store_form.js.php');
 <input type="hidden" name="sod" value="<?php echo $sod ?>">
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
 <?=$form_input??''?>
 <div class="local_desc01 local_desc">
     <p>가맹점정보를 관리해 주세요.</p>
@@ -257,7 +256,6 @@ include_once('./js/store_form.js.php');
 	<tr>
 		<th scope="row">업체명<strong class="sound_only">필수</strong></th>
 		<td>
-			<input type="hidden" name="shop_id" value="<?=$shop_id?>">
 			<input type="text" name="name" value="<?=$com['name']??''?>" placeholder="업체명" id="name" class="frm_input" maxlength="30">
 		</td>
 		<th scope="row">사업자등록번호<strong class="sound_only">필수</strong></th>
@@ -422,7 +420,7 @@ include_once('./js/store_form.js.php');
 			<input type="text" id="input_keyword" placeholder="" class="frm_input w-[200px]">
 			<a href="javascript:" id="add_keyword" class="mm-blue-btn">키워드추가</a>
 			<input type="hidden" name="shop_keywords" id="shop_keywords" value="<?=$com['shop_keywords']??''?>" class="w-full border">
-			<div id="keyword_box" class="border border-4 border-gray-200 pl-2 pt-2 mt-2 min-h-[40px]">
+			<div id="keyword_box" class="border-4 border-gray-200 pl-2 pt-2 mt-2 min-h-[40px]">
 				<?php 
 				if(!empty($kwds)){
 					$kn = 0;
@@ -595,7 +593,6 @@ include_once('./js/store_form.js.php');
 </form>
 
 <form name="form_close" id="form_close" action="./store_close.php" method="post" onsubmit="return confirm_close(this);">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
 <input type="hidden" name="token" value="">
 <div class="tbl_frm01 tbl_wrap" style="margin-top:50px;">
 	<table>

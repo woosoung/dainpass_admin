@@ -65,14 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     alert('잘못된 접근입니다.');
 }
 
-// POST로 전달된 shop_id 확인
-$post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
-
-// 가맹점 오너는 자신의 가맹점만 탈퇴 가능 (플랫폼 관리자는 모든 가맹점 탈퇴 가능)
-if (!$is_platform_admin && $post_shop_id != $shop_id) {
-    alert('접속할 수 없는 페이지 입니다.');
-}
-
 // 이미 탈퇴된 가맹점인지 확인
 if ($shop_status === 'closed') {
     alert('이미 탈퇴 처리된 가맹점입니다.');
