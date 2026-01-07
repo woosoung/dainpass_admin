@@ -305,8 +305,11 @@ function sql_fetch_pg($sql, $error=G5_DISPLAY_SQL_ERROR, $link=null)
         $link = $g5['connect_pg'];
 
     $result = sql_query_pg($sql, $error, $link);
-    $row = sql_fetch_array_pg($result->result);
-    return $row;
+    if ($result && is_object($result) && isset($result->result)) {
+        $row = sql_fetch_array_pg($result->result);
+        return $row;
+    }
+    return false;
 }
 }
 
