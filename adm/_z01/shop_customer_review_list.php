@@ -251,7 +251,11 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <td class="td_left"><?php echo $created_at_text ?></td>
         <td class="td_left"><?php echo $updated_at_text ?></td>
         <td class="td_mng">
+            <?php if ($is_developer) { ?>
             <a href="./shop_customer_review_form.php?w=u&review_id=<?php echo $review_id ?>&<?php echo $qstr ?>" class="btn btn_03">수정</a>
+            <?php } else { ?>
+            <a href="./shop_customer_review.php?review_id=<?php echo $review_id ?>" class="btn btn_03">조회</a>
+            <?php } ?>
         </td>
     </tr>
     <?php

@@ -12,6 +12,11 @@ auth_check_menu($auth, $sub_menu, "w");
 
 check_admin_token();
 
+// 리뷰 수정은 개발자(mb_level 8 이상)만 가능
+if (!isset($member['mb_level']) || $member['mb_level'] < 8) {
+    alert("수정 권한이 없습니다.");
+}
+
 $review_id = isset($_POST['review_id']) ? (int)$_POST['review_id'] : 0;
 $w = isset($_POST['w']) ? $_POST['w'] : '';
 

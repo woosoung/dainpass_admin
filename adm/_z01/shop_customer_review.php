@@ -9,20 +9,27 @@ $shop_info = $result['shop_info'];
 
 @auth_check($auth[$sub_menu], 'r');
 
+// 개발자 권한 체크 (mb_level 8 이상)
+$is_developer = isset($member['mb_level']) && $member['mb_level'] >= 8;
+
 $review_id = isset($_GET['review_id']) ? (int)$_GET['review_id'] : 0;
 
 if ($review_id > 0) {
+    // 가맹점 접근 권한 체크의 shop_id를 정수로 캐스팅
+    $shop_id = (int)$shop_id;
+
     // 리뷰 상세 조회
-    $sql = " SELECT sr.*, 
-                    c.user_id, 
+    $sql = " SELECT sr.*,
+                    c.user_id,
                     c.name as customer_name,
+                    c.nickname,
                     s.shop_name,
                     s.name as shop_display_name
              FROM shop_review AS sr
              LEFT JOIN customers AS c ON sr.customer_id = c.customer_id
              LEFT JOIN shop AS s ON sr.shop_id = s.shop_id
-             WHERE sr.review_id = '{$review_id}' 
-             AND sr.shop_id = {$shop_id} 
+             WHERE sr.review_id = {$review_id}
+             AND sr.shop_id = {$shop_id}
              AND sr.sr_deleted = 'N' ";
     
     $review = sql_fetch_pg($sql);
@@ -126,7 +133,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 <div class="btn_fixed_top">
     <a href="./shop_customer_review_list.php" class="btn_02 btn">목록</a>
+    <?php if ($is_developer) { ?>
     <a href="./shop_customer_review_form.php?w=u&review_id=<?php echo $review_id; ?>" class="btn btn_03">수정</a>
+    <?php } ?>
 </div>
 
 <?php

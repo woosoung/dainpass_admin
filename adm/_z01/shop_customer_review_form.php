@@ -9,6 +9,11 @@ $shop_info = $result['shop_info'];
 
 auth_check_menu($auth, $sub_menu, "w");
 
+// 리뷰 수정은 개발자(mb_level 8 이상)만 가능
+if (!isset($member['mb_level']) || $member['mb_level'] < 8) {
+    alert("수정 권한이 없습니다.", "./shop_customer_review_list.php");
+}
+
 $review_id = isset($_GET['review_id']) ? (int)$_GET['review_id'] : 0;
 $w = isset($_GET['w']) ? $_GET['w'] : '';
 
