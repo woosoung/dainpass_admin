@@ -95,7 +95,7 @@ if (isset($_POST['sod'])) {
 // 검색 필드 검증
 if (isset($_POST['sfl'])) {
     $sfl = clean_xss_tags($_POST['sfl']);
-    $allowed_sfl = array('customer_id', 'user_id', 'customer_name', 'sr_content');
+    $allowed_sfl = array('nickname', 'sr_content');
     if (in_array($sfl, $allowed_sfl)) {
         $qstr .= '&sfl='.urlencode($sfl);
     }

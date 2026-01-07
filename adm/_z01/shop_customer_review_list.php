@@ -29,7 +29,7 @@ if (!in_array($sod, array('asc', 'desc'))) {
 }
 
 // 검색 필드 검증
-$allowed_sfl = array('customer_id', 'user_id', 'customer_name', 'sr_content');
+$allowed_sfl = array('nickname', 'sr_content');
 if ($sfl && !in_array($sfl, $allowed_sfl)) {
     $sfl = '';
 }
@@ -60,14 +60,8 @@ if ($sfl && $stx) {
     $stx_escaped = pg_escape_string($g5['connect_pg'], $stx);
 
     switch ($sfl) {
-        case 'customer_id':
-            $where_sql .= " AND c.customer_id::text LIKE '%{$stx_escaped}%' ";
-            break;
-        case 'user_id':
-            $where_sql .= " AND c.user_id LIKE '%{$stx_escaped}%' ";
-            break;
-        case 'customer_name':
-            $where_sql .= " AND c.name LIKE '%{$stx_escaped}%' ";
+        case 'nickname':
+            $where_sql .= " AND c.nickname LIKE '%{$stx_escaped}%' ";
             break;
         case 'sr_content':
             $where_sql .= " AND sr.sr_content LIKE '%{$stx_escaped}%' ";
@@ -91,14 +85,15 @@ $total_count = $count_row['cnt'];
 $total_page = ceil($total_count / $rows_per_page);
 
 // 목록 조회
-$sql = " SELECT sr.*, 
-                c.user_id, 
+$sql = " SELECT sr.*,
+                c.user_id,
                 c.name as customer_name,
-                c.customer_id
+                c.customer_id,
+                c.nickname
          FROM shop_review AS sr
          LEFT JOIN customers AS c ON sr.customer_id = c.customer_id
-         {$where_sql} 
-         ORDER BY {$sst} {$sod} 
+         {$where_sql}
+         ORDER BY {$sst} {$sod}
          LIMIT {$rows_per_page} OFFSET {$offset} ";
 $result = sql_query_pg($sql);
 
@@ -138,9 +133,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <label for="sfl" class="sound_only">검색대상</label>
     <select name="sfl" id="sfl" class="frm_input">
         <option value="">선택</option>
-        <option value="user_id"<?php echo $sfl == 'user_id' ? ' selected' : '' ?>>회원ID</option>
-        <option value="customer_name"<?php echo $sfl == 'customer_name' ? ' selected' : '' ?>>회원명</option>
-        <option value="customer_id"<?php echo $sfl == 'customer_id' ? ' selected' : '' ?>>고객ID</option>
+        <option value="nickname"<?php echo $sfl == 'nickname' ? ' selected' : '' ?>>닉네임</option>
         <option value="sr_content"<?php echo $sfl == 'sr_content' ? ' selected' : '' ?>>내용</option>
     </select>
     <label for="stx" class="sound_only">검색어</label>
@@ -203,11 +196,12 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
             $customer_id = $row['customer_id'];
             $user_id = $row['user_id'];
             $customer_name = $row['customer_name'];
+            $nickname = $row['nickname'];
             $sr_score = $row['sr_score'];
             $sr_content = $row['sr_content'];
             $sr_created_at = $row['sr_created_at'];
             $sr_updated_at = $row['sr_updated_at'];
-            
+
             // 평점 표시
             $score_text = '';
             $score_class = '';
@@ -230,10 +224,10 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                 default:
                     $score_text = htmlspecialchars($sr_score) . '점';
             }
-            
+
             $created_at_text = $sr_created_at ? date('Y-m-d H:i', strtotime($sr_created_at)) : '-';
             $updated_at_text = $sr_updated_at ? date('Y-m-d H:i', strtotime($sr_updated_at)) : '-';
-            $customer_info = ($user_id ? htmlspecialchars($user_id) : '-') . '<br><small>' . ($customer_name ? htmlspecialchars($customer_name) : '-') . '</small>';
+            $customer_info = $nickname ? htmlspecialchars($nickname) : '-';
             $content_preview = $sr_content ? cut_str(strip_tags($sr_content), 50, '...') : '-';
     ?>
     <tr>
