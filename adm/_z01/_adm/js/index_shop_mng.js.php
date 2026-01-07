@@ -408,7 +408,7 @@ if (!defined('_GNUBOARD_')) exit;
         if (customerTypeDistribution && customerTypeDistribution.length) {
             for (var i = 0; i < customerTypeDistribution.length; i++) {
                 var row = customerTypeDistribution[i];
-                labels.push(row.customer_type === 'new' ? '신규 고객' : '기존 고객');
+                labels.push(row.type);
                 data.push(row.count || 0);
             }
         }
@@ -760,7 +760,7 @@ if (!defined('_GNUBOARD_')) exit;
             var tr = '<tr>' +
                 '<td class="text-center">' + (row.settlement_date || row.settlement_at || '-') + '</td>' +
                 '<td class="text-center">' + (periodText || '-') + '</td>' +
-                '<td class="text-right pr-2">' + formatCurrency(row.settlement_amount || 0) + '</td>' +
+                '<td class="pr-2 text-right">' + formatCurrency(row.settlement_amount || 0) + '</td>' +
                 '<td class="text-center">' + getSettlementStatusText(row.status) + '</td>' +
                 '</tr>';
             $tbody.append(tr);
