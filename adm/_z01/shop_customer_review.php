@@ -68,16 +68,9 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
         <td><?php echo $review['review_id']; ?></td>
     </tr>
     <tr>
-        <th scope="row">가맹점</th>
-        <td><?php echo get_text($review['shop_display_name'] ? $review['shop_display_name'] : ($review['shop_name'] ? $review['shop_name'] : 'ID: ' . $review['shop_id'])); ?></td>
-    </tr>
-    <tr>
-        <th scope="row">고객정보</th>
+        <th scope="row">회원 닉네임</th>
         <td>
-            <div class="text-sm">
-                <strong><?php echo get_text($review['customer_name']); ?></strong> (<?php echo get_text($review['user_id']); ?>)
-                <span class="ml-2 text-xs text-gray-500">ID: <?php echo $review['customer_id']; ?></span>
-            </div>
+            <?php echo $review['nickname'] ? htmlspecialchars($review['nickname']) : '-'; ?>
         </td>
     </tr>
     <tr>
@@ -126,7 +119,27 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     </tr>
     <tr>
         <th scope="row">고객IP</th>
-        <td><?php echo $review['sr_ip'] ? htmlspecialchars($review['sr_ip']) : '-'; ?></td>
+        <td>
+            <?php
+            if ($review['sr_ip']) {
+                if ($is_developer) {
+                    // 개발자는 전체 IP 표시
+                    echo htmlspecialchars($review['sr_ip']);
+                } else {
+                    // 가맹점 관리자는 뒤 두 영역 마스킹
+                    $ip_parts = explode('.', $review['sr_ip']);
+                    if (count($ip_parts) == 4) {
+                        echo htmlspecialchars($ip_parts[0] . '.' . $ip_parts[1] . '.***.***');
+                    } else {
+                        // IPv6나 다른 형식
+                        echo '***';
+                    }
+                }
+            } else {
+                echo '-';
+            }
+            ?>
+        </td>
     </tr>
     </tbody>
     </table>
