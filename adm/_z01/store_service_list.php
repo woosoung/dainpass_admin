@@ -143,7 +143,7 @@ include_once('./js/store_service_list.js.php');
             } else {
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $num = $total_count - ($page - 1) * $rows - $i;
-                    $s_mod = '<a href="./store_service_form.php?'.$qstr.'&amp;w=u&amp;service_id='.$row['service_id'].'">수정</a>';
+                    $s_mod = '<a href="./store_service_form.php?'.$qstr.'&amp;w=u&amp;service_id='.$row['service_id'].'" class="btn btn_03">수정</a>';
 
                     // 해당 서비스의 이미지중에 fle_sort순으로 1개만 가져오는 쿼리
                     $fsql = " SELECT fle_path FROM {$g5['dain_file_table']}
