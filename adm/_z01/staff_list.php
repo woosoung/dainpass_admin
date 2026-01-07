@@ -140,7 +140,7 @@ include_once('./js/staff_list.js.php');
             } else {
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $num = $total_count - ($page - 1) * $rows - $i;
-                    $s_mod = '<a href="./staff_form.php?'.$qstr.'&amp;w=u&amp;staff_id='.$row['staff_id'].'">수정</a>';
+                    $s_mod = '<a href="./staff_form.php?'.$qstr.'&amp;w=u&amp;staff_id='.$row['staff_id'].'" class="btn btn_03">수정</a>';
 
                     // 해당 직원의 이미지중에 fle_sort순으로 1개만 가져오는 쿼리
                     $fsql = " SELECT fle_path FROM {$g5['dain_file_table']}
