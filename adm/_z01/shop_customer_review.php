@@ -12,11 +12,14 @@ $shop_info = $result['shop_info'];
 // 개발자 권한 체크 (mb_level 8 이상)
 $is_developer = isset($member['mb_level']) && $member['mb_level'] >= 8;
 
+// review_id 검증
 $review_id = isset($_GET['review_id']) ? (int)$_GET['review_id'] : 0;
 
+if ($review_id <= 0) {
+    alert("리뷰번호가 없습니다.");
+}
+
 if ($review_id > 0) {
-    // 가맹점 접근 권한 체크의 shop_id를 정수로 캐스팅
-    $shop_id = (int)$shop_id;
 
     // 리뷰 상세 조회
     $sql = " SELECT sr.*,
@@ -37,10 +40,8 @@ if ($review_id > 0) {
     if (!isset($review['review_id']) || !$review['review_id']) {
         alert("리뷰자료가 없습니다.");
     }
-    
+
     $html_title = "고객리뷰 - 상세보기";
-} else {
-    alert("리뷰번호가 없습니다.");
 }
 
 $g5['title'] = $html_title;
