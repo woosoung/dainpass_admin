@@ -92,11 +92,6 @@ if ($w == '') {
     if (!$com || !isset($com['service_id']) || !$com['service_id'])
         alert('존재하지 않는 서비스자료입니다.');
     
-    // 가맹점측 관리자는 자신의 가맹점 서비스만 수정 가능
-    if ($com['shop_id'] != $shop_id) {
-        alert('접속할 수 없는 페이지 입니다.');
-    }
-    
     $com['service_name'] = get_text($com['service_name']);
     $com['description'] = get_text($com['description']);
     
@@ -143,7 +138,6 @@ include_once('./js/store_service_form.js.php');
 <input type="hidden" name="sod" value="<?php echo $sod ?>">
 <input type="hidden" name="page" value="<?php echo $page ?>">
 <input type="hidden" name="token" value="">
-<input type="hidden" name="shop_id" value="<?php echo $shop_id; ?>">
 <input type="hidden" name="service_id" value="<?php echo $service_id; ?>">
 <?=$form_input??''?>
 <div class="local_desc01 local_desc">

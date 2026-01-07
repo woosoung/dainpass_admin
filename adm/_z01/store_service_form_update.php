@@ -11,13 +11,7 @@ $shop_id = $result['shop_id'];
 
 // 입력 기본값 안전 초기화
 $w = isset($_POST['w']) ? trim($_POST['w']) : (isset($_REQUEST['w']) ? trim($_REQUEST['w']) : '');
-$post_shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : (isset($_REQUEST['shop_id']) ? (int)$_REQUEST['shop_id'] : 0);
 $service_id = isset($_POST['service_id']) ? (int)$_POST['service_id'] : (isset($_REQUEST['service_id']) ? (int)$_REQUEST['service_id'] : 0);
-
-// 가맹점측 관리자는 자신의 가맹점만 수정 가능
-if ($post_shop_id != $shop_id) {
-    alert('접속할 수 없는 페이지 입니다.');
-}
 
 if ($w == 'u')
     check_demo();
