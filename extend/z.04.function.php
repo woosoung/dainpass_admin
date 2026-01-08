@@ -3842,3 +3842,60 @@ function get_shop_display_name($shop_info, $shop_id, $tag = 'p') {
 }
 }
 
+/**
+ * 통계 AJAX 요청의 날짜 및 period_type 검증 및 보정
+ *
+ * @param string $period_type 기간 유형 (daily, weekly, monthly)
+ * @param string $start_date 시작일 (YYYY-MM-DD)
+ * @param string $end_date 종료일 (YYYY-MM-DD)
+ * @return array [period_type, start_date, end_date] 보정된 값
+ */
+if (!function_exists('validate_and_sanitize_statistics_params')) {
+function validate_and_sanitize_statistics_params($period_type, $start_date, $end_date)
+{
+    // period_type 검증 (화이트리스트 방식)
+    $allowed_period_types = ['daily', 'weekly', 'monthly'];
+    if (!in_array($period_type, $allowed_period_types)) {
+        $period_type = 'daily';
+    }
+
+    // 날짜 범위 설정
+    $current_year = date('Y');
+    $min_year = $current_year - 2;
+    $absolute_min_date = $min_year . '-01-01'; // 2년 전 1월 1일
+    $today = date('Y-m-d');
+
+    // 날짜 형식 검증 및 기본값 설정
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date) || strtotime($start_date) === false) {
+        $start_date = date('Y-m-d', strtotime('-1 month')); // 기본값: 한 달 전
+    }
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date) || strtotime($end_date) === false) {
+        $end_date = $today; // 기본값: 오늘
+    }
+
+    // 날짜 범위 보정
+    if ($start_date < $absolute_min_date) {
+        $start_date = $absolute_min_date; // 최소 날짜로 보정
+    }
+    if ($start_date > $today) {
+        $start_date = $today; // 오늘로 보정
+    }
+
+    if ($end_date < $absolute_min_date) {
+        $end_date = $absolute_min_date; // 최소 날짜로 보정
+    }
+    if ($end_date > $today) {
+        $end_date = $today; // 오늘로 보정
+    }
+
+    // 시작일이 종료일보다 크면 swap
+    if ($start_date > $end_date) {
+        $temp = $start_date;
+        $start_date = $end_date;
+        $end_date = $temp;
+    }
+
+    return [$period_type, $start_date, $end_date];
+}
+}
+
