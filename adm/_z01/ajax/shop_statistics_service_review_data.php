@@ -457,6 +457,9 @@ if (!defined('SHOP_STAT_LIB_MODE')) {
         $start_date = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
         $end_date = isset($_POST['end_date']) ? trim($_POST['end_date']) : '';
 
+        // 날짜 및 period_type 검증 및 보정
+        list($period_type, $start_date, $end_date) = validate_and_sanitize_statistics_params($period_type, $start_date, $end_date);
+
         // shop_id 확인 (세션 또는 파라미터에서)
         $shop_id = 0;
         if (isset($_SESSION['ss_shop_id']) && $_SESSION['ss_shop_id']) {

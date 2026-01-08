@@ -568,6 +568,9 @@ if (!defined('SHOP_STAT_LIB_MODE')) {
     $start_date  = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
     $end_date    = isset($_POST['end_date']) ? trim($_POST['end_date']) : '';
 
+    // 날짜 및 period_type 검증 및 보정
+    list($period_type, $start_date, $end_date) = validate_and_sanitize_statistics_params($period_type, $start_date, $end_date);
+
     try {
         // 기간 계산
         list($range_start, $range_end) = calculate_date_range($period_type, $start_date, $end_date);
