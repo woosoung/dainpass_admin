@@ -18,14 +18,14 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 // 기본 기간: 최근 30일 (JS에서 다시 세팅하지만 초기값용)
 $today = date('Y-m-d');
-$default_start = date('Y-m-d', strtotime('-29 days'));
+$default_start = date('Y-m-d', strtotime('-30 days'));
 ?>
 
 <div class="mb-4 local_desc01 local_desc">
     <p>
-        가맹점의 쿠폰 통계를 조회합니다.<br>
-        <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
+        가맹점의 쿠폰 통계를 조회합니다.
     </p>
+    <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
 <div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
