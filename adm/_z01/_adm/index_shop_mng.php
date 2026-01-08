@@ -1,14 +1,17 @@
 <?php
 if (!defined('_GNUBOARD_')) exit; /// 개별 페이지 접근 불가
 
+// 가맹점 접근 권한 체크
+$result = check_shop_access();
+$shop_id = $result['shop_id'];
+$shop_info = $result['shop_info'];
+
 // JS / CSS
 add_javascript('<script src="'.G5_Z_URL.'/js/chartjs/chart.min.js"></script>', 0);
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
 // jQuery UI datepicker 플러그인
 include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
-
-$shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 
 // 기본 기간: 한 달 전부터 오늘까지
 $today = date('Y-m-d');
