@@ -3,6 +3,10 @@ if (!defined('_GNUBOARD_')) exit; /// 개별 페이지 접근 불가
 
 // JS / CSS
 add_javascript('<script src="'.G5_Z_URL.'/js/chartjs/chart.min.js"></script>', 0);
+include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
+
+// jQuery UI datepicker 플러그인
+include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
 
 $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ? $shop_info['shop_name'] : (isset($shop_info['name']) ? $shop_info['name'] : 'ID: ' . $shop_id);
 
@@ -19,13 +23,22 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
+    <!-- 세그먼트 컨트롤 형태의 빠른 선택 버튼 -->
+    <div class="quick-period-segment">
+        <button type="button" class="quick-period-btn" data-days="7">최근 7일</button>
+        <button type="button" class="quick-period-btn" data-days="30">30일</button>
+        <button type="button" class="quick-period-btn" data-days="90">90일</button>
+        <button type="button" class="quick-period-btn" data-days="180">180일</button>
+    </div>
+
     <select id="period_type" class="frm_input">
         <option value="daily">일별</option>
         <option value="weekly">주별</option>
         <option value="monthly">월별</option>
     </select>
-    <input type="date" id="start_date" class="frm_input" value="<?php echo $default_start; ?>">
-    <input type="date" id="end_date" class="frm_input" value="<?php echo $today; ?>">
+    <input type="text" id="start_date" class="frm_input" value="<?php echo $default_start; ?>" placeholder="시작일" readonly style="width: 120px;">
+    <span class="text-gray-400">~</span>
+    <input type="text" id="end_date" class="frm_input" value="<?php echo $today; ?>" placeholder="종료일" readonly style="width: 120px;">
     <button type="button" id="search_btn" class="btn_submit btn">조회</button>
 </div>
 

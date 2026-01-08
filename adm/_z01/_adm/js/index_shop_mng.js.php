@@ -1,5 +1,8 @@
 <?php
 if (!defined('_GNUBOARD_')) exit;
+
+// 공통 datepicker 함수 include
+include_once(G5_Z_PATH . '/js/_common_datepicker.js.php');
 ?>
 <script>
 (function($) {
@@ -769,8 +772,22 @@ if (!defined('_GNUBOARD_')) exit;
 
     // 초기화
     $(document).ready(function() {
+        // Datepicker 초기화
+        initializeStatisticsDatePicker({
+            startInputId: 'start_date',
+            endInputId: 'end_date'
+        });
+
+        // 빠른 선택 버튼 초기화
+        initializeQuickSelectButtons({
+            startInputId: 'start_date',
+            endInputId: 'end_date',
+            searchBtnId: 'search_btn',
+            autoSearch: true
+        });
+
         $('#search_btn').on('click', loadDashboardData);
-        
+
         // 페이지 로드 시 자동 조회
         loadDashboardData();
     });

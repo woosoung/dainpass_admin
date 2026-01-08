@@ -121,5 +121,20 @@ tailwind.config = {
     .mm-blue-btn {
         @apply mm-btn bg-blue-500 !text-white;
     }
+    /* 세그먼트 컨트롤 - 빠른 선택 버튼 */
+    .quick-period-segment {
+        @apply inline-flex border border-gray-300 rounded overflow-hidden;
+    }
+    .quick-period-btn {
+        @apply px-2.5 py-2 text-xs bg-white border-r border-gray-300 text-gray-700 cursor-pointer transition-all duration-200;
+        @apply hover:bg-gray-50;
+    }
+    .quick-period-btn:last-child {
+        @apply border-r-0;
+    }
+    /* Datepicker 입력 필드 */
+    #start_date, #end_date {
+        @apply cursor-pointer;
+    }
 }
 </style>
