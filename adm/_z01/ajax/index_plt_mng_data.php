@@ -43,7 +43,6 @@ function calculate_date_range($period_type, $start_date, $end_date)
 {
     $today = new DateTime('today');
 
-    // start_date와 end_date가 모두 제공되면 custom으로 처리
     if ($start_date && $end_date) {
         $start = DateTime::createFromFormat('Y-m-d', $start_date);
         $end   = DateTime::createFromFormat('Y-m-d', $end_date);
@@ -92,9 +91,6 @@ function calculate_date_range($period_type, $start_date, $end_date)
             // 이번 달 1일부터 마지막 날까지
             $start->modify('first day of this month');
             $end->modify('last day of this month');
-            break;
-        case 'custom':
-            // custom은 start_date와 end_date가 필요하므로 오늘부터 오늘까지
             break;
         default: // daily
             // 오늘부터 오늘까지
