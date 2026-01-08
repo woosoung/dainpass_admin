@@ -48,13 +48,76 @@ include_once(G5_Z_PATH . '/js/_common_datepicker.js.php');
         }
     }
 
+    function validateDate(dateStr) {
+        // 날짜 형식 검증 (YYYY-MM-DD)
+        var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(dateStr)) {
+            return false;
+        }
+
+        // 날짜 유효성 검증
+        var date = new Date(dateStr + 'T00:00:00');
+        if (isNaN(date.getTime())) {
+            return false;
+        }
+
+        // 날짜 범위 검증 (2년 전 연도의 1월 1일부터 오늘까지)
+        var today = new Date();
+        today.setHours(0, 0, 0, 0);
+        var currentYear = today.getFullYear();
+        var minYear = currentYear - 2;
+        var minDate = new Date(minYear + '-01-01T00:00:00');
+
+        if (date < minDate || date > today) {
+            return false;
+        }
+
+        return true;
+    }
+
     function loadDashboardData() {
         var periodType = $('#period_type').val();
         var startDate  = $('#start_date').val();
         var endDate    = $('#end_date').val();
 
+        // 기본 입력값 검증
         if (!startDate || !endDate) {
             alert('조회 기간을 선택해 주세요.');
+            return;
+        }
+
+        // period_type 검증 (화이트리스트)
+        var allowedPeriodTypes = ['daily', 'weekly', 'monthly'];
+        if (allowedPeriodTypes.indexOf(periodType) === -1) {
+            alert('올바르지 않은 기간 타입입니다.');
+            return;
+        }
+
+        // 날짜 형식 및 유효성 검증
+        if (!validateDate(startDate)) {
+            alert('시작일이 올바르지 않습니다.');
+            return;
+        }
+
+        if (!validateDate(endDate)) {
+            alert('종료일이 올바르지 않습니다.');
+            return;
+        }
+
+        // 날짜 순서 검증
+        if (new Date(startDate) > new Date(endDate)) {
+            alert('시작일은 종료일보다 이전이어야 합니다.');
+            return;
+        }
+
+        // 조회 기간 제한 (최대 3년, 윤년 자동 고려)
+        var start = new Date(startDate + 'T00:00:00');
+        var end = new Date(endDate + 'T00:00:00');
+        var maxEndDate = new Date(start);
+        maxEndDate.setFullYear(start.getFullYear() + 3);
+
+        if (end > maxEndDate) {
+            alert('조회 기간은 최대 3년까지 가능합니다.');
             return;
         }
 
