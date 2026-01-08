@@ -23,19 +23,18 @@ $today = date('Y-m-d');
 $default_start = date('Y-m-d', strtotime('-1 month'));
 ?>
 
-<div class="local_desc01 local_desc mb-4">
+<div class="mb-4 local_desc01 local_desc">
     <p>
         가맹점의 매출 및 결제 통계를 조회합니다.<br>
         <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 
-<div class="mb-4 flex flex-wrap items-center gap-2 date-range-selector">
+<div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
     <select id="period_type" class="frm_input">
         <option value="daily">일별</option>
         <option value="weekly">주별</option>
         <option value="monthly">월별</option>
-        <option value="custom">기간 지정</option>
     </select>
     <input type="date" id="start_date" class="frm_input" value="<?php echo $default_start; ?>">
     <input type="date" id="end_date" class="frm_input" value="<?php echo $today; ?>">
@@ -43,38 +42,38 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <!-- 주요 지표 카드 영역 -->
-<div class="statistics-cards grid gap-4 mb-6" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">오늘의 매출</div>
-        <div class="text-2xl font-bold mb-1" id="today_sales_amount">- 원</div>
+<div class="grid gap-4 mb-6 statistics-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">오늘의 매출</div>
+        <div class="mb-1 text-2xl font-bold" id="today_sales_amount">- 원</div>
         <div class="text-xs text-gray-600">
             예약건수: <span id="today_appointment_count">-</span>건 · 취소금액: <span id="today_cancel_amount">- 원</span>
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">이번 달 매출</div>
-        <div class="text-2xl font-bold mb-1" id="month_sales_amount">- 원</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">이번 달 매출</div>
+        <div class="mb-1 text-2xl font-bold" id="month_sales_amount">- 원</div>
         <div class="text-xs text-gray-600">
             예약건수: <span id="month_appointment_count">-</span>건 · 전월 대비: <span id="month_vs_prev_rate">- %</span>
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">누적 매출</div>
-        <div class="text-2xl font-bold mb-1" id="total_sales_amount">- 원</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">누적 매출</div>
+        <div class="mb-1 text-2xl font-bold" id="total_sales_amount">- 원</div>
         <div class="text-xs text-gray-600">
             누적 예약건수: <span id="total_appointment_count">-</span>건
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">취소 통계</div>
-        <div class="text-xl font-bold mb-1" id="range_cancel_amount">- 원</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">취소 통계</div>
+        <div class="mb-1 text-xl font-bold" id="range_cancel_amount">- 원</div>
         <div class="text-xs text-gray-600">
             취소건수: <span id="range_cancel_count">-</span>건 · 취소율: <span id="range_cancel_rate">- %</span>
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">정산 순매출</div>
-        <div class="text-2xl font-bold mb-1" id="settlement_net_amount">- 원</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">정산 순매출</div>
+        <div class="mb-1 text-2xl font-bold" id="settlement_net_amount">- 원</div>
         <div class="text-xs text-gray-600">
             실 매출: <span id="settlement_total_sales">- 원</span> · 차감액: <span id="settlement_deduction_amount">- 원</span> (<span id="settlement_deduction_rate">-</span>%)
         </div>
@@ -82,13 +81,13 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <!-- 차트 영역: 첫 번째 줄 - 기간별 매출 추이, 정산 금액 추이 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+<div class="grid gap-6 mb-6 charts-area" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">기간별 매출 추이</h3>
         <canvas id="sales_trend_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li><strong>총 매출</strong>: 예약 기준 실제 결제된 금액의 합계입니다.</li>
                 <li><strong>순 매출</strong>: 총 매출에서 취소금액을 뺀 실제 매출입니다.</li>
                 <li>두 선의 차이가 크면 취소율이 높은 기간을 의미합니다.</li>
@@ -96,12 +95,12 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </ul>
         </div>
     </div>
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">정산 금액 추이</h3>
         <canvas id="settlement_trend_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>플랫폼에서 가맹점으로 정산한 금액의 추이를 보여줍니다.</li>
                 <li>정산 금액은 수수료 및 기타 차감 후 실제 입금되는 금액입니다.</li>
                 <li>매출 추이와 비교하여 수수료 차감 규모를 파악할 수 있습니다.</li>
@@ -112,13 +111,13 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <!-- 차트 영역: 두 번째 줄 - 결제 수단별 통계, 상세 통계 요약 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+<div class="grid gap-6 mb-6 charts-area" style="grid-template-columns: minmax(0, 3fr) minmax(0, 7fr);">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">결제 수단별 통계</h3>
         <canvas id="payment_method_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>고객들이 주로 사용하는 결제 수단의 비율을 보여줍니다.</li>
                 <li>각 결제 수단의 비율(%)과 금액을 확인할 수 있습니다.</li>
                 <li>카드 결제 비율이 높으면 신용카드 사용 고객이 많음을 의미합니다.</li>
@@ -126,14 +125,14 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </ul>
         </div>
     </div>
-    <div class="statistics-tables border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm statistics-tables">
         <h3 class="mb-2 font-semibold">상세 통계 요약</h3>
         <div id="sales_detail_summary" class="text-sm text-gray-700">
             선택한 기간의 매출, 예약건수, 평균 객단가, 취소금액/취소율이 이곳에 요약으로 표시됩니다.
         </div>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li><strong>총 매출액</strong>: 선택한 기간의 전체 매출 합계입니다.</li>
                 <li><strong>평균 객단가</strong>: 예약 1건당 평균 결제 금액입니다.</li>
                 <li><strong>취소율</strong>: 전체 예약 대비 취소 비율로, 높으면 개선이 필요합니다.</li>
@@ -144,10 +143,10 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <!-- 차트 영역: 세 번째 줄 - 정산 처리 내역 (100% 너비) -->
-<div class="charts-area mb-6">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm overflow-x-auto">
+<div class="mb-6 charts-area">
+    <div class="p-4 overflow-x-auto bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">정산 처리 내역</h3>
-        <table class="tbl_head01 w-full text-sm" id="settlement_table">
+        <table class="w-full text-sm tbl_head01" id="settlement_table">
             <thead>
             <tr>
                 <th scope="col">정산일</th>
@@ -162,9 +161,9 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </tr>
             </tbody>
         </table>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li><strong>정산일</strong>: 플랫폼에서 정산을 처리한 날짜입니다.</li>
                 <li><strong>정산기간</strong>: 해당 정산에 포함된 매출 발생 기간입니다.</li>
                 <li><strong>상태</strong>: 완료(정산 완료), 대기(정산 대기), 실패(정산 실패)를 의미합니다.</li>

@@ -97,19 +97,18 @@ $today = date('Y-m-d');
 $default_start = date('Y-m-d', strtotime('-29 days'));
 ?>
 
-<div class="local_desc01 local_desc mb-4">
+<div class="mb-4 local_desc01 local_desc">
     <p>
         가맹점의 쿠폰 통계를 조회합니다.<br>
         <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 
-<div class="mb-4 flex flex-wrap items-center gap-2 date-range-selector">
+<div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
     <select id="period_type" class="frm_input">
         <option value="daily">일별</option>
         <option value="weekly">주별</option>
         <option value="monthly">월별</option>
-        <option value="custom">기간 지정</option>
     </select>
     <input type="date" id="start_date" class="frm_input" value="<?php echo $default_start; ?>">
     <input type="date" id="end_date" class="frm_input" value="<?php echo $today; ?>">
@@ -117,39 +116,39 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
 </div>
 
 <!-- 주요 지표 카드 영역 -->
-<div class="statistics-cards grid gap-4 mb-6" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+<div class="grid gap-4 mb-6 statistics-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
     <!-- 쿠폰 통계 카드 -->
     <!-- 총 쿠폰 발급 수 -->
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">총 쿠폰 발급 수</div>
-        <div class="text-2xl font-bold mb-1" id="total_coupon_issued">- 개</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">총 쿠폰 발급 수</div>
+        <div class="mb-1 text-2xl font-bold" id="total_coupon_issued">- 개</div>
         <div class="text-xs text-gray-600">
             기간 내 발급된 쿠폰 수
         </div>
     </div>
     
     <!-- 총 쿠폰 사용 수 -->
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">총 쿠폰 사용 수</div>
-        <div class="text-2xl font-bold mb-1" id="total_coupon_used">- 개</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">총 쿠폰 사용 수</div>
+        <div class="mb-1 text-2xl font-bold" id="total_coupon_used">- 개</div>
         <div class="text-xs text-gray-600">
             기간 내 사용된 쿠폰 수
         </div>
     </div>
     
     <!-- 쿠폰 사용률 -->
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">쿠폰 사용률</div>
-        <div class="text-2xl font-bold mb-1" id="coupon_usage_rate">- %</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">쿠폰 사용률</div>
+        <div class="mb-1 text-2xl font-bold" id="coupon_usage_rate">- %</div>
         <div class="text-xs text-gray-600">
             사용 수 / 발급 수
         </div>
     </div>
     
     <!-- 총 쿠폰 할인 금액 -->
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">총 쿠폰 할인 금액</div>
-        <div class="text-2xl font-bold mb-1" id="total_coupon_discount">- 원</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">총 쿠폰 할인 금액</div>
+        <div class="mb-1 text-2xl font-bold" id="total_coupon_discount">- 원</div>
         <div class="text-xs text-gray-600">
             기간 내 쿠폰 할인 금액 합계
         </div>
@@ -158,13 +157,13 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
 
 <!-- 차트 영역 -->
 <!-- 쿠폰 추이 차트 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+<div class="grid gap-6 mb-6 charts-area" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">기간별 쿠폰 발급/사용 추이</h3>
         <canvas id="coupon_issue_use_trend_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li><strong>발급</strong>: 해당 기간에 고객에게 발급된 쿠폰의 총 개수입니다.</li>
                 <li><strong>사용</strong>: 해당 기간에 실제로 사용된 쿠폰의 총 개수입니다.</li>
                 <li>발급 수 대비 사용 수가 높으면 쿠폰 활용도가 좋음을 의미합니다.</li>
@@ -175,12 +174,12 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
     </div>
     
     <!-- 할인 금액 추이 -->
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">기간별 할인 금액 추이</h3>
         <canvas id="discount_amount_trend_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>기간별로 쿠폰 사용으로 인해 할인된 금액의 합계를 보여줍니다.</li>
                 <li>할인 금액이 높으면 쿠폰 마케팅 효과가 크지만, 순수익에는 영향을 줍니다.</li>
                 <li>할인 금액 추이와 매출 추이를 함께 비교하여 쿠폰의 실질적 효과를 파악하세요.</li>
@@ -192,14 +191,14 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
 </div>
 
 <!-- 쿠폰별 사용률 차트 및 상세 통계 테이블 (가로 배치) -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
+<div class="grid gap-6 mb-6 charts-area" style="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);">
     <!-- 쿠폰별 사용률 차트 -->
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">쿠폰별 사용률 (상위 10개)</h3>
         <canvas id="coupon_usage_rate_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>발급된 쿠폰 대비 실제 사용된 비율을 보여줍니다.</li>
                 <li><strong>사용률</strong>: (사용 수 / 발급 수) × 100으로 계산됩니다.</li>
                 <li>사용률이 높은 쿠폰은 고객에게 인기가 많고 실효성이 높은 쿠폰입니다.</li>
@@ -210,10 +209,10 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
     </div>
     
     <!-- 쿠폰별 상세 통계 테이블 -->
-    <div class="statistics-tables border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm statistics-tables">
         <h3 class="mb-2 font-semibold">쿠폰별 상세 통계 (상위 20개)</h3>
         <div class="overflow-x-auto">
-            <table class="tbl_head01 w-full text-sm" id="coupon_detail_table">
+            <table class="w-full text-sm tbl_head01" id="coupon_detail_table">
                 <thead>
                 <tr>
                     <th scope="col" class="text-center">쿠폰명</th>
@@ -231,9 +230,9 @@ $default_start = date('Y-m-d', strtotime('-29 days'));
                 </tbody>
             </table>
         </div>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li><strong>쿠폰명/코드</strong>: 각 쿠폰의 고유 식별 정보입니다.</li>
                 <li><strong>발급 수</strong>: 해당 쿠폰이 고객에게 발급된 총 횟수입니다.</li>
                 <li><strong>사용 수</strong>: 발급된 쿠폰 중 실제 사용된 횟수입니다.</li>

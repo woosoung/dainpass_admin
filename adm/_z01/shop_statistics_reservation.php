@@ -23,19 +23,18 @@ $today = date('Y-m-d');
 $default_start = date('Y-m-d', strtotime('-1 month'));
 ?>
 
-<div class="local_desc01 local_desc mb-4">
+<div class="mb-4 local_desc01 local_desc">
     <p>
         가맹점의 예약 및 운영 통계를 조회합니다.<br>
         <strong>가맹점: <?php echo get_text($shop_display_name); ?></strong>
     </p>
 </div>
 
-<div class="mb-4 flex flex-wrap items-center gap-2 date-range-selector">
+<div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
     <select id="period_type" class="frm_input">
         <option value="daily">일별</option>
         <option value="weekly">주별</option>
         <option value="monthly">월별</option>
-        <option value="custom">기간 지정</option>
     </select>
     <input type="date" id="start_date" class="frm_input" value="<?php echo $default_start; ?>">
     <input type="date" id="end_date" class="frm_input" value="<?php echo $today; ?>">
@@ -43,38 +42,38 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <!-- 주요 지표 카드 영역 -->
-<div class="statistics-cards grid gap-4 mb-6" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">전체 예약 건수</div>
-        <div class="text-2xl font-bold mb-1" id="total_appointment_count">- 건</div>
+<div class="grid gap-4 mb-6 statistics-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">전체 예약 건수</div>
+        <div class="mb-1 text-2xl font-bold" id="total_appointment_count">- 건</div>
         <div class="text-xs text-gray-600">
             기간 내 총 예약: <span id="range_total_count">-</span>건
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">활성 예약 건수</div>
-        <div class="text-2xl font-bold mb-1" id="active_appointment_count">- 건</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">활성 예약 건수</div>
+        <div class="mb-1 text-2xl font-bold" id="active_appointment_count">- 건</div>
         <div class="text-xs text-gray-600">
             예정된 예약 수
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">취소율</div>
-        <div class="text-2xl font-bold mb-1" id="cancel_rate">- %</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">취소율</div>
+        <div class="mb-1 text-2xl font-bold" id="cancel_rate">- %</div>
         <div class="text-xs text-gray-600">
             취소 건수: <span id="cancel_count">-</span>건
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">재방문율</div>
-        <div class="text-2xl font-bold mb-1" id="repeat_visit_rate">- %</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">재방문율</div>
+        <div class="mb-1 text-2xl font-bold" id="repeat_visit_rate">- %</div>
         <div class="text-xs text-gray-600">
             재방문 고객: <span id="repeat_customer_count">-</span>명
         </div>
     </div>
-    <div class="card border rounded px-4 py-3 bg-white shadow-sm">
-        <div class="text-sm text-gray-500 mb-1">평균 예약 횟수</div>
-        <div class="text-2xl font-bold mb-1" id="avg_appointment_per_customer">- 회</div>
+    <div class="px-4 py-3 bg-white border rounded shadow-sm card">
+        <div class="mb-1 text-sm text-gray-500">평균 예약 횟수</div>
+        <div class="mb-1 text-2xl font-bold" id="avg_appointment_per_customer">- 회</div>
         <div class="text-xs text-gray-600">
             고객당 평균 예약 횟수
         </div>
@@ -83,13 +82,13 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 
 <!-- 차트 영역 -->
 <!-- 첫 번째 줄: 기간별 예약 건수 추이, 시간대별 예약 건수, 요일별 예약 건수 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+<div class="grid gap-6 mb-6 charts-area" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">기간별 예약 건수 추이</h3>
         <canvas id="appointment_trend_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li><strong>전체 예약</strong>: 해당 기간 내 실제 발생한 예약 건수입니다.</li>
                 <li><strong>취소 예약</strong>: 해당 기간 내 취소된 예약 건수입니다.</li>
                 <li>두 선의 차이가 크면 취소율이 높은 기간을 의미합니다.</li>
@@ -98,12 +97,12 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </ul>
         </div>
     </div>
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">시간대별 예약 건수</h3>
         <canvas id="hourly_appointment_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>0시부터 23시까지 각 시간대별 예약 건수를 보여줍니다.</li>
                 <li>피크 시간대를 파악하여 인력 배치를 최적화하세요.</li>
                 <li>비수기 시간대에는 할인 이벤트나 프로모션을 고려해보세요.</li>
@@ -111,12 +110,12 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </ul>
         </div>
     </div>
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">요일별 예약 건수</h3>
         <canvas id="weekly_appointment_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>일요일부터 토요일까지 각 요일별 예약 건수를 보여줍니다.</li>
                 <li>주중과 주말의 예약 패턴을 비교하세요.</li>
                 <li>특정 요일에 예약이 집중된다면 해당 요일의 운영 전략을 세우세요.</li>
@@ -127,13 +126,13 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <!-- 두 번째 줄: 취소율 추이, 상태별 예약 분포, 상세 통계 요약 -->
-<div class="charts-area grid gap-6 mb-6" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);">
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+<div class="grid gap-6 mb-6 charts-area" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">취소율 추이</h3>
         <canvas id="cancel_trend_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>전체 예약 대비 취소 예약의 비율(%)을 기간별로 보여줍니다.</li>
                 <li>취소율이 높거나 증가 추세라면 취소 원인을 분석하세요.</li>
                 <li>일반적으로 취소율이 10% 이하는 양호한 수준입니다.</li>
@@ -142,12 +141,12 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </ul>
         </div>
     </div>
-    <div class="chart-container border rounded p-4 bg-white shadow-sm">
+    <div class="p-4 bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">상태별 예약 분포</h3>
         <canvas id="status_distribution_chart" height="120"></canvas>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li>전체 예약 중 완료, 취소 등의 상태별 비율을 보여줍니다.</li>
                 <li>각 상태의 건수와 전체 대비 비율(%)을 확인할 수 있습니다.</li>
                 <li>취소 비율이 높다면 운영 개선이 필요합니다.</li>
@@ -156,14 +155,14 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </ul>
         </div>
     </div>
-    <div class="chart-container border rounded p-4 bg-white shadow-sm overflow-x-auto">
+    <div class="p-4 overflow-x-auto bg-white border rounded shadow-sm chart-container">
         <h3 class="mb-2 font-semibold">상세 통계 요약</h3>
         <div id="reservation_detail_summary" class="text-sm text-gray-700">
             선택한 기간의 예약 통계 요약 정보가 표시됩니다.
         </div>
-        <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+        <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
             <p class="mb-1"><strong>해석 방법:</strong></p>
-            <ul class="list-disc list-inside space-y-1">
+            <ul class="space-y-1 list-disc list-inside">
                 <li><strong>전체 예약</strong>: 선택한 기간의 전체 예약 건수입니다.</li>
                 <li><strong>활성 예약</strong>: 현재 진행 중이거나 예정된 예약 건수입니다.</li>
                 <li><strong>고유 고객</strong>: 예약한 고유 고객 수입니다.</li>
@@ -175,10 +174,10 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
 </div>
 
 <!-- 요일별 시간대별 예약 패턴 테이블 -->
-<div class="statistics-tables border rounded p-4 bg-white shadow-sm mb-6">
+<div class="p-4 mb-6 bg-white border rounded shadow-sm statistics-tables">
     <h3 class="mb-2 font-semibold">요일별 시간대별 예약 패턴</h3>
     <div class="overflow-x-auto">
-        <table class="tbl_head01 w-full text-sm" id="weekday_hour_pattern_table">
+        <table class="w-full text-sm tbl_head01" id="weekday_hour_pattern_table">
             <thead>
             <tr>
                 <th scope="col" class="text-center">요일</th>
@@ -193,9 +192,9 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
             </tbody>
         </table>
     </div>
-    <div class="mt-3 text-xs text-gray-600 border-t pt-2">
+    <div class="pt-2 mt-3 text-xs text-gray-600 border-t">
         <p class="mb-1"><strong>해석 방법:</strong></p>
-        <ul class="list-disc list-inside space-y-1">
+        <ul class="space-y-1 list-disc list-inside">
             <li>특정 요일의 특정 시간대에 예약이 집중되는 패턴을 확인할 수 있습니다.</li>
             <li>피크 요일·시간대를 파악하여 스태프 스케줄을 최적화하세요.</li>
             <li>예약이 집중되는 시간대에는 재고 관리와 서비스 준비를 철저히 하세요.</li>

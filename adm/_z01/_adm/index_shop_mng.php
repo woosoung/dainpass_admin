@@ -23,7 +23,6 @@ $default_start = date('Y-m-d', strtotime('-1 month'));
         <option value="daily">일별</option>
         <option value="weekly">주별</option>
         <option value="monthly">월별</option>
-        <option value="custom">기간 지정</option>
     </select>
     <input type="date" id="start_date" class="frm_input" value="<?php echo $default_start; ?>">
     <input type="date" id="end_date" class="frm_input" value="<?php echo $today; ?>">
