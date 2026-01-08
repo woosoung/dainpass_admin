@@ -6,6 +6,14 @@ include_once('./_common.php');
 
 header('Content-Type: application/json; charset=utf-8');
 
+// POST 요청만 허용
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ob_clean();
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => '허용되지 않은 요청 방식입니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // 에러 발생 시 JSON으로 응답하도록 설정
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -37,14 +45,24 @@ $result = check_shop_access();
 $shop_id = $result['shop_id'];
 
 if (!$shop_id) {
-    echo json_encode(['success' => false, 'message' => '접속할 수 없는 페이지 입니다.']);
+    ob_clean();
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => '접속할 수 없는 페이지 입니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+// 입력값 검증 - 필수 파라미터 확인
+if (!isset($_POST['period_type']) || !isset($_POST['start_date']) || !isset($_POST['end_date'])) {
+    ob_clean();
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => '필수 파라미터가 누락되었습니다.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 // 입력값
-$period_type = isset($_POST['period_type']) ? trim($_POST['period_type']) : 'daily';
-$start_date  = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
-$end_date    = isset($_POST['end_date']) ? trim($_POST['end_date']) : '';
+$period_type = trim($_POST['period_type']);
+$start_date  = trim($_POST['start_date']);
+$end_date    = trim($_POST['end_date']);
 
 // 날짜 및 period_type 검증 및 보정
 list($period_type, $start_date, $end_date) = validate_and_sanitize_statistics_params($period_type, $start_date, $end_date);

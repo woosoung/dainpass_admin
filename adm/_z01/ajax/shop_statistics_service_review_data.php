@@ -452,10 +452,24 @@ function get_service_details($shop_id, $range_start, $range_end)
 // 다른 파일에서 라이브러리처럼 include 할 때는 실행되지 않도록 가드한다.
 if (!defined('SHOP_STAT_LIB_MODE')) {
     try {
+        // POST 요청만 허용
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => '허용되지 않은 요청 방식입니다.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        // 입력값 검증 - 필수 파라미터 확인
+        if (!isset($_POST['period_type']) || !isset($_POST['start_date']) || !isset($_POST['end_date'])) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => '필수 파라미터가 누락되었습니다.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
         // 파라미터 받기
-        $period_type = isset($_POST['period_type']) ? trim($_POST['period_type']) : 'daily';
-        $start_date = isset($_POST['start_date']) ? trim($_POST['start_date']) : '';
-        $end_date = isset($_POST['end_date']) ? trim($_POST['end_date']) : '';
+        $period_type = trim($_POST['period_type']);
+        $start_date = trim($_POST['start_date']);
+        $end_date = trim($_POST['end_date']);
 
         // 날짜 및 period_type 검증 및 보정
         list($period_type, $start_date, $end_date) = validate_and_sanitize_statistics_params($period_type, $start_date, $end_date);
