@@ -26,16 +26,26 @@ if (!defined('_GNUBOARD_')) exit;
         var startInputId = options.startInputId || 'start_date';
         var endInputId = options.endInputId || 'end_date';
 
+        // 절대 최소 날짜: 2년 전 1월 1일
+        var today = new Date();
+        var currentYear = today.getFullYear();
+        var minYear = currentYear - 2;
+        var absoluteMinDate = new Date(minYear, 0, 1); // 1월 1일
+
         $('#' + startInputId).datepicker({
             changeMonth: true,
             changeYear: true,
             dateFormat: "yy-mm-dd",
             showButtonPanel: true,
-            yearRange: "c-10:c+1",
-            maxDate: "+1y",
+            yearRange: minYear + ":" + currentYear,
+            minDate: absoluteMinDate,
+            maxDate: "+0d",
             onClose: function(selectedDate) {
                 if (selectedDate) {
-                    $('#' + endInputId).datepicker("option", "minDate", selectedDate);
+                    var selected = new Date(selectedDate);
+                    // 선택한 날짜와 절대 최소 날짜 중 큰 값을 사용
+                    var minDateForEnd = selected > absoluteMinDate ? selected : absoluteMinDate;
+                    $('#' + endInputId).datepicker("option", "minDate", minDateForEnd);
                 }
             }
         });
@@ -45,8 +55,9 @@ if (!defined('_GNUBOARD_')) exit;
             changeYear: true,
             dateFormat: "yy-mm-dd",
             showButtonPanel: true,
-            yearRange: "c-10:c+1",
-            maxDate: "+1y",
+            yearRange: minYear + ":" + currentYear,
+            minDate: absoluteMinDate,
+            maxDate: "+0d",
             onClose: function(selectedDate) {
                 if (selectedDate) {
                     $('#' + startInputId).datepicker("option", "maxDate", selectedDate);
