@@ -12,7 +12,7 @@ $shop_display_name = isset($shop_info['shop_name']) && $shop_info['shop_name'] ?
 
 // 기본 기간: 한 달 전부터 오늘까지
 $today = date('Y-m-d');
-$default_start = date('Y-m-d', strtotime('-1 month'));
+$default_start = date('Y-m-d', strtotime('-30 days'));
 ?>
 
 <div class="mb-4 local_desc01 local_desc">
