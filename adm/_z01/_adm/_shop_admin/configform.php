@@ -202,8 +202,9 @@ add_javascript('<script src="'.G5_Z_URL.'/js/colpick/colpick.js"></script>',0);
         <tr>
             <th scope="row"><label for="de_point_duration">포인트 유효기간<?php if($is_dev_manager) { ?><br><span class="text-red-800">de_point_duration</span><?php } ?></label></th>
             <td>
+
                 <?php echo help("포인트의 유효기간을 설정합니다. (단위: 개월)\n예: 1로 설정하면 1개월 동안 포인트가 유효합니다."); ?>
-                <input type="text" name="de_point_duration" value="<?php echo get_sanitize_input($default2['de_point_duration']??0); ?>" id="de_point_duration" class="frm_input" size="5"> 개월
+                <input type="number" name="de_point_duration" value="<?php echo get_sanitize_input($default2['de_point_duration']??0); ?>" id="de_point_duration" class="frm_input w-[60px]" size="2"> 개월
             </td>
         </tr>
         <tr>

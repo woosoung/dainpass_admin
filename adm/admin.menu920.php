@@ -10,6 +10,7 @@ $menu["menu920"] = array(
     array('920450', '정산관리', '' . G5_Z_URL . '/settlement_list.php', 'settlement_list'),
     array('920500', '고객(사용자)회원관리', '' . G5_Z_URL . '/customer_list.php', 'customer_list'),
     array('920600', '고객(사용자)문의관리', '' . G5_Z_URL . '/customer_qa_list.php', 'customer_qa_list'),
+    array('920650', '배너관리', '' . G5_Z_URL . '/banner_list.php', 'banner_list'),
     array('920700', '가맹점문의관리', '' . G5_Z_URL . '/shop_qa_list.php', 'shop_qa_list'),
     array('920800', '업종별요일별운영시간', '' . G5_Z_URL . '/default_slot_list.php', 'default_slot_list'),
     array('920900', '업종별예약준비시간', '' . G5_Z_URL . '/category_preparation_list.php', 'category_preparation_list'),
