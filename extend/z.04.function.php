@@ -3855,7 +3855,7 @@ function validate_and_sanitize_statistics_params($period_type, $start_date, $end
 {
     // period_type 검증 (화이트리스트 방식)
     $allowed_period_types = ['daily', 'weekly', 'monthly'];
-    if (!in_array($period_type, $allowed_period_types)) {
+    if (!in_array($period_type, $allowed_period_types, true)) {
         $period_type = 'daily';
     }
 
@@ -3865,12 +3865,31 @@ function validate_and_sanitize_statistics_params($period_type, $start_date, $end
     $absolute_min_date = $min_year . '-01-01'; // 2년 전 1월 1일
     $today = date('Y-m-d');
 
+    // SQL Injection 방지를 위한 추가 검증
+    // 오직 숫자와 하이픈만 허용
+    $start_date = preg_replace('/[^0-9-]/', '', $start_date);
+    $end_date = preg_replace('/[^0-9-]/', '', $end_date);
+
     // 날짜 형식 검증 및 기본값 설정
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date) || strtotime($start_date) === false) {
-        $start_date = date('Y-m-d', strtotime('-1 month')); // 기본값: 한 달 전
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date)) {
+        $start_date = date('Y-m-d', strtotime('-30 days')); // 기본값: 30일 전
     }
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date) || strtotime($end_date) === false) {
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date)) {
         $end_date = $today; // 기본값: 오늘
+    }
+
+    // 날짜 유효성 검증 (존재하는 날짜인지 확인)
+    $start_timestamp = strtotime($start_date);
+    $end_timestamp = strtotime($end_date);
+
+    if ($start_timestamp === false || date('Y-m-d', $start_timestamp) !== $start_date) {
+        $start_date = date('Y-m-d', strtotime('-30 days')); // 유효하지 않으면 기본값
+        $start_timestamp = strtotime($start_date);
+    }
+
+    if ($end_timestamp === false || date('Y-m-d', $end_timestamp) !== $end_date) {
+        $end_date = $today; // 유효하지 않으면 기본값
+        $end_timestamp = strtotime($end_date);
     }
 
     // 날짜 범위 보정
@@ -3893,6 +3912,17 @@ function validate_and_sanitize_statistics_params($period_type, $start_date, $end
         $temp = $start_date;
         $start_date = $end_date;
         $end_date = $temp;
+    }
+
+    // 조회 기간 제한 (최대 3년)
+    $start_date_obj = new DateTime($start_date);
+    $end_date_obj = new DateTime($end_date);
+    $max_end_date = clone $start_date_obj;
+    $max_end_date->modify('+3 years');
+
+    if ($end_date_obj > $max_end_date) {
+        // 시작일 기준으로 3년 후로 종료일 조정
+        $end_date = $max_end_date->format('Y-m-d');
     }
 
     return [$period_type, $start_date, $end_date];
