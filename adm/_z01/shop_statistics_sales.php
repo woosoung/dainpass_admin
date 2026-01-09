@@ -167,5 +167,4 @@ render_statistics_date_range_selector($default_start, $today); ?>
 </div>
 
 <?php
-include_once('./js/shop_statistics_sales.js.php');
 include_once(G5_ADMIN_PATH.'/admin.tail.php');
