@@ -276,6 +276,8 @@ if ($action == 'insert') {
     $bnr_desc = ($bnr_desc == '') ? 'NULL' : "'".addslashes($bnr_desc)."'";
     $bnr_link = isset($_POST['bnr_link']) ? trim($_POST['bnr_link']) : '';
     $bnr_link = ($bnr_link == '') ? 'NULL' : "'".addslashes($bnr_link)."'";
+    $bnr_mo_link = isset($_POST['bnr_mo_link']) ? trim($_POST['bnr_mo_link']) : '';
+    $bnr_mo_link = ($bnr_mo_link == '') ? 'NULL' : "'".addslashes($bnr_mo_link)."'";
     $bnr_target = isset($_POST['bnr_target']) ? trim($_POST['bnr_target']) : '_self';
     $bnr_youtube = isset($_POST['bnr_youtube']) ? trim($_POST['bnr_youtube']) : '';
     $bnr_youtube = ($bnr_youtube == '') ? 'NULL' : "'".addslashes($bnr_youtube)."'";
@@ -293,7 +295,7 @@ if ($action == 'insert') {
     $has_image = false;
     $banner_img_files = array();
     
-    // FormData에서 banner_img[]로 전송하면 $_FILES['banner_img']로 접근
+    // FormData에서 banner_img[]로 전송하면 $_FILES['banner_img']로 접근 (PC용)
     if (isset($_FILES['banner_img'])) {
         // 배열 형태로 전송된 경우 (banner_img[])
         if (isset($_FILES['banner_img']['name'])) {
@@ -327,6 +329,39 @@ if ($action == 'insert') {
         }
     }
     
+    // 모바일용 이미지 파일 처리
+    $has_mo_image = false;
+    $banner_mo_img_files = array();
+    
+    if (isset($_FILES['banner_mo_img'])) {
+        if (isset($_FILES['banner_mo_img']['name'])) {
+            if (is_array($_FILES['banner_mo_img']['name'])) {
+                $valid_mo_files = true;
+                foreach ($_FILES['banner_mo_img']['error'] as $error) {
+                    if ($error != UPLOAD_ERR_OK) {
+                        $valid_mo_files = false;
+                        break;
+                    }
+                }
+                if ($valid_mo_files) {
+                    $has_mo_image = true;
+                    $banner_mo_img_files = $_FILES['banner_mo_img'];
+                }
+            } else {
+                if (!empty($_FILES['banner_mo_img']['name']) && $_FILES['banner_mo_img']['error'] == UPLOAD_ERR_OK) {
+                    $has_mo_image = true;
+                    $banner_mo_img_files = array(
+                        'name' => array($_FILES['banner_mo_img']['name']),
+                        'type' => array($_FILES['banner_mo_img']['type']),
+                        'tmp_name' => array($_FILES['banner_mo_img']['tmp_name']),
+                        'error' => array($_FILES['banner_mo_img']['error']),
+                        'size' => array($_FILES['banner_mo_img']['size'])
+                    );
+                }
+            }
+        }
+    }
+    
     $has_youtube = !empty($bnr_youtube) && $bnr_youtube != 'NULL';
     
     if (!$has_image && !$has_youtube) {
@@ -340,9 +375,9 @@ if ($action == 'insert') {
 
     // 배너 INSERT
     $sql = " INSERT INTO banner 
-                (bng_id, shop_id, bnr_name, bnr_desc, bnr_link, bnr_target, bnr_youtube, bnr_start_dt, bnr_end_dt, bnr_sort, bnr_status, bnr_created_at, bnr_update_at)
+                (bng_id, shop_id, bnr_name, bnr_desc, bnr_link, bnr_mo_link, bnr_target, bnr_youtube, bnr_start_dt, bnr_end_dt, bnr_sort, bnr_status, bnr_created_at, bnr_update_at)
               VALUES 
-                ({$bng_id}, {$shop_id}, {$bnr_name}, {$bnr_desc}, {$bnr_link}, '{$bnr_target}', {$bnr_youtube}, {$bnr_start_dt}, {$bnr_end_dt}, {$next_sort}, '{$bnr_status}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ";
+                ({$bng_id}, {$shop_id}, {$bnr_name}, {$bnr_desc}, {$bnr_link}, {$bnr_mo_link}, '{$bnr_target}', {$bnr_youtube}, {$bnr_start_dt}, {$bnr_end_dt}, {$next_sort}, '{$bnr_status}', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ";
     
     $result = @sql_query_pg($sql);
     if (!$result) {
@@ -392,7 +427,50 @@ if ($action == 'insert') {
             // 파일 업로드 실패 시 배너는 이미 등록되었으므로 경고만 표시
             // 필요시 배너를 삭제할 수도 있음
             $response['success'] = true;
-            $response['message'] = '배너는 등록되었으나 이미지 업로드에 실패했습니다: ' . $e->getMessage();
+            $response['message'] = '배너는 등록되었으나 PC용 이미지 업로드에 실패했습니다: ' . $e->getMessage();
+            $response['bnr_id'] = $bnr_id;
+            echo json_encode($response);
+            exit;
+        }
+    }
+
+    // 모바일용 이미지 파일 업로드
+    if ($has_mo_image && !empty($banner_mo_img_files)) {
+        try {
+            upload_multi_file($banner_mo_img_files, 'banner', $bnr_id, 'plt/banner', 'banner_mo_img');
+            
+            // 배너당 모바일 이미지는 1개만 유지: 업로드 후 가장 최신 파일만 남기고 나머지 삭제
+            if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
+                $check_mo_sql = " SELECT fle_idx, fle_reg_dt
+                                  FROM {$g5['dain_file_table']}
+                                  WHERE fle_db_tbl = 'banner'
+                                  AND fle_db_idx = '{$bnr_id}'
+                                  AND fle_type = 'banner_mo_img'
+                                  AND fle_dir = 'plt/banner'
+                                  ORDER BY fle_reg_dt DESC ";
+                $check_mo_result = @sql_query_pg($check_mo_sql);
+                $uploaded_mo_files = array();
+                if ($check_mo_result && is_object($check_mo_result) && isset($check_mo_result->result)) {
+                    while ($file_row = sql_fetch_array_pg($check_mo_result->result)) {
+                        $uploaded_mo_files[] = $file_row;
+                    }
+                }
+                
+                // 2개 이상 업로드된 경우 가장 최신 것(첫 번째)만 남기고 나머지 삭제
+                if (count($uploaded_mo_files) > 1) {
+                    $delete_mo_idx_array = array();
+                    for ($i = 1; $i < count($uploaded_mo_files); $i++) {
+                        $delete_mo_idx_array[] = $uploaded_mo_files[$i]['fle_idx'];
+                    }
+                    if (!empty($delete_mo_idx_array)) {
+                        delete_idx_s3_file($delete_mo_idx_array);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // 파일 업로드 실패 시 배너는 이미 등록되었으므로 경고만 표시
+            $response['success'] = true;
+            $response['message'] = '배너는 등록되었으나 모바일용 이미지 업로드에 실패했습니다: ' . $e->getMessage();
             $response['bnr_id'] = $bnr_id;
             echo json_encode($response);
             exit;
@@ -427,6 +505,8 @@ if ($action == 'insert') {
     $bnr_desc = ($bnr_desc == '') ? 'NULL' : "'".addslashes($bnr_desc)."'";
     $bnr_link = isset($_POST['bnr_link']) ? trim($_POST['bnr_link']) : '';
     $bnr_link = ($bnr_link == '') ? 'NULL' : "'".addslashes($bnr_link)."'";
+    $bnr_mo_link = isset($_POST['bnr_mo_link']) ? trim($_POST['bnr_mo_link']) : '';
+    $bnr_mo_link = ($bnr_mo_link == '') ? 'NULL' : "'".addslashes($bnr_mo_link)."'";
     $bnr_target = isset($_POST['bnr_target']) ? trim($_POST['bnr_target']) : '_self';
     $bnr_youtube = isset($_POST['bnr_youtube']) ? trim($_POST['bnr_youtube']) : '';
     $bnr_youtube = ($bnr_youtube == '') ? 'NULL' : "'".addslashes($bnr_youtube)."'";
@@ -440,7 +520,7 @@ if ($action == 'insert') {
     $has_image = false;
     $banner_img_files = array();
     
-    // FormData에서 banner_img[]로 전송하면 $_FILES['banner_img']로 접근
+    // FormData에서 banner_img[]로 전송하면 $_FILES['banner_img']로 접근 (PC용)
     if (isset($_FILES['banner_img'])) {
         // 배열 형태로 전송된 경우 (banner_img[])
         if (isset($_FILES['banner_img']['name'])) {
@@ -474,13 +554,46 @@ if ($action == 'insert') {
         }
     }
     
+    // 모바일용 이미지 파일 처리
+    $has_mo_image = false;
+    $banner_mo_img_files = array();
+    
+    if (isset($_FILES['banner_mo_img'])) {
+        if (isset($_FILES['banner_mo_img']['name'])) {
+            if (is_array($_FILES['banner_mo_img']['name'])) {
+                $valid_mo_files = true;
+                foreach ($_FILES['banner_mo_img']['error'] as $error) {
+                    if ($error != UPLOAD_ERR_OK) {
+                        $valid_mo_files = false;
+                        break;
+                    }
+                }
+                if ($valid_mo_files) {
+                    $has_mo_image = true;
+                    $banner_mo_img_files = $_FILES['banner_mo_img'];
+                }
+            } else {
+                if (!empty($_FILES['banner_mo_img']['name']) && $_FILES['banner_mo_img']['error'] == UPLOAD_ERR_OK) {
+                    $has_mo_image = true;
+                    $banner_mo_img_files = array(
+                        'name' => array($_FILES['banner_mo_img']['name']),
+                        'type' => array($_FILES['banner_mo_img']['type']),
+                        'tmp_name' => array($_FILES['banner_mo_img']['tmp_name']),
+                        'error' => array($_FILES['banner_mo_img']['error']),
+                        'size' => array($_FILES['banner_mo_img']['size'])
+                    );
+                }
+            }
+        }
+    }
+    
     $has_youtube = !empty($bnr_youtube) && $bnr_youtube != 'NULL';
     $has_existing_image = false;
     
-    // 기존 이미지 확인
+    // 기존 이미지 확인 (PC용 또는 모바일용)
     if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
         $img_sql = " SELECT COUNT(*) AS cnt FROM {$g5['dain_file_table']} 
-                     WHERE fle_db_tbl = 'banner' AND fle_type = 'banner_img' AND fle_dir = 'plt/banner' AND fle_db_idx = '{$bnr_id}' ";
+                     WHERE fle_db_tbl = 'banner' AND (fle_type = 'banner_img' OR fle_type = 'banner_mo_img') AND fle_dir = 'plt/banner' AND fle_db_idx = '{$bnr_id}' ";
         $img_row = @sql_fetch_pg($img_sql);
         if ($img_row && isset($img_row['cnt']) && $img_row['cnt'] > 0) {
             $has_existing_image = true;
@@ -497,6 +610,7 @@ if ($action == 'insert') {
                 bnr_name = {$bnr_name},
                 bnr_desc = {$bnr_desc},
                 bnr_link = {$bnr_link},
+                bnr_mo_link = {$bnr_mo_link},
                 bnr_target = '{$bnr_target}',
                 bnr_youtube = {$bnr_youtube},
                 bnr_start_dt = {$bnr_start_dt},
@@ -567,7 +681,67 @@ if ($action == 'insert') {
         } catch (Exception $e) {
             // 파일 업로드 실패 시에도 배너는 수정되었으므로 경고만 표시
             $response['success'] = true;
-            $response['message'] = '배너는 수정되었으나 이미지 업로드에 실패했습니다: ' . $e->getMessage();
+            $response['message'] = '배너는 수정되었으나 PC용 이미지 업로드에 실패했습니다: ' . $e->getMessage();
+            echo json_encode($response);
+            exit;
+        }
+    }
+
+    // 모바일용 이미지 파일 업로드
+    if ($has_mo_image && !empty($banner_mo_img_files)) {
+        try {
+            // 새 이미지를 업로드하기 전에 기존 모바일 이미지 삭제 (배너당 1개만 유지)
+            if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
+                $del_mo_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
+                                FROM {$g5['dain_file_table']}
+                                WHERE fle_db_tbl = 'banner'
+                                AND fle_db_idx = '{$bnr_id}'
+                                AND fle_type = 'banner_mo_img'
+                                AND fle_dir = 'plt/banner' ";
+                $del_mo_row = @sql_fetch_pg($del_mo_sql);
+                if ($del_mo_row && !empty($del_mo_row['fle_idxs'])) {
+                    $fle_mo_idx_array = explode(',', $del_mo_row['fle_idxs']);
+                    if (!empty($fle_mo_idx_array) && is_array($fle_mo_idx_array)) {
+                        // S3 및 dain_file 테이블에서 기존 파일 삭제
+                        delete_idx_s3_file($fle_mo_idx_array);
+                    }
+                }
+            }
+            
+            upload_multi_file($banner_mo_img_files, 'banner', $bnr_id, 'plt/banner', 'banner_mo_img');
+            
+            // 배너당 모바일 이미지는 1개만 유지: 업로드 후 가장 최신 파일만 남기고 나머지 삭제
+            if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
+                $check_mo_sql = " SELECT fle_idx, fle_reg_dt
+                                  FROM {$g5['dain_file_table']}
+                                  WHERE fle_db_tbl = 'banner'
+                                  AND fle_db_idx = '{$bnr_id}'
+                                  AND fle_type = 'banner_mo_img'
+                                  AND fle_dir = 'plt/banner'
+                                  ORDER BY fle_reg_dt DESC ";
+                $check_mo_result = @sql_query_pg($check_mo_sql);
+                $uploaded_mo_files = array();
+                if ($check_mo_result && is_object($check_mo_result) && isset($check_mo_result->result)) {
+                    while ($file_row = sql_fetch_array_pg($check_mo_result->result)) {
+                        $uploaded_mo_files[] = $file_row;
+                    }
+                }
+                
+                // 2개 이상 업로드된 경우 가장 최신 것(첫 번째)만 남기고 나머지 삭제
+                if (count($uploaded_mo_files) > 1) {
+                    $delete_mo_idx_array = array();
+                    for ($i = 1; $i < count($uploaded_mo_files); $i++) {
+                        $delete_mo_idx_array[] = $uploaded_mo_files[$i]['fle_idx'];
+                    }
+                    if (!empty($delete_mo_idx_array)) {
+                        delete_idx_s3_file($delete_mo_idx_array);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // 파일 업로드 실패 시에도 배너는 수정되었으므로 경고만 표시
+            $response['success'] = true;
+            $response['message'] = '배너는 수정되었으나 모바일용 이미지 업로드에 실패했습니다: ' . $e->getMessage();
             echo json_encode($response);
             exit;
         }
@@ -592,7 +766,7 @@ if ($action == 'insert') {
         throw new Exception('배너를 찾을 수 없습니다.');
     }
 
-    // 이미지 파일 조회
+    // 이미지 파일 조회 (PC용)
     $img_url = null;
     $thumb_wd = 120;
     $thumb_ht = 80;
@@ -610,6 +784,25 @@ if ($action == 'insert') {
             } else {
                 // imgproxy가 없으면 기본 URL 사용
                 $img_url = (isset($set_conf['set_s3_basicurl']) ? $set_conf['set_s3_basicurl'] : '').'/'.$img_row['fle_path'];
+            }
+        }
+    }
+
+    // 이미지 파일 조회 (모바일용)
+    $img_mo_url = null;
+    if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
+        $img_mo_sql = " SELECT * FROM {$g5['dain_file_table']} 
+                        WHERE fle_db_tbl = 'banner' AND fle_type = 'banner_mo_img' AND fle_dir = 'plt/banner' AND fle_db_idx = '{$bnr_id}' 
+                        ORDER BY fle_reg_dt DESC LIMIT 1 ";
+        $img_mo_row = @sql_fetch_pg($img_mo_sql);
+        
+        if ($img_mo_row && !empty($img_mo_row['fle_path'])) {
+            global $set_conf;
+            if (isset($set_conf['set_imgproxy_url']) && isset($set_conf['set_s3_basicurl'])) {
+                $img_mo_url = $set_conf['set_imgproxy_url'].'/rs:fill:'.$thumb_wd.':'.$thumb_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$img_mo_row['fle_path'];
+            } else {
+                // imgproxy가 없으면 기본 URL 사용
+                $img_mo_url = (isset($set_conf['set_s3_basicurl']) ? $set_conf['set_s3_basicurl'] : '').'/'.$img_mo_row['fle_path'];
             }
         }
     }
@@ -653,12 +846,14 @@ if ($action == 'insert') {
         'bnr_name' => $bnr['bnr_name'],
         'bnr_desc' => $bnr['bnr_desc'],
         'bnr_link' => $bnr['bnr_link'],
+        'bnr_mo_link' => isset($bnr['bnr_mo_link']) ? $bnr['bnr_mo_link'] : '',
         'bnr_target' => $bnr['bnr_target'],
         'bnr_youtube' => $bnr['bnr_youtube'],
         'bnr_start_dt' => $bnr_start_dt_local,
         'bnr_end_dt' => $bnr_end_dt_local,
         'bnr_status' => $bnr['bnr_status'],
         'img_url' => $img_url,
+        'img_mo_url' => $img_mo_url,
         'youtube_thumb_url' => $youtube_thumb_url
     );
     $response['message'] = '배너 데이터를 조회했습니다.';
@@ -680,7 +875,7 @@ if ($action == 'insert') {
     }
 
     // 관련 이미지 파일 삭제 (S3 및 dain_file 테이블에서 삭제)
-    // fle_dir 조건을 포함하여 더 정확하게 삭제
+    // PC용 이미지 삭제
     if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
         $del_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
                      FROM {$g5['dain_file_table']}
@@ -708,6 +903,34 @@ if ($action == 'insert') {
                 }
             }
         }
+        
+        // 모바일용 이미지 삭제
+        $del_mo_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
+                        FROM {$g5['dain_file_table']}
+                        WHERE fle_db_tbl = 'banner'
+                        AND fle_db_idx = '{$bnr_id}'
+                        AND fle_type = 'banner_mo_img'
+                        AND fle_dir = 'plt/banner' ";
+        $del_mo_row = @sql_fetch_pg($del_mo_sql);
+        if ($del_mo_row && !empty($del_mo_row['fle_idxs'])) {
+            $fle_mo_idx_array = explode(',', $del_mo_row['fle_idxs']);
+            if (!empty($fle_mo_idx_array) && is_array($fle_mo_idx_array)) {
+                // S3 및 dain_file 테이블에서 파일 삭제
+                // 출력 버퍼 정리 후 삭제 함수 호출
+                $buffer_before_delete = ob_get_contents();
+                if (!empty($buffer_before_delete)) {
+                    ob_end_clean();
+                    ob_start();
+                }
+                delete_idx_s3_file($fle_mo_idx_array);
+                // 삭제 함수 호출 후 출력 버퍼 정리
+                $buffer_after_delete = ob_get_contents();
+                if (!empty($buffer_after_delete)) {
+                    ob_end_clean();
+                    ob_start();
+                }
+            }
+        }
     } else {
         // dain_file_table이 없으면 기본 함수 사용
         $buffer_before_delete = ob_get_contents();
@@ -716,6 +939,7 @@ if ($action == 'insert') {
             ob_start();
         }
         delete_db_s3_file('banner', $bnr_id, 'banner_img');
+        delete_db_s3_file('banner', $bnr_id, 'banner_mo_img');
         // 삭제 함수 호출 후 출력 버퍼 정리
         $buffer_after_delete = ob_get_contents();
         if (!empty($buffer_after_delete)) {

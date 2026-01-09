@@ -45,7 +45,7 @@ else if($w == 'd') {
         }
         
         // 1. 배너그룹 이미지 파일 삭제 (S3 및 dain_file 테이블)
-        // fle_dir 조건을 포함하여 더 정확하게 삭제
+        // PC용 이미지 삭제
         if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
             $bng_del_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
                              FROM {$g5['dain_file_table']}
@@ -61,9 +61,26 @@ else if($w == 'd') {
                     delete_idx_s3_file($bng_fle_idx_array);
                 }
             }
+            
+            // 모바일용 이미지 삭제
+            $bng_mo_del_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
+                                FROM {$g5['dain_file_table']}
+                                WHERE fle_db_tbl = 'banner_group'
+                                AND fle_db_idx = '{$bng_id}'
+                                AND fle_type = 'bng_mo_img'
+                                AND fle_dir = 'plt/banner' ";
+            $bng_mo_del_row = @sql_fetch_pg($bng_mo_del_sql, 0);
+            if ($bng_mo_del_row && !empty($bng_mo_del_row['fle_idxs'])) {
+                $bng_mo_fle_idx_array = explode(',', $bng_mo_del_row['fle_idxs']);
+                if (!empty($bng_mo_fle_idx_array) && is_array($bng_mo_fle_idx_array)) {
+                    // S3 및 dain_file 테이블에서 파일 삭제
+                    delete_idx_s3_file($bng_mo_fle_idx_array);
+                }
+            }
         } else {
             // dain_file_table이 없으면 기본 함수 사용
             delete_db_s3_file('banner_group', $bng_id, 'bng_img');
+            delete_db_s3_file('banner_group', $bng_id, 'bng_mo_img');
         }
         
         // 2. 해당 bng_id를 가진 모든 배너(banner) 레코드 조회
@@ -76,6 +93,7 @@ else if($w == 'd') {
                 $bnr_id = $banner_row['bnr_id'];
                 
                 // 2-1. 각 배너의 이미지 파일 삭제 (S3 및 dain_file 테이블)
+                // PC용 이미지 삭제
                 if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
                     $del_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
                                  FROM {$g5['dain_file_table']}
@@ -91,9 +109,26 @@ else if($w == 'd') {
                             delete_idx_s3_file($fle_idx_array);
                         }
                     }
+                    
+                    // 모바일용 이미지 삭제
+                    $del_mo_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
+                                    FROM {$g5['dain_file_table']}
+                                    WHERE fle_db_tbl = 'banner'
+                                    AND fle_db_idx = '{$bnr_id}'
+                                    AND fle_type = 'banner_mo_img'
+                                    AND fle_dir = 'plt/banner' ";
+                    $del_mo_row = @sql_fetch_pg($del_mo_sql, 0);
+                    if ($del_mo_row && !empty($del_mo_row['fle_idxs'])) {
+                        $fle_mo_idx_array = explode(',', $del_mo_row['fle_idxs']);
+                        if (!empty($fle_mo_idx_array) && is_array($fle_mo_idx_array)) {
+                            // S3 및 dain_file 테이블에서 파일 삭제
+                            delete_idx_s3_file($fle_mo_idx_array);
+                        }
+                    }
                 } else {
                     // dain_file_table이 없으면 기본 함수 사용
                     delete_db_s3_file('banner', $bnr_id, 'banner_img');
+                    delete_db_s3_file('banner', $bnr_id, 'banner_mo_img');
                 }
                 
                 // 2-2. banner 테이블에서 해당 bnr_id 레코드 삭제

@@ -53,14 +53,26 @@ document.addEventListener('DOMContentLoaded', function(){
         });
     }
 
-    // 배너그룹 이미지 MultiFile
+    // 배너그룹 이미지 MultiFile (PC용)
     $('#banner_group_img').MultiFile({
         max:1,
         accept:'jpg|jpeg|png|gif|svg',
     });
 
-    // 배너 이미지 MultiFile
+    // 배너그룹 이미지 MultiFile (모바일용)
+    $('#banner_group_mo_img').MultiFile({
+        max:1,
+        accept:'jpg|jpeg|png|gif|svg',
+    });
+
+    // 배너 이미지 MultiFile (PC용)
     $('#banner_img').MultiFile({
+        max:1,
+        accept:'jpg|jpeg|png|gif|svg',
+    });
+
+    // 배너 이미지 MultiFile (모바일용)
+    $('#banner_mo_img').MultiFile({
         max:1,
         accept:'jpg|jpeg|png|gif|svg',
     });
@@ -304,6 +316,7 @@ async function addBanner() {
     formData.append('bnr_name', document.getElementById('bnr_name').value || '');
     formData.append('bnr_desc', document.getElementById('bnr_desc').value || '');
     formData.append('bnr_link', document.getElementById('bnr_link').value || '');
+    formData.append('bnr_mo_link', document.getElementById('bnr_mo_link').value || '');
     formData.append('bnr_target', document.getElementById('bnr_target').value || '_self');
     formData.append('bnr_youtube', document.getElementById('bnr_youtube').value || '');
     formData.append('bnr_start_dt', document.getElementById('bnr_start_dt').value || '');
@@ -313,7 +326,7 @@ async function addBanner() {
     // 파일 첨부 (MultiFile.js를 사용하는 경우)
     let hasFile = false;
     
-    // jQuery를 사용하여 MultiFile.js가 관리하는 파일 입력 필드에서 파일 가져오기
+    // jQuery를 사용하여 MultiFile.js가 관리하는 파일 입력 필드에서 파일 가져오기 (PC용)
     const $bannerImgInput = $('#banner_img');
     if ($bannerImgInput.length > 0) {
         const fileInput = $bannerImgInput[0];
@@ -337,6 +350,33 @@ async function addBanner() {
                 for (let i = 0; i < input.files.length; i++) {
                     formData.append('banner_img[]', input.files[i]);
                     hasFile = true;
+                }
+            }
+        });
+    }
+
+    // 모바일용 이미지 파일 처리
+    const $bannerMoImgInput = $('#banner_mo_img');
+    if ($bannerMoImgInput.length > 0) {
+        const fileMoInput = $bannerMoImgInput[0];
+        
+        // 원본 입력 필드에서 파일 확인
+        if (fileMoInput && fileMoInput.files && fileMoInput.files.length > 0) {
+            for (let i = 0; i < fileMoInput.files.length; i++) {
+                formData.append('banner_mo_img[]', fileMoInput.files[i]);
+            }
+        }
+        
+        // 모든 banner_mo_img[] name 속성을 가진 입력 필드 확인
+        $('input[name="banner_mo_img[]"]').each(function() {
+            const input = this;
+            // 원본 입력 필드와 동일한 요소는 이미 처리했으므로 스킵
+            if (input === fileMoInput) {
+                return; // continue
+            }
+            if (input.files && input.files.length > 0) {
+                for (let i = 0; i < input.files.length; i++) {
+                    formData.append('banner_mo_img[]', input.files[i]);
                 }
             }
         });
@@ -567,6 +607,7 @@ async function editBanner(bnrId) {
         document.getElementById('bnr_name').value = data.bnr_name || '';
         document.getElementById('bnr_desc').value = data.bnr_desc || '';
         document.getElementById('bnr_link').value = data.bnr_link || '';
+        document.getElementById('bnr_mo_link').value = data.bnr_mo_link || '';
         document.getElementById('bnr_target').value = data.bnr_target || '_self';
         document.getElementById('bnr_youtube').value = data.bnr_youtube || '';
         document.getElementById('bnr_start_dt').value = data.bnr_start_dt || '';
@@ -576,20 +617,30 @@ async function editBanner(bnrId) {
         // 섬네일 표시
         const previewArea = document.getElementById('banner_preview_area');
         const imgPreview = document.getElementById('banner_img_preview');
+        const imgMoPreview = document.getElementById('banner_mo_img_preview');
         const youtubePreview = document.getElementById('banner_youtube_preview');
         const noPreview = document.getElementById('banner_no_preview');
         const imgThumb = document.getElementById('banner_img_thumb');
+        const imgMoThumb = document.getElementById('banner_mo_img_thumb');
         const youtubeThumb = document.getElementById('banner_youtube_thumb');
         
         // 기존 섬네일 숨기기
         imgPreview.style.display = 'none';
+        imgMoPreview.style.display = 'none';
         youtubePreview.style.display = 'none';
         noPreview.style.display = 'none';
         
-        // 이미지 섬네일 표시
+        // PC용 이미지 섬네일 표시
         if (data.img_url) {
             imgThumb.src = data.img_url;
             imgPreview.style.display = 'block';
+            previewArea.style.display = 'block';
+        }
+        
+        // 모바일용 이미지 섬네일 표시
+        if (data.img_mo_url) {
+            imgMoThumb.src = data.img_mo_url;
+            imgMoPreview.style.display = 'block';
             previewArea.style.display = 'block';
         }
         
@@ -600,8 +651,8 @@ async function editBanner(bnrId) {
             previewArea.style.display = 'block';
         }
         
-        // 둘 다 없으면 '이미지 없음' 표시
-        if (!data.img_url && !data.youtube_thumb_url) {
+        // 모두 없으면 '이미지 없음' 표시
+        if (!data.img_url && !data.img_mo_url && !data.youtube_thumb_url) {
             noPreview.style.display = 'block';
             previewArea.style.display = 'block';
         }
@@ -616,6 +667,7 @@ async function editBanner(bnrId) {
         
         // MultiFile 초기화 (파일 입력 필드 초기화)
         $('#banner_img').MultiFile('reset');
+        $('#banner_mo_img').MultiFile('reset');
         
     } catch (error) {
         console.error('Error:', error);
@@ -634,6 +686,7 @@ function resetBannerForm() {
     document.getElementById('bnr_name').value = '';
     document.getElementById('bnr_desc').value = '';
     document.getElementById('bnr_link').value = '';
+    document.getElementById('bnr_mo_link').value = '';
     document.getElementById('bnr_target').value = '_self';
     document.getElementById('bnr_youtube').value = '';
     document.getElementById('bnr_start_dt').value = '';
@@ -650,6 +703,7 @@ function resetBannerForm() {
     
     // MultiFile 초기화
     $('#banner_img').MultiFile('reset');
+    $('#banner_mo_img').MultiFile('reset');
 }
 
 // 배너 수정 취소 (확인 필요)
@@ -742,12 +796,6 @@ function fbannerformcheck(f)
     if (!f.bng_name.value.trim()) {
         alert('배너그룹명을 입력해 주세요.');
         f.bng_name.focus();
-        return false;
-    }
-
-    if (!f.bng_device.value) {
-        alert('디바이스를 선택해 주세요.');
-        f.bng_device.focus();
         return false;
     }
 

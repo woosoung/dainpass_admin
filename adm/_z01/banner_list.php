@@ -43,12 +43,6 @@ if ($stx) {
     }
 }
 
-// 디바이스 필터
-$ser_device = isset($_GET['ser_device']) ? trim($_GET['ser_device']) : '';
-if ($ser_device !== '') {
-    $where[] = " bng_device = '".addslashes($ser_device)."' ";
-}
-
 // 상태 필터
 $ser_status = isset($_GET['ser_status']) ? trim($_GET['ser_status']) : '';
 if ($ser_status !== '') {
@@ -92,11 +86,6 @@ $colspan = 11;
 $thumb_wd = 120;
 $thumb_ht = 80;
 
-$device_arr = array(
-    'PC' => 'PC',
-    'MOBILE' => '모바일'
-);
-
 $status_arr = array(
     'ok' => '정상',
     'pending' => '대기',
@@ -114,13 +103,6 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
     <span class="btn_ov01"><span class="ov_txt">총</span><span class="ov_num"> <?php echo number_format($total_count) ?></span></span>
 </div>
 <form id="fsearch" name="fsearch" class="local_sch01 local_sch" method="get">
-<label for="ser_device" class="sound_only">디바이스</label>
-<select name="ser_device" id="ser_device" class="cp_field" title="디바이스">
-    <option value="">전체</option>
-    <option value="PC"<?php echo get_selected($_GET['ser_device']??'', "PC"); ?>>PC</option>
-    <option value="MOBILE"<?php echo get_selected($_GET['ser_device']??'', "MOBILE"); ?>>모바일</option>
-</select>
-
 <label for="ser_status" class="sound_only">상태</label>
 <select name="ser_status" id="ser_status" class="cp_field" title="상태">
     <option value="">전체상태</option>
@@ -157,10 +139,10 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                         <input type="checkbox" name="chkall" value="1" id="chkall" onclick="check_all(this.form)">
                     </th>
                     <th scope="col" class="td_left">번호</th>
-                    <th scope="col" class="td_center !w-[<?=$thumb_wd?>px]">섬네일</th>
+                    <th scope="col" class="td_center !w-[<?=$thumb_wd?>px]">PC 섬네일</th>
+                    <th scope="col" class="td_center !w-[<?=$thumb_wd?>px]">모바일 섬네일</th>
                     <th scope="col" class="td_left"><?php echo subject_sort_link('bng_code', $qstr) ?>배너그룹 코드</a></th>
                     <th scope="col" class="td_left"><?php echo subject_sort_link('bng_name', $qstr) ?>배너그룹명</a></th>
-                    <th scope="col"><?php echo subject_sort_link('bng_device', $qstr) ?>디바이스</a></th>
                     <th scope="col"><?php echo subject_sort_link('bng_start_dt', $qstr) ?>시작일시</a></th>
                     <th scope="col"><?php echo subject_sort_link('bng_end_dt', $qstr) ?>종료일시</a></th>
                     <th scope="col"><?php echo subject_sort_link('bng_status', $qstr) ?>상태</a></th>
@@ -173,7 +155,7 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                 for ($i=0; $row=sql_fetch_array_pg($result->result); $i++){
                     $s_mod = '<a href="./banner_form.php?'.$qstr.'&amp;w=u&amp;bng_id='.$row['bng_id'].'">수정</a>';
 
-                    // 배너 그룹 이미지 가져오기
+                    // 배너 그룹 이미지 가져오기 (PC용)
                     $fsql = " SELECT fle_path FROM {$g5['dain_file_table']}
                                 WHERE fle_db_tbl = 'banner_group'
                                     AND fle_type = 'bng_img'
@@ -182,13 +164,31 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                                 ORDER BY fle_reg_dt DESC LIMIT 1 ";
                     $fres = sql_fetch_pg($fsql);
                     
-                    $row['thumb_tag'] = '';
+                    // 배너 그룹 이미지 가져오기 (모바일용)
+                    $fsql_mo = " SELECT fle_path FROM {$g5['dain_file_table']}
+                                  WHERE fle_db_tbl = 'banner_group'
+                                      AND fle_type = 'bng_mo_img'
+                                      AND fle_dir = 'plt/banner'
+                                      AND fle_db_idx = '{$row['bng_id']}'
+                                  ORDER BY fle_reg_dt DESC LIMIT 1 ";
+                    $fres_mo = sql_fetch_pg($fsql_mo);
+                    
+                    // PC용 이미지 HTML 생성
+                    $row['pc_thumb_tag'] = '';
                     if(!empty($fres['fle_path'])){
                         $row['thumb_url'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$thumb_wd.':'.$thumb_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$fres['fle_path'];
-                        $row['thumb_tag'] = '<img src="'.$row['thumb_url'].'" alt="'.get_text($row['bng_name']).'" width="'.$thumb_wd.'" class="inline-block" height="'.$thumb_ht.'" style="border:1px solid #ddd;width:'.$thumb_wd.'px;height:'.$thumb_ht.'px;">';
+                        $row['pc_thumb_tag'] = '<div style="position:relative;display:inline-block;"><img src="'.$row['thumb_url'].'" alt="'.get_text($row['bng_name']).' (PC)" width="'.$thumb_wd.'" class="inline-block" height="'.$thumb_ht.'" style="border:1px solid #ddd;width:'.$thumb_wd.'px;height:'.$thumb_ht.'px;"><span style="position:absolute;bottom:2px;left:2px;background-color:rgba(0,102,204,0.8);color:#fff;padding:1px 4px;font-size:10px;border-radius:2px;">PC</span></div>';
+                    } else {
+                        $row['pc_thumb_tag'] = '<img src="'.G5_Z_URL.'/img/no_thumb.png" alt="no image" width="'.$thumb_wd.'" class="inline-block" height="'.$thumb_ht.'" style="border:1px solid #ddd;width:'.$thumb_wd.'px;height:'.$thumb_ht.'px;">';
                     }
-                    else {
-                        $row['thumb_tag'] = '<img src="'.G5_Z_URL.'/img/no_thumb.png" alt="no image" width="'.$thumb_wd.'" class="inline-block" height="'.$thumb_ht.'" style="border:1px solid #ddd;width:'.$thumb_wd.'px;height:'.$thumb_ht.'px;">';
+                    
+                    // 모바일용 이미지 HTML 생성
+                    $row['mo_thumb_tag'] = '';
+                    if(!empty($fres_mo['fle_path'])){
+                        $row['thumb_url_mo'] = $set_conf['set_imgproxy_url'].'/rs:fill:'.$thumb_wd.':'.$thumb_ht.':1/plain/'.$set_conf['set_s3_basicurl'].'/'.$fres_mo['fle_path'];
+                        $row['mo_thumb_tag'] = '<div style="position:relative;display:inline-block;"><img src="'.$row['thumb_url_mo'].'" alt="'.get_text($row['bng_name']).' (Mobile)" width="'.$thumb_wd.'" class="inline-block" height="'.$thumb_ht.'" style="border:1px solid #ddd;width:'.$thumb_wd.'px;height:'.$thumb_ht.'px;"><span style="position:absolute;bottom:2px;left:2px;background-color:rgba(204,102,0,0.8);color:#fff;padding:1px 4px;font-size:10px;border-radius:2px;">MO</span></div>';
+                    } else {
+                        $row['mo_thumb_tag'] = '<img src="'.G5_Z_URL.'/img/no_thumb.png" alt="no image" width="'.$thumb_wd.'" class="inline-block" height="'.$thumb_ht.'" style="border:1px solid #ddd;width:'.$thumb_wd.'px;height:'.$thumb_ht.'px;">';
                     }
 
                     $bg = 'bg'.($i%2);
@@ -201,10 +201,10 @@ include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
                         <input type="checkbox" name="chk[]" value="<?=$i?>" id="chk_<?=$i?>">
                     </td>
                     <td class="td_left font_size_8"><?=$row['bng_id']?></td>
-                    <td class="td_thumb font_size_8"><?=$row['thumb_tag']?></td>
+                    <td class="td_thumb font_size_8" style="text-align:center;"><?=$row['pc_thumb_tag']?></td>
+                    <td class="td_thumb font_size_8" style="text-align:center;"><?=$row['mo_thumb_tag']?></td>
                     <td class="td_left"><a href="./banner_form.php?<?=$qstr?>&amp;w=u&amp;bng_id=<?=$row['bng_id']?>"><?=get_text($row['bng_code'])?></a></td>
                     <td class="td_left"><b><?=get_text($row['bng_name'])?></b></td>
-                    <td><?=isset($device_arr[$row['bng_device']]) ? $device_arr[$row['bng_device']] : $row['bng_device']?></td>
                     <td class="font_size_8"><?=!empty($row['bng_start_dt']) ? substr($row['bng_start_dt'],0,16) : '-'?></td>
                     <td class="font_size_8"><?=!empty($row['bng_end_dt']) ? substr($row['bng_end_dt'],0,16) : '-'?></td>
                     <td><?=isset($status_arr[$row['bng_status']]) ? $status_arr[$row['bng_status']] : $row['bng_status']?></td>

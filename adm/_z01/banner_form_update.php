@@ -33,7 +33,6 @@ check_admin_token();
 
 // 입력값 받기
 $bng_code = isset($_POST['bng_code']) ? trim($_POST['bng_code']) : '';
-$bng_device = isset($_POST['bng_device']) ? trim($_POST['bng_device']) : '';
 $bng_name = isset($_POST['bng_name']) ? trim($_POST['bng_name']) : '';
 $bng_desc = isset($_POST['bng_desc']) ? trim($_POST['bng_desc']) : '';
 $bng_desc = ($bng_desc == '') ? 'NULL' : "'".addslashes($bng_desc)."'";
@@ -58,10 +57,6 @@ if (!$bng_name) {
     alert('배너그룹명을 입력해 주세요.');
 }
 
-if (!$bng_device) {
-    alert('디바이스를 선택해 주세요.');
-}
-
 if ($w == "") {
     // 신규 등록: 중복 체크
     $sql = " SELECT COUNT(*) AS cnt FROM banner_group WHERE bng_code = '".addslashes($bng_code)."' ";
@@ -71,15 +66,14 @@ if ($w == "") {
     }
 
     $sql = " INSERT INTO banner_group 
-                (bng_code, bng_device, bng_name, bng_desc, bng_start_dt, bng_end_dt, bng_status, bng_created_at, bng_update_at)
+                (bng_code, bng_name, bng_desc, bng_start_dt, bng_end_dt, bng_status, bng_created_at, bng_update_at)
               VALUES 
-                ('".addslashes($bng_code)."', '".addslashes($bng_device)."', '".addslashes($bng_name)."', ".$bng_desc.", ".$bng_start_dt.", ".$bng_end_dt.", ".$bng_status.", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ";
+                ('".addslashes($bng_code)."', '".addslashes($bng_name)."', ".$bng_desc.", ".$bng_start_dt.", ".$bng_end_dt.", ".$bng_status.", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) ";
     sql_query_pg($sql);
     $bng_id = sql_insert_id_pg('banner_group');
 } else if ($w == "u") {
     // 수정
-    $sql_common = " bng_device = '".addslashes($bng_device)."',
-                    bng_name = '".addslashes($bng_name)."',
+    $sql_common = " bng_name = '".addslashes($bng_name)."',
                     bng_desc = ".$bng_desc.",
                     bng_start_dt = ".$bng_start_dt.",
                     bng_end_dt = ".$bng_end_dt.",
@@ -94,7 +88,7 @@ if ($w == "") {
 else if ($w == "d")
 {
     // 관련 banner 레코드는 CASCADE로 자동 삭제됨
-    // 배너그룹 이미지 파일 삭제 (fle_dir 조건 포함)
+    // 배너그룹 PC용 이미지 파일 삭제 (fle_dir 조건 포함)
     if (isset($g5['dain_file_table']) && !empty($g5['dain_file_table'])) {
         $bng_del_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
                          FROM {$g5['dain_file_table']}
@@ -110,9 +104,26 @@ else if ($w == "d")
                 delete_idx_s3_file($bng_fle_idx_array);
             }
         }
+        
+        // 배너그룹 모바일용 이미지 파일 삭제
+        $bng_mo_del_sql = " SELECT string_agg(fle_idx::text, ',') AS fle_idxs
+                            FROM {$g5['dain_file_table']}
+                            WHERE fle_db_tbl = 'banner_group'
+                            AND fle_db_idx = '{$bng_id}'
+                            AND fle_type = 'bng_mo_img'
+                            AND fle_dir = 'plt/banner' ";
+        $bng_mo_del_row = @sql_fetch_pg($bng_mo_del_sql, 0);
+        if ($bng_mo_del_row && !empty($bng_mo_del_row['fle_idxs'])) {
+            $bng_mo_fle_idx_array = explode(',', $bng_mo_del_row['fle_idxs']);
+            if (!empty($bng_mo_fle_idx_array) && is_array($bng_mo_fle_idx_array)) {
+                // S3 및 dain_file 테이블에서 파일 삭제
+                delete_idx_s3_file($bng_mo_fle_idx_array);
+            }
+        }
     } else {
         // dain_file_table이 없으면 기본 함수 사용
         delete_db_s3_file('banner_group', $bng_id, 'bng_img');
+        delete_db_s3_file('banner_group', $bng_id, 'bng_mo_img');
     }
 
     if($set_conf['set_del_yn']){
@@ -128,7 +139,7 @@ else if ($w == "d")
 
 // 파일 처리
 if($w == '' || $w == 'u'){
-    //파일 삭제처리
+    // PC용 이미지 삭제처리
     $merge_del = array();
     $del_arr = array();
 
@@ -146,10 +157,28 @@ if($w == '' || $w == 'u'){
         }
     }
     
+    // 모바일용 이미지 삭제처리
+    $bng_mo_img_del = isset($_POST['bng_mo_img_'.$bng_id.'_del']) && is_array($_POST['bng_mo_img_'.$bng_id.'_del']) ? $_POST['bng_mo_img_'.$bng_id.'_del'] : array();
+
+    if(!empty($bng_mo_img_del)){
+        foreach($bng_mo_img_del as $k=>$v) {
+            $merge_del[$k] = $v;
+        }
+    }
+
+    if(!empty($merge_del)){
+        foreach($merge_del as $k=>$v) {
+            array_push($del_arr,$k);
+        }
+    }
+    
     if(!empty($del_arr)) delete_idx_s3_file($del_arr);
     
-    // 배너그룹 이미지 업로드
+    // 배너그룹 PC용 이미지 업로드
     upload_multi_file($_FILES['banner_group_img'],'banner_group',$bng_id,'plt/banner','bng_img');
+    
+    // 배너그룹 모바일용 이미지 업로드
+    upload_multi_file($_FILES['banner_group_mo_img'],'banner_group',$bng_id,'plt/banner','bng_mo_img');
 }
 
 if(function_exists('get_admin_captcha_by'))
