@@ -1,7 +1,11 @@
 <?php
+// 출력 버퍼링 시작 - 예상치 못한 출력 방지
+ob_start();
+
 include_once('./_common.php');
 
-header('Content-Type: application/json; charset=utf-8');
+ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
 
 // 에러 발생 시 JSON으로 응답하도록 설정
 error_reporting(E_ALL);
@@ -9,6 +13,7 @@ ini_set('display_errors', 0);
 register_shutdown_function(function() {
     $error = error_get_last();
     if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        ob_clean();
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['success' => false, 'message' => '서버 오류가 발생했습니다: ' . $error['message']], JSON_UNESCAPED_UNICODE);
         exit;
@@ -448,50 +453,46 @@ function get_service_details($shop_id, $range_start, $range_end)
 // =========================
 // Main Logic
 // =========================
+// 공통: 가맹점 접근 권한 및 shop_id 확인
 // 이 블록은 단독 ajax 호출일 때만 실행되고,
 // 다른 파일에서 라이브러리처럼 include 할 때는 실행되지 않도록 가드한다.
 if (!defined('SHOP_STAT_LIB_MODE')) {
+    // POST 요청만 허용
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        ob_clean();
+        http_response_code(405);
+        echo json_encode(['success' => false, 'message' => '허용되지 않은 요청 방식입니다.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // 입력값 검증 - 필수 파라미터 확인
+    if (!isset($_POST['period_type']) || !isset($_POST['start_date']) || !isset($_POST['end_date'])) {
+        ob_clean();
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '필수 파라미터가 누락되었습니다.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // 가맹점 접근 권한 체크
+    $result = check_shop_access();
+    $shop_id = $result['shop_id'];
+
+    if (!$shop_id) {
+        ob_clean();
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => '접속할 수 없는 페이지 입니다.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // 입력값
+    $period_type = trim($_POST['period_type']);
+    $start_date = trim($_POST['start_date']);
+    $end_date = trim($_POST['end_date']);
+
+    // 날짜 및 period_type 검증 및 보정
+    list($period_type, $start_date, $end_date) = validate_and_sanitize_statistics_params($period_type, $start_date, $end_date);
+
     try {
-        // POST 요청만 허용
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => '허용되지 않은 요청 방식입니다.'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
-
-        // 입력값 검증 - 필수 파라미터 확인
-        if (!isset($_POST['period_type']) || !isset($_POST['start_date']) || !isset($_POST['end_date'])) {
-            http_response_code(400);
-            echo json_encode(['success' => false, 'message' => '필수 파라미터가 누락되었습니다.'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
-
-        // 파라미터 받기
-        $period_type = trim($_POST['period_type']);
-        $start_date = trim($_POST['start_date']);
-        $end_date = trim($_POST['end_date']);
-
-        // 날짜 및 period_type 검증 및 보정
-        list($period_type, $start_date, $end_date) = validate_and_sanitize_statistics_params($period_type, $start_date, $end_date);
-
-        // shop_id 확인 (세션 또는 파라미터에서)
-        $shop_id = 0;
-        if (isset($_SESSION['ss_shop_id']) && $_SESSION['ss_shop_id']) {
-            $shop_id = (int)$_SESSION['ss_shop_id'];
-        } elseif (isset($_POST['shop_id']) && $_POST['shop_id']) {
-            $shop_id = (int)$_POST['shop_id'];
-        } else {
-            // check_shop_access 함수 사용
-            if (function_exists('check_shop_access')) {
-                $result = check_shop_access();
-                $shop_id = $result['shop_id'];
-            }
-        }
-
-        if (!$shop_id) {
-            echo json_encode(['success' => false, 'message' => '가맹점 정보를 찾을 수 없습니다.'], JSON_UNESCAPED_UNICODE);
-            exit;
-        }
 
         // 날짜 범위 계산
         list($range_start, $range_end) = calculate_date_range($period_type, $start_date, $end_date);
@@ -510,6 +511,8 @@ if (!defined('SHOP_STAT_LIB_MODE')) {
         $summary['review_count'] = $review_summary['review_count'];
 
         // 응답
+        // 출력 버퍼 정리 후 JSON 출력
+        ob_clean();
         echo json_encode([
             'success' => true,
             'period_type' => $period_type,
@@ -524,11 +527,13 @@ if (!defined('SHOP_STAT_LIB_MODE')) {
         ], JSON_UNESCAPED_UNICODE);
 
     } catch (Exception $e) {
+        ob_clean();
         echo json_encode([
             'success' => false,
             'message' => '데이터 조회 중 오류가 발생했습니다: ' . $e->getMessage()
         ], JSON_UNESCAPED_UNICODE);
     }
+    ob_end_flush();
     exit;
 }
 
