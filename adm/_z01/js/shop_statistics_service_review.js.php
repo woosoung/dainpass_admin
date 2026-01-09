@@ -1,5 +1,14 @@
 <?php
 if (!defined('_GNUBOARD_')) exit;
+
+// jQuery UI datepicker 플러그인
+include_once(G5_PLUGIN_PATH.'/jquery-ui/datepicker.php');
+
+// 공통 datepicker 함수 include
+include_once(G5_Z_PATH . '/js/_common_datepicker.js.php');
+
+// 공통 통계 유틸리티 함수 include
+include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
 ?>
 <script>
 (function($) {
@@ -9,23 +18,25 @@ if (!defined('_GNUBOARD_')) exit;
     var ratingTrendChart = null;
     var ratingDistributionChart = null;
 
-    function formatNumber(num) {
-        if (num === null || num === undefined || isNaN(num)) return '-';
-        return Number(num).toLocaleString('ko-KR');
-    }
-
-    function formatCurrency(num) {
-        if (num === null || num === undefined || isNaN(num)) return '-';
-        return Number(num).toLocaleString('ko-KR') + '원';
-    }
+    // 공통 함수 별칭
+    var formatNumber = StatisticsCommon.formatNumber;
+    var formatCurrency = StatisticsCommon.formatCurrency;
+    var formatDateLabel = StatisticsCommon.formatDateLabel;
 
     function loadStatistics() {
         var periodType = $('#period_type').val();
         var startDate  = $('#start_date').val();
         var endDate    = $('#end_date').val();
 
-        if (!startDate || !endDate) {
-            alert('조회 기간을 선택해 주세요.');
+        // 통계 파라미터 검증
+        var validation = StatisticsCommon.validateStatisticsParams({
+            periodType: periodType,
+            startDate: startDate,
+            endDate: endDate
+        });
+
+        if (!validation.valid) {
+            alert(validation.message);
             return;
         }
 
@@ -55,19 +66,7 @@ if (!defined('_GNUBOARD_')) exit;
             renderRatingDistributionChart(res.rating_distribution);
             renderServiceDetailTable(res.service_details);
         }).fail(function(xhr, status, error) {
-            var errorMsg = '서버 통신 중 오류가 발생했습니다.';
-            if (xhr.responseText) {
-                try {
-                    var errorRes = JSON.parse(xhr.responseText);
-                    if (errorRes && errorRes.message) {
-                        errorMsg = errorRes.message;
-                    }
-                } catch(e) {
-                    // JSON 파싱 실패 시 기본 메시지 사용
-                }
-            }
-            alert(errorMsg + '\n상태: ' + status + '\n오류: ' + error);
-            console.error('AJAX Error:', {xhr: xhr, status: status, error: error, responseText: xhr.responseText});
+            StatisticsCommon.handleAjaxError(xhr, status, error);
         }).always(function() {
             $btn.prop('disabled', false).text('조회');
         });
@@ -416,23 +415,21 @@ if (!defined('_GNUBOARD_')) exit;
         });
     }
 
-    function initDefaultDates() {
-        var today = new Date();
-        var endDate = today.toISOString().slice(0, 10);
-        var start = new Date();
-        start.setDate(start.getDate() - 29);
-        var startDate = start.toISOString().slice(0, 10);
-
-        if (!$('#start_date').val()) {
-            $('#start_date').val(startDate);
-        }
-        if (!$('#end_date').val()) {
-            $('#end_date').val(endDate);
-        }
-    }
 
     $(function() {
-        initDefaultDates();
+        // Datepicker 초기화
+        initializeStatisticsDatePicker({
+            startInputId: 'start_date',
+            endInputId: 'end_date'
+        });
+
+        // 빠른 선택 버튼 초기화
+        initializeQuickSelectButtons({
+            startInputId: 'start_date',
+            endInputId: 'end_date',
+            searchBtnId: 'search_btn',
+            autoSearch: true
+        });
 
         $('#search_btn').on('click', function() {
             loadStatistics();
