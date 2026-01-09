@@ -84,6 +84,13 @@ if (!defined('_GNUBOARD_')) exit;
                 $('#' + searchBtnId).click();
             }
         });
+
+        // period_type 변경 시 자동 조회
+        $('#period_type').on('change', function() {
+            if (options.autoSearch !== false) {
+                $('#' + searchBtnId).click();
+            }
+        });
     };
 })(jQuery);
 </script>
