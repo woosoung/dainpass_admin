@@ -197,10 +197,6 @@ render_statistics_date_range_selector($default_start, $today); ?>
     </div>
 </div>
 
-<script>
-var SHOP_STATISTICS_SHOP_ID = <?php echo (int)$shop_id; ?>;
-</script>
-
 <?php
 include_once('./js/shop_statistics_reservation.js.php');
 include_once(G5_ADMIN_PATH.'/admin.tail.php');
