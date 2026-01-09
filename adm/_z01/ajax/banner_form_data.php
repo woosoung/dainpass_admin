@@ -270,6 +270,7 @@ if ($action == 'insert') {
     // 배너 등록
     $bng_id = isset($_POST['bng_id']) ? (int)$_POST['bng_id'] : 0;
     $shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
+    $shop_id = ($shop_id > 0) ? $shop_id : 'NULL';
     $bnr_name = isset($_POST['bnr_name']) ? trim($_POST['bnr_name']) : '';
     $bnr_name = ($bnr_name == '') ? 'NULL' : "'".addslashes($bnr_name)."'";
     $bnr_desc = isset($_POST['bnr_desc']) ? trim($_POST['bnr_desc']) : '';
@@ -499,6 +500,7 @@ if ($action == 'insert') {
 
     // 수정할 필드 처리
     $shop_id = isset($_POST['shop_id']) ? (int)$_POST['shop_id'] : 0;
+    $shop_id = ($shop_id > 0) ? $shop_id : 'NULL';
     $bnr_name = isset($_POST['bnr_name']) ? trim($_POST['bnr_name']) : '';
     $bnr_name = ($bnr_name == '') ? 'NULL' : "'".addslashes($bnr_name)."'";
     $bnr_desc = isset($_POST['bnr_desc']) ? trim($_POST['bnr_desc']) : '';
