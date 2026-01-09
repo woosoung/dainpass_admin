@@ -269,7 +269,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
                     y: {
                         beginAtZero: true,
                         ticks: {
+                            stepSize: 1,
                             callback: function(value) {
+                                // 예약 건수는 정수만 표시
                                 return formatNumber(value);
                             }
                         }
@@ -317,7 +319,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
                     y: {
                         beginAtZero: true,
                         ticks: {
+                            stepSize: 1,
                             callback: function(value) {
+                                // 예약 건수는 정수만 표시
                                 return formatNumber(value);
                             }
                         }
@@ -367,7 +371,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
                     y: {
                         beginAtZero: true,
                         ticks: {
+                            stepSize: 1,
                             callback: function(value) {
+                                // 예약 건수는 정수만 표시
                                 return formatNumber(value);
                             }
                         }
@@ -460,7 +466,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
                     x: {
                         beginAtZero: true,
                         ticks: {
+                            stepSize: 1,
                             callback: function(value) {
+                                // 예약 건수는 정수만 표시
                                 return formatNumber(value);
                             }
                         }
@@ -638,7 +646,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
                     y: {
                         beginAtZero: true,
                         ticks: {
+                            stepSize: 1,
                             callback: function(value) {
+                                // 쿠폰 개수는 정수만 표시
                                 return formatNumber(value);
                             }
                         }
