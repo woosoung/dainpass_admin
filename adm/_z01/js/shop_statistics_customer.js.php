@@ -66,8 +66,8 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
             renderCustomerTypeChart(res.customer_type_distribution);
             renderCustomerAmountChart(res.top_customers);
             renderAppointmentFrequencyChart(res.frequency_distribution);
-            renderWishTrendChart(res.wish_trend);
-            renderWishConversionTrendChart(res.wish_conversion_trend);
+            renderWishTrendChart(res.wish_trend, periodType);
+            renderWishConversionTrendChart(res.wish_conversion_trend, periodType);
             renderVipCustomerTable(res.vip_customers);
         }).fail(function(xhr, status, error) {
             StatisticsCommon.handleAjaxError(xhr, status, error);
@@ -254,14 +254,14 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         });
     }
 
-    function renderWishTrendChart(wishTrend) {
+    function renderWishTrendChart(wishTrend, periodType) {
         var labels = [];
         var data = [];
 
         if (wishTrend && wishTrend.length) {
             for (var i = 0; i < wishTrend.length; i++) {
                 var row = wishTrend[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 data.push(row.wish_count || 0);
             }
         }
@@ -316,14 +316,14 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         });
     }
 
-    function renderWishConversionTrendChart(wishConversionTrend) {
+    function renderWishConversionTrendChart(wishConversionTrend, periodType) {
         var labels = [];
         var conversionRateData = [];
 
         if (wishConversionTrend && wishConversionTrend.length) {
             for (var i = 0; i < wishConversionTrend.length; i++) {
                 var row = wishConversionTrend[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 conversionRateData.push(row.conversion_rate || 0);
             }
         }

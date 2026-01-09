@@ -72,11 +72,11 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
 
             updateSummaryCards(res.summary);
             updateDetailSummary(res.summary, res.range_start, res.range_end);
-            renderAppointmentTrendChart(res.daily_appointments);
+            renderAppointmentTrendChart(res.daily_appointments, periodType);
             renderStatusDistributionChart(res.status_distribution);
             renderHourlyAppointmentChart(res.hourly_appointments);
             renderWeeklyAppointmentChart(res.weekly_appointments);
-            renderCancelTrendChart(res.cancel_trend);
+            renderCancelTrendChart(res.cancel_trend, periodType);
             renderWeekdayHourPatternTable(res.weekday_hour_pattern);
         }).fail(function(xhr, status, error) {
             StatisticsCommon.handleAjaxError(xhr, status, error);
@@ -116,7 +116,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         $('#reservation_detail_summary').html(html);
     }
 
-    function renderAppointmentTrendChart(dailyAppointments) {
+    function renderAppointmentTrendChart(dailyAppointments, periodType) {
         var labels = [];
         var totalData = [];
         var cancelData = [];
@@ -124,7 +124,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         if (dailyAppointments && dailyAppointments.length) {
             for (var i = 0; i < dailyAppointments.length; i++) {
                 var row = dailyAppointments[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 totalData.push(row.total_count || 0);
                 cancelData.push(row.cancel_count || 0);
             }
@@ -358,14 +358,14 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         });
     }
 
-    function renderCancelTrendChart(cancelTrend) {
+    function renderCancelTrendChart(cancelTrend, periodType) {
         var labels = [];
         var cancelRateData = [];
 
         if (cancelTrend && cancelTrend.length) {
             for (var i = 0; i < cancelTrend.length; i++) {
                 var row = cancelTrend[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 cancelRateData.push(row.cancel_rate || 0);
             }
         }

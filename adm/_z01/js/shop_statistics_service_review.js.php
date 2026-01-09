@@ -61,8 +61,8 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
             updateSummaryCards(res.summary);
             renderServicePopularityChart(res.service_popularity);
             renderServiceSalesChart(res.service_sales);
-            renderReviewTrendChart(res.review_trend);
-            renderRatingTrendChart(res.review_trend);
+            renderReviewTrendChart(res.review_trend, periodType);
+            renderRatingTrendChart(res.review_trend, periodType);
             renderRatingDistributionChart(res.rating_distribution);
             renderServiceDetailTable(res.service_details);
         }).fail(function(xhr, status, error) {
@@ -193,14 +193,14 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         });
     }
 
-    function renderReviewTrendChart(reviewTrend) {
+    function renderReviewTrendChart(reviewTrend, periodType) {
         var labels = [];
         var data = [];
 
         if (reviewTrend && reviewTrend.length) {
             for (var i = 0; i < reviewTrend.length; i++) {
                 var row = reviewTrend[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 data.push(row.review_count || 0);
             }
         }
@@ -255,14 +255,14 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         });
     }
 
-    function renderRatingTrendChart(reviewTrend) {
+    function renderRatingTrendChart(reviewTrend, periodType) {
         var labels = [];
         var data = [];
 
         if (reviewTrend && reviewTrend.length) {
             for (var i = 0; i < reviewTrend.length; i++) {
                 var row = reviewTrend[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 data.push(row.avg_rating || 0);
             }
         }

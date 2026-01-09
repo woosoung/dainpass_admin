@@ -58,9 +58,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
 
             updateSummaryCards(res.summary, res.cancellations, res.settlement_deduction);
             updateDetailSummary(res.summary, res.cancellations, res.range_start, res.range_end);
-            renderSalesTrendChart(res.daily_sales);
+            renderSalesTrendChart(res.daily_sales, periodType);
             renderPaymentMethodChart(res.payment_methods);
-            renderSettlementTrendChart(res.settlement_chart);
+            renderSettlementTrendChart(res.settlement_chart, periodType);
             renderSettlementTable(res.settlement_logs);
         }).fail(function(xhr, status, error) {
             StatisticsCommon.handleAjaxError(xhr, status, error);
@@ -122,7 +122,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         $('#sales_detail_summary').html(html);
     }
 
-    function renderSalesTrendChart(dailySales) {
+    function renderSalesTrendChart(dailySales, periodType) {
         var labels = [];
         var totalData = [];
         var netData = [];
@@ -130,7 +130,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         if (dailySales && dailySales.length) {
             for (var i = 0; i < dailySales.length; i++) {
                 var row = dailySales[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 totalData.push(row.total_sales || 0);
                 netData.push(row.net_sales || 0);
             }
@@ -203,7 +203,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         });
     }
 
-    function renderSettlementTrendChart(settlementChartData) {
+    function renderSettlementTrendChart(settlementChartData, periodType) {
         var labels = [];
         var amounts = [];
 
@@ -211,7 +211,8 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
             for (var i = 0; i < settlementChartData.length; i++) {
                 var row = settlementChartData[i];
                 // month 또는 settlement_date 기준 라벨
-                labels.push(row.month || row.settlement_date || row.settlement_at);
+                var dateStr = row.month || row.settlement_date || row.settlement_at;
+                labels.push(formatDateLabel(dateStr, periodType));
                 amounts.push(row.total_amount || row.settlement_amount || 0);
             }
         }

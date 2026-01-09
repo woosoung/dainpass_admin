@@ -57,9 +57,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
             }
 
             updateSummaryCards(res.summary);
-            renderCouponIssueUseTrendChart(res.coupon_issue_use_trend);
+            renderCouponIssueUseTrendChart(res.coupon_issue_use_trend, periodType);
             renderCouponUsageRateChart(res.coupon_usage_rate);
-            renderDiscountAmountTrendChart(res.discount_amount_trend);
+            renderDiscountAmountTrendChart(res.discount_amount_trend, periodType);
             renderCouponDetailTable(res.coupon_detail_statistics);
         }).fail(function(xhr, status, error) {
             StatisticsCommon.handleAjaxError(xhr, status, error);
@@ -78,7 +78,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         $('#total_coupon_discount').text(formatCurrency(summary.total_coupon_discount || 0));
     }
 
-    function renderCouponIssueUseTrendChart(couponTrend) {
+    function renderCouponIssueUseTrendChart(couponTrend, periodType) {
         var labels = [];
         var issuedData = [];
         var usedData = [];
@@ -86,7 +86,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         if (couponTrend && couponTrend.length) {
             for (var i = 0; i < couponTrend.length; i++) {
                 var row = couponTrend[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 issuedData.push(row.issued_count || 0);
                 usedData.push(row.used_count || 0);
             }
@@ -207,14 +207,14 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         });
     }
 
-    function renderDiscountAmountTrendChart(discountTrend) {
+    function renderDiscountAmountTrendChart(discountTrend, periodType) {
         var labels = [];
         var data = [];
 
         if (discountTrend && discountTrend.length) {
             for (var i = 0; i < discountTrend.length; i++) {
                 var row = discountTrend[i];
-                labels.push(row.date);
+                labels.push(formatDateLabel(row.date, periodType));
                 data.push(row.discount_amount || 0);
             }
         }
