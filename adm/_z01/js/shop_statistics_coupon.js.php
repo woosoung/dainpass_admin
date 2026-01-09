@@ -140,6 +140,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
                     y: {
                         beginAtZero: true,
                         ticks: {
+                            stepSize: 1,
                             callback: function(value) {
                                 return formatNumber(value) + '개';
                             }
