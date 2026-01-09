@@ -535,10 +535,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
             var maxItems = Math.min(10, topCustomers.length);
             for (var i = 0; i < maxItems; i++) {
                 var row = topCustomers[i];
-                var customerName = row.user_id || ('고객 ' + row.customer_id);
-                if (row.nickname) {
-                    customerName += ' (' + row.nickname + ')';
-                }
+                var customerName = row.customer_name || '고객';
                 labels.push(customerName);
                 data.push(row.total_amount || 0);
             }

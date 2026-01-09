@@ -349,7 +349,6 @@ function get_top_customers($shop_id, $range_start, $range_end)
 {
     $sql = "
         SELECT 
-            sa.customer_id,
             c.user_id,
             c.nickname,
             COUNT(*) AS appointment_count,
@@ -380,7 +379,6 @@ function get_top_customers($shop_id, $range_start, $range_end)
             $customer_name = $row['nickname'] ? $row['nickname'] : ('고객 ' . $customer_index);
 
             $rows[] = [
-                'customer_id' => (int)$row['customer_id'],
                 'customer_name' => $customer_name,
                 'appointment_count' => (int)$row['appointment_count'],
                 'total_amount' => (int)$row['total_amount'],
