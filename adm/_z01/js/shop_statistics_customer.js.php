@@ -151,7 +151,7 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         if (topCustomers && topCustomers.length) {
             for (var i = 0; i < topCustomers.length; i++) {
                 var row = topCustomers[i];
-                labels.push(row.customer_name || ('고객 ' + row.customer_id));
+                labels.push(row.customer_name || '고객');
                 data.push(row.total_amount || 0);
             }
         }
@@ -389,11 +389,9 @@ include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
         }
 
         vipCustomers.forEach(function(row) {
-            // user_id(nickname) 형식으로 표시
-            var customerDisplay = row.customer_display || 
-                (row.user_id ? (row.user_id + (row.nickname ? '(' + row.nickname + ')' : '')) : 
-                ('고객 ' + row.customer_id));
-            
+            // 닉네임만 표시 (ID 노출 방지)
+            var customerDisplay = row.customer_display || 'VIP 고객';
+
             var tr = '<tr>' +
                 '<td class="text-center">' + (row.rank || '-') + '</td>' +
                 '<td class="text-center">' + customerDisplay + '</td>' +

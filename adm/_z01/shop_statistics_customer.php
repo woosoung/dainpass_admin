@@ -180,7 +180,7 @@ render_statistics_date_range_selector($default_start, $today); ?>
             <thead>
             <tr>
                 <th scope="col" class="text-center">순위</th>
-                <th scope="col" class="text-center">고객 ID(닉네임)</th>
+                <th scope="col" class="text-center">닉네임</th>
                 <th scope="col" class="text-center">예약 횟수</th>
                 <th scope="col" class="text-center">누적 결제 금액</th>
                 <th scope="col" class="text-center">평균 결제 금액</th>

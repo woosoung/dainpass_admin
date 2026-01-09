@@ -374,12 +374,11 @@ function get_top_customers($shop_id, $range_start, $range_end)
     $rows = [];
 
     if ($result && is_object($result) && isset($result->result)) {
+        $customer_index = 1;
         while ($row = sql_fetch_array_pg($result->result)) {
-            // user_id(nickname) 형식으로 표시
-            $user_id = $row['user_id'] ? $row['user_id'] : ('고객 ' . $row['customer_id']);
-            $nickname = $row['nickname'] ? '(' . $row['nickname'] . ')' : '';
-            $customer_name = $user_id . $nickname;
-            
+            // 닉네임만 표시, 없으면 '고객 N'으로 표시 (ID 노출 방지)
+            $customer_name = $row['nickname'] ? $row['nickname'] : ('고객 ' . $customer_index);
+
             $rows[] = [
                 'customer_id' => (int)$row['customer_id'],
                 'customer_name' => $customer_name,
@@ -387,6 +386,7 @@ function get_top_customers($shop_id, $range_start, $range_end)
                 'total_amount' => (int)$row['total_amount'],
                 'avg_amount' => (float)$row['avg_amount'],
             ];
+            $customer_index++;
         }
     }
 
@@ -644,16 +644,12 @@ function get_vip_customers($shop_id, $range_start, $range_end)
 
     if ($result && is_object($result) && isset($result->result)) {
         while ($row = sql_fetch_array_pg($result->result)) {
-            // user_id(nickname) 형식으로 표시
-            $user_id = $row['user_id'] ? $row['user_id'] : ('고객 ' . $row['customer_id']);
-            $nickname = $row['nickname'] ? '(' . $row['nickname'] . ')' : '';
-            $customer_display = $user_id . $nickname;
-            
+            // 닉네임만 표시, 없으면 'VIP 고객 N'으로 표시 (ID 노출 방지)
+            $customer_display = $row['nickname'] ? $row['nickname'] : ('VIP 고객 ' . $rank);
+
             $rows[] = [
                 'rank' => $rank++,
                 'customer_id' => (int)$row['customer_id'],
-                'user_id' => $row['user_id'],
-                'nickname' => $row['nickname'],
                 'customer_display' => $customer_display,
                 'appointment_count' => (int)$row['appointment_count'],
                 'total_amount' => (int)$row['total_amount'],
