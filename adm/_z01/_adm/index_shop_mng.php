@@ -25,25 +25,9 @@ $default_start = date('Y-m-d', strtotime('-30 days'));
     <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
-<div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
-    <!-- 세그먼트 컨트롤 형태의 빠른 선택 버튼 -->
-    <div class="quick-period-segment">
-        <button type="button" class="quick-period-btn" data-days="7">최근 7일</button>
-        <button type="button" class="quick-period-btn" data-days="30">30일</button>
-        <button type="button" class="quick-period-btn" data-days="90">90일</button>
-        <button type="button" class="quick-period-btn" data-days="180">180일</button>
-    </div>
-
-    <select id="period_type" class="frm_input">
-        <option value="daily">일별</option>
-        <option value="weekly">주별</option>
-        <option value="monthly">월별</option>
-    </select>
-    <input type="text" id="start_date" class="frm_input" value="<?php echo $default_start; ?>" placeholder="시작일" readonly style="width: 120px;">
-    <span class="text-gray-400">~</span>
-    <input type="text" id="end_date" class="frm_input" value="<?php echo $today; ?>" placeholder="종료일" readonly style="width: 120px;">
-    <button type="button" id="search_btn" class="btn_submit btn">조회</button>
-</div>
+<?php
+// 통계 기간 선택 툴
+render_statistics_date_range_selector($default_start, $today); ?>
 
 <!-- 주요 지표 카드 영역 -->
 <div class="grid gap-4 mb-6 statistics-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">

@@ -16,7 +16,7 @@ $g5['title'] = '쿠폰통계';
 include_once(G5_ADMIN_PATH.'/admin.head.php');
 include_once(G5_Z_PATH.'/css/_adm_tailwind_utility_class.php');
 
-// 기본 기간: 최근 30일 (JS에서 다시 세팅하지만 초기값용)
+// 기본 기간: 최근 30일
 $today = date('Y-m-d');
 $default_start = date('Y-m-d', strtotime('-30 days'));
 ?>
@@ -28,16 +28,9 @@ $default_start = date('Y-m-d', strtotime('-30 days'));
     <?php echo get_shop_display_name($shop_info, $shop_id); ?>
 </div>
 
-<div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
-    <select id="period_type" class="frm_input">
-        <option value="daily">일별</option>
-        <option value="weekly">주별</option>
-        <option value="monthly">월별</option>
-    </select>
-    <input type="date" id="start_date" class="frm_input" value="<?php echo $default_start; ?>">
-    <input type="date" id="end_date" class="frm_input" value="<?php echo $today; ?>">
-    <button type="button" id="search_btn" class="btn_submit btn">조회</button>
-</div>
+<?php
+// 통계 기간 선택 툴
+render_statistics_date_range_selector($default_start, $today); ?>
 
 <!-- 주요 지표 카드 영역 -->
 <div class="grid gap-4 mb-6 statistics-cards" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
