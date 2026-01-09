@@ -3929,3 +3929,43 @@ function validate_and_sanitize_statistics_params($period_type, $start_date, $end
 }
 }
 
+/**
+ * 통계 페이지용 기간 선택 UI 컴포넌트 렌더링
+ *
+ * @param string $default_start 기본 시작일 (YYYY-MM-DD)
+ * @param string $default_end 기본 종료일 (YYYY-MM-DD)
+ * @return void (HTML 출력)
+ */
+if (!function_exists('render_statistics_date_range_selector')) {
+function render_statistics_date_range_selector($default_start = '', $default_end = '')
+{
+    // 기본값 설정
+    if (empty($default_start)) {
+        $default_start = date('Y-m-d', strtotime('-30 days'));
+    }
+    if (empty($default_end)) {
+        $default_end = date('Y-m-d');
+    }
+    ?>
+<div class="flex flex-wrap items-center gap-2 mb-4 date-range-selector">
+    <div class="quick-period-segment">
+        <button type="button" class="quick-period-btn" data-days="7">최근 7일</button>
+        <button type="button" class="quick-period-btn" data-days="30">30일</button>
+        <button type="button" class="quick-period-btn" data-days="90">90일</button>
+        <button type="button" class="quick-period-btn" data-days="180">180일</button>
+    </div>
+
+    <select id="period_type" class="frm_input">
+        <option value="daily">일별</option>
+        <option value="weekly">주별</option>
+        <option value="monthly">월별</option>
+    </select>
+    <input type="text" id="start_date" class="frm_input" value="<?php echo $default_start; ?>" placeholder="시작일" readonly style="width: 120px;">
+    <span class="text-gray-400">~</span>
+    <input type="text" id="end_date" class="frm_input" value="<?php echo $default_end; ?>" placeholder="종료일" readonly style="width: 120px;">
+    <button type="button" id="search_btn" class="btn_submit btn">조회</button>
+</div>
+    <?php
+}
+}
+
