@@ -3,6 +3,9 @@ if (!defined('_GNUBOARD_')) exit;
 
 // 공통 datepicker 함수 include
 include_once(G5_Z_PATH . '/js/_common_datepicker.js.php');
+
+// 공통 통계 유틸리티 함수 include
+include_once(G5_Z_PATH . '/js/_common_statistics.js.php');
 ?>
 <script>
 (function($) {
@@ -18,106 +21,25 @@ include_once(G5_Z_PATH . '/js/_common_datepicker.js.php');
     var couponIssueUseTrendChart = null;
     var discountAmountTrendChart = null;
 
-    function formatNumber(num) {
-        if (num === null || num === undefined || isNaN(num)) return '-';
-        return Number(num).toLocaleString('ko-KR');
-    }
-
-    function formatCurrency(num) {
-        if (num === null || num === undefined || isNaN(num)) return '- 원';
-        return Number(num).toLocaleString('ko-KR') + '원';
-    }
-
-    function formatDateLabel(dateStr, periodType) {
-        if (!dateStr) return '';
-        var date = new Date(dateStr + 'T00:00:00');
-        if (isNaN(date.getTime())) return dateStr;
-        
-        switch(periodType) {
-            case 'weekly':
-                var weekStart = new Date(date);
-                weekStart.setDate(date.getDate() - date.getDay());
-                var weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
-                return (weekStart.getMonth() + 1) + '/' + weekStart.getDate() + '~' + (weekEnd.getMonth() + 1) + '/' + weekEnd.getDate();
-            case 'monthly':
-                return (date.getMonth() + 1) + '월';
-            case 'daily':
-            default:
-                return (date.getMonth() + 1) + '/' + date.getDate();
-        }
-    }
-
-    function validateDate(dateStr) {
-        // 날짜 형식 검증 (YYYY-MM-DD)
-        var dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(dateStr)) {
-            return false;
-        }
-
-        // 날짜 유효성 검증
-        var date = new Date(dateStr + 'T00:00:00');
-        if (isNaN(date.getTime())) {
-            return false;
-        }
-
-        // 날짜 범위 검증 (2년 전 연도의 1월 1일부터 오늘까지)
-        var today = new Date();
-        today.setHours(0, 0, 0, 0);
-        var currentYear = today.getFullYear();
-        var minYear = currentYear - 2;
-        var minDate = new Date(minYear + '-01-01T00:00:00');
-
-        if (date < minDate || date > today) {
-            return false;
-        }
-
-        return true;
-    }
+    // 공통 함수 별칭
+    var formatNumber = StatisticsCommon.formatNumber;
+    var formatCurrency = StatisticsCommon.formatCurrency;
+    var formatDateLabel = StatisticsCommon.formatDateLabel;
 
     function loadDashboardData() {
         var periodType = $('#period_type').val();
         var startDate  = $('#start_date').val();
         var endDate    = $('#end_date').val();
 
-        // 기본 입력값 검증
-        if (!startDate || !endDate) {
-            alert('조회 기간을 선택해 주세요.');
-            return;
-        }
+        // 통계 파라미터 검증
+        var validation = StatisticsCommon.validateStatisticsParams({
+            periodType: periodType,
+            startDate: startDate,
+            endDate: endDate
+        });
 
-        // period_type 검증 (화이트리스트)
-        var allowedPeriodTypes = ['daily', 'weekly', 'monthly'];
-        if (allowedPeriodTypes.indexOf(periodType) === -1) {
-            alert('올바르지 않은 기간 타입입니다.');
-            return;
-        }
-
-        // 날짜 형식 및 유효성 검증
-        if (!validateDate(startDate)) {
-            alert('시작일이 올바르지 않습니다.');
-            return;
-        }
-
-        if (!validateDate(endDate)) {
-            alert('종료일이 올바르지 않습니다.');
-            return;
-        }
-
-        // 날짜 순서 검증
-        if (new Date(startDate) > new Date(endDate)) {
-            alert('시작일은 종료일보다 이전이어야 합니다.');
-            return;
-        }
-
-        // 조회 기간 제한 (최대 3년, 윤년 자동 고려)
-        var start = new Date(startDate + 'T00:00:00');
-        var end = new Date(endDate + 'T00:00:00');
-        var maxEndDate = new Date(start);
-        maxEndDate.setFullYear(start.getFullYear() + 3);
-
-        if (end > maxEndDate) {
-            alert('조회 기간은 최대 3년까지 가능합니다.');
+        if (!validation.valid) {
+            alert(validation.message);
             return;
         }
 
@@ -157,19 +79,7 @@ include_once(G5_Z_PATH . '/js/_common_datepicker.js.php');
             // 정산 처리 내역 테이블 업데이트
             renderSettlementTable(res.settlement_logs);
         }).fail(function(xhr, status, error) {
-            var errorMsg = '서버 통신 중 오류가 발생했습니다.';
-            if (xhr.responseText) {
-                try {
-                    var errorRes = JSON.parse(xhr.responseText);
-                    if (errorRes && errorRes.message) {
-                        errorMsg = errorRes.message;
-                    }
-                } catch(e) {
-                    // JSON 파싱 실패 시 기본 메시지 사용
-                }
-            }
-            alert(errorMsg + '\n상태: ' + status + '\n오류: ' + error);
-            console.error('AJAX Error:', {xhr: xhr, status: status, error: error, responseText: xhr.responseText});
+            StatisticsCommon.handleAjaxError(xhr, status, error);
         }).always(function() {
             $btn.prop('disabled', false).text('조회');
         });
